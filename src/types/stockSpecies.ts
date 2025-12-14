@@ -1,0 +1,41 @@
+export interface SpeciesStockBlock {
+    species_id: string;
+    species_name_th: string;
+    species_name_en: string | null;
+    species_code: string | null;
+    size_label: string;
+    height_label: string | null;
+    grade_id: string | null;
+    grade_name_th: string | null;
+    grade_code: string | null;
+    zone_count: number;
+    zone_names: string[] | null;
+    zone_ids: string[] | null;
+    total_qty: number;
+    available_qty: number;
+    reserved_qty: number;
+    dig_ordered_qty: number;
+    dug_qty: number;
+    shipped_qty: number;
+    planted_qty: number;
+    untagged_qty: number;
+    dig_ordered_to_panel_qty: number;
+    dig_ordered_to_customer_qty: number;
+    dug_to_panel_qty: number;
+    dug_to_customer_qty: number;
+    // Pricing Stats
+    line_count: number | null;
+    total_qty_sold: number | null;
+    total_revenue: number | null;
+    avg_price_per_tree: number | null;
+    median_price_per_tree: number | null;
+    min_price_per_tree: number | null;
+    max_price_per_tree: number | null;
+    avg_price_per_meter: number | null;
+    median_price_per_meter: number | null;
+    min_price_per_meter: number | null;
+    max_price_per_meter: number | null;
+    last_price_per_tree: number | null;
+    last_price_per_meter: number | null;
+    last_price_type: string | null;
+}
