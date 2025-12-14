@@ -41,6 +41,9 @@ import { useTagLifecycleTotals } from "../hooks/useTagLifecycleTotals";
 import { useZoneInventorySummary } from "../hooks/useZoneInventorySummary";
 import { usePlotSizeTransitionHistory } from "../hooks/usePlotSizeTransitionHistory";
 import { ZoneLocationSection } from "./zones/ZoneLocationSection";
+import ZoneOverviewTab from "./zones/tabs/ZoneOverviewTab";
+import ZoneTagsTab from "./zones/tabs/ZoneTagsTab";
+import ZonePlotManagementTab from "./zones/tabs/ZonePlotManagementTab";
 
 // Helper to map Thai status from DB to English keys for color map
 const mapThaiStatusToKey = (status?: string) => {
@@ -80,7 +83,7 @@ const formatDate = (value?: string | null) => {
 const toThaiNumber = (value?: number | null) =>
     (value ?? 0).toLocaleString("th-TH", { maximumFractionDigits: 0 });
 
-type TabId = "overview" | "tags" | "operations" | "audit";
+type TabId = "overview" | "tags" | "plot" | "operations" | "audit";
 
 const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void }) => {
     // --- State & Hooks ---
@@ -93,6 +96,7 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
 
     // ✅ Tabs State (Fix)
     const [activeTab, setActiveTab] = React.useState<TabId>("overview");
+    const [isMapOpen, setIsMapOpen] = React.useState(false);
     const handleTabChange = (tab: TabId) => setActiveTab(tab);
 
     // Plot Type State
@@ -196,6 +200,7 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
     // --- Tag Lifecycle Totals ---
     const { data: tagLifecycleTotals, loading: tagLifecycleLoading, reload: reloadTagLife } =
         useTagLifecycleTotals({ zoneId });
+
 
 
     const readyStockSummary = React.useMemo(() => {
@@ -752,7 +757,720 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
         return { totalPlanted, totalTagged, remaining, speciesCount: speciesSet.size };
     }, [inventoryItems, plotTotals]);
 
-    // --- Render Guards ---
+    // --- Render Tab Content ---
+    const renderTab = () => {
+        if (activeTab === "overview") {
+            return (
+                <div className="space-y-6">
+                    <ZoneOverviewTab
+                        zoneId={zoneId}
+                        zone={zone}
+                        readyStockSummary={readyStockSummary}
+                        tagLifeTotals={tagLifecycleTotals || undefined}
+                        inventorySummary={inventorySummary}
+                        plotTotals={plotTotals}
+                        zoneInvSummary={zoneInvSummary}
+                        isMapOpen={isMapOpen}
+                        setIsMapOpen={setIsMapOpen}
+                        onReload={onTagMutated}
+                    />
+
+                    <ZonePlotManagementTab
+                        zoneId={zoneId}
+                        zone={zone}
+                        plantCountDrafts={plantCountDrafts}
+                        speciesOptions={speciesOptions}
+                        addPlantCountRow={addPlantCountRow}
+                        updatePlantCountRow={updatePlantCountRow}
+                        removePlantCountRow={removePlantCountRow}
+                        savePlantCounts={savePlantCounts}
+                        savingPlantCounts={savingPlantCounts}
+                        plantCountsMsg={plantCountsMsg}
+                        plotTypes={plotTypes}
+                        selectedPlotTypeId={selectedPlotTypeId}
+                        setSelectedPlotTypeId={setSelectedPlotTypeId}
+                        handleSavePlotType={handleSavePlotType}
+                        savingPlotType={savingPlotType}
+                        saveMessage={saveMessage}
+                        onReload={onTagMutated}
+                    />
+                </div>
+            );
+        }
+
+        if (activeTab === "tags") {
+            return (
+                <div className="space-y-6">
+                    <ZoneTagsTab
+                        zoneId={zoneId}
+                        zone={zone}
+                        tagLifeTotals={tagLifecycleTotals || undefined}
+                        plotTotals={plotTotals}
+                        inventorySummary={inventorySummary}
+                        onReload={onTagMutated}
+                    />
+
+                    {/* === Plot Inventory Table + Create Tag === */}
+                    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
+                        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                            <span className="text-sm font-semibold text-slate-700">รายการต้นไม้ในแปลง (Plot Inventory)</span>
+                            <span className="text-xs text-slate-500">รวมทั้งสิ้น {inventoryItems.length} รายการ</span>
+                        </div>
+
+                        <div className="mx-4 mt-3 rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-xs text-emerald-900">
+                            <div className="font-semibold mb-1">ขั้นตอนการทำงานในแปลงนี้</div>
+                            <ol className="list-decimal pl-4 space-y-0.5">
+                                <li>กำหนดแผนปลูกในตาราง <span className="font-medium">"รายการต้นไม้ในแปลง (Plot Inventory)"</span></li>
+                                <li>สร้าง <span className="font-medium">Tag</span> สำหรับต้นไม้ที่จะขาย/ขุดล้อม จากปุ่ม <span className="font-medium">"+ Tag"</span> ในแต่ละแถว</li>
+                                <li>วางแผนคำสั่งขุดล้อมจาก <span className="font-medium">Tag</span> ที่สร้างแล้ว (ระบบจะดึงเฉพาะต้นที่มี Tag)</li>
+                            </ol>
+                            <p className="mt-2 text-[11px] text-emerald-800">
+                                * ผลสำรวจใช้สำหรับตรวจสอบจำนวนจริง เปรียบเทียบกับจำนวน Tag (ไม่ได้ใช้เป็นฐานขุดล้อมโดยตรง)
+                            </p>
+                        </div>
+
+                        <div className="px-4 py-2 flex flex-wrap gap-2 bg-slate-50 border-b border-slate-100">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1 text-xs">
+                                พร้อมขาย: <span className="font-semibold">{readyStockSummary.available.toLocaleString("th-TH")} ต้น</span>
+                            </span>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100 px-3 py-1 text-xs">
+                                จองแล้ว: <span className="font-semibold">{readyStockSummary.reserved.toLocaleString("th-TH")} ต้น</span>
+                            </span>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 text-sky-700 border border-sky-100 px-3 py-1 text-xs">
+                                อยู่ในใบสั่งขุด: <span className="font-semibold">{readyStockSummary.digOrdered.toLocaleString("th-TH")} ต้น</span>
+                            </span>
+                        </div>
+
+                        {plotInventoryLoading && (
+                            <div className="py-8 text-center text-slate-500">
+                                <Loader2 className="w-5 h-5 animate-spin inline-block mr-2" />
+                                กำลังโหลดรายการต้นไม้...
+                            </div>
+                        )}
+
+                        {!plotInventoryLoading && plotInventoryError && <div className="py-8 text-center text-rose-500 text-sm">{plotInventoryError}</div>}
+
+                        {!plotInventoryLoading && !plotInventoryError && (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full text-sm">
+                                    <thead className="bg-slate-50 text-xs text-slate-500 border-b border-slate-100">
+                                        <tr>
+                                            <th className="px-3 py-2 text-left font-medium">ชนิดต้นไม้</th>
+                                            <th className="px-3 py-2 text-left font-medium">ขนาด</th>
+                                            <th className="px-3 py-2 text-left font-medium">ความสูง</th>
+                                            <th className="px-3 py-2 text-right font-medium">จำนวนที่ปลูก</th>
+                                            <th className="px-3 py-2 text-right font-medium">สร้าง Tag แล้ว</th>
+                                            <th className="px-3 py-2 text-right font-medium">คงเหลือให้สร้าง Tag</th>
+                                            <th className="px-3 py-2 text-left font-medium">วันที่ปลูก</th>
+                                            <th className="px-3 py-2 text-left font-medium">หมายเหตุ</th>
+                                            <th className="px-3 py-2 text-right font-medium">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {inventoryItems.length === 0 && (
+                                            <tr>
+                                                <td colSpan={9} className="py-8 text-center text-slate-400 text-sm">
+                                                    ยังไม่มีข้อมูลต้นไม้ในแปลงนี้
+                                                </td>
+                                            </tr>
+                                        )}
+
+                                        {inventoryItems.map((row) => {
+                                            const isEditing = editingInventoryId === row.id;
+                                            const editingSpeciesId = editFormData?.speciesId;
+                                            const editingSpecies = speciesOptions.find((s) => s.id === editingSpeciesId);
+                                            const isEditingHeightSpecies = editingSpecies?.measure_by_height === true;
+
+                                            return (
+                                                <tr key={row.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                                    <td className="px-3 py-2 text-slate-800 font-medium">
+                                                        {isEditing ? (
+                                                            <select
+                                                                value={editFormData?.speciesId}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    const sp = speciesOptions.find((s) => s.id === val);
+                                                                    setEditFormData((prev) => {
+                                                                        if (!prev) return null;
+                                                                        const next = { ...prev, speciesId: val };
+                                                                        if (sp?.measure_by_height) next.sizeLabel = "";
+                                                                        else next.heightLabel = "";
+                                                                        return next;
+                                                                    });
+                                                                }}
+                                                                className="w-full px-2 py-1 rounded border border-slate-300 text-sm"
+                                                            >
+                                                                {speciesOptions.map((sp) => (
+                                                                    <option key={sp.id} value={sp.id}>
+                                                                        {sp.name_th || sp.name}
+                                                                        {sp.measure_by_height ? " • วัดตามความสูง" : ""}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        ) : (
+                                                            row.species_name_th || "-"
+                                                        )}
+                                                    </td>
+
+                                                    <td className="px-3 py-2 text-slate-600">
+                                                        {isEditing ? (
+                                                            <select
+                                                                value={editFormData?.sizeLabel}
+                                                                onChange={(e) => setEditFormData((prev) => (prev ? { ...prev, sizeLabel: e.target.value } : null))}
+                                                                className="w-full px-2 py-1 rounded border border-slate-300 text-sm disabled:bg-slate-100 disabled:text-slate-400"
+                                                                disabled={isEditingHeightSpecies}
+                                                            >
+                                                                {trunkSizeOptions.map((opt) => (
+                                                                    <option key={opt.value} value={opt.value}>
+                                                                        {opt.label}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        ) : (
+                                                            `${row.size_label} นิ้ว`
+                                                        )}
+                                                    </td>
+
+                                                    <td className="px-3 py-2 text-slate-600">
+                                                        {isEditing ? (
+                                                            <input
+                                                                type="text"
+                                                                value={editFormData?.heightLabel}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value.replace(/[^0-9.,]/g, "");
+                                                                    setEditFormData((prev) => (prev ? { ...prev, heightLabel: val } : null));
+                                                                }}
+                                                                className="w-full px-2 py-1 rounded border border-slate-300 text-sm disabled:bg-slate-100 disabled:text-slate-400"
+                                                                placeholder={isEditingHeightSpecies ? "เช่น 1.5" : "-"}
+                                                            />
+                                                        ) : (
+                                                            formatHeightLabel(row.height_label)
+                                                        )}
+                                                    </td>
+
+                                                    <td className="px-3 py-2 text-right text-slate-600">
+                                                        {isEditing ? (
+                                                            <input
+                                                                type="number"
+                                                                value={editFormData?.plantedQty}
+                                                                onChange={(e) => setEditFormData((prev) => (prev ? { ...prev, plantedQty: Number(e.target.value) } : null))}
+                                                                className="w-20 px-2 py-1 rounded border border-slate-300 text-sm text-right"
+                                                            />
+                                                        ) : (
+                                                            row.planted_qty.toLocaleString("th-TH")
+                                                        )}
+                                                    </td>
+
+                                                    <td className="px-3 py-2 text-right text-slate-600">{row.created_tag_qty.toLocaleString("th-TH")}</td>
+
+                                                    <td className="px-3 py-2 text-right text-emerald-600 font-semibold">
+                                                        {row.remaining_for_tag.toLocaleString("th-TH")}
+                                                    </td>
+
+                                                    <td className="px-3 py-2 text-slate-600">
+                                                        {isEditing ? (
+                                                            <input
+                                                                type="date"
+                                                                value={editFormData?.plantedDate}
+                                                                onChange={(e) => setEditFormData((prev) => (prev ? { ...prev, plantedDate: e.target.value } : null))}
+                                                                className="w-full px-2 py-1 rounded border border-slate-300 text-sm"
+                                                            />
+                                                        ) : (
+                                                            row.planted_date ? new Date(row.planted_date).toLocaleDateString("th-TH") : "-"
+                                                        )}
+                                                    </td>
+
+                                                    <td className="px-3 py-2 text-xs text-slate-500">
+                                                        {isEditing ? (
+                                                            <input
+                                                                type="text"
+                                                                value={editFormData?.note}
+                                                                onChange={(e) => setEditFormData((prev) => (prev ? { ...prev, note: e.target.value } : null))}
+                                                                className="w-full px-2 py-1 rounded border border-slate-300 text-xs"
+                                                            />
+                                                        ) : (
+                                                            row.note || "-"
+                                                        )}
+                                                    </td>
+
+                                                    <td className="px-3 py-2 text-right">
+                                                        {isEditing ? (
+                                                            <div className="flex items-center justify-end gap-2">
+                                                                <button onClick={handleSaveEditInventory} className="text-emerald-600 hover:text-emerald-700 font-medium text-xs">
+                                                                    บันทึก
+                                                                </button>
+                                                                <button onClick={handleCancelEditInventory} className="text-slate-400 hover:text-slate-600 text-xs">
+                                                                    ยกเลิก
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center justify-end gap-2">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setSelectedInventoryForTag(row);
+                                                                        setCreateTagDialogOpen(true);
+                                                                    }}
+                                                                    disabled={row.remaining_for_tag <= 0}
+                                                                    className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                    title="สร้าง Tag"
+                                                                >
+                                                                    <Plus className="w-3 h-3" />
+                                                                    Tag
+                                                                </button>
+
+                                                                <button onClick={() => handleEditInventory(row)} className="p-1 text-slate-400 hover:text-indigo-600 transition-colors" title="แก้ไข">
+                                                                    <Edit3 className="w-3.5 h-3.5" />
+                                                                </button>
+
+                                                                <button onClick={() => handleDeleteInventory(row.id)} className="p-1 text-slate-400 hover:text-rose-600 transition-colors" title="ลบ">
+                                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        {!plotInventoryLoading && !plotInventoryError && (
+                            <ZoneReadyStockFromPlotSection
+                                zoneId={zoneId}
+                                rows={inventoryItems}
+                                onReload={reloadPlotInventory}
+                                onReloadLifecycle={reloadLifecycle}
+                                createTagsFromInventory={createTagsFromInventory}
+                            />
+                        )}
+
+                        <div className="border-t border-slate-100 mt-4 pt-4 px-4 pb-2">
+                            <h4 className="text-sm font-semibold text-slate-700 mb-2">+ เพิ่มต้นไม้ใหม่</h4>
+                        </div>
+
+                        <form
+                            onSubmit={handleCreatePlanting}
+                            className="px-4 pb-6 grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto] items-end"
+                        >
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-slate-600">ชนิด/พันธุ์ต้นไม้</label>
+                                <select
+                                    value={newSpeciesId}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === "__add_new_species__") setShowSpeciesDialog(true);
+                                        else {
+                                            setNewSpeciesId(val);
+                                            const sp = speciesOptions.find((s) => s.id === val);
+                                            if (sp?.measure_by_height) setNewSizeLabel("");
+                                            else setNewHeightLabel("");
+                                        }
+                                    }}
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                    disabled={speciesLoading || savingNewPlant}
+                                >
+                                    <option value="">เลือกชนิดต้นไม้...</option>
+                                    {speciesOptions.map((sp) => (
+                                        <option key={sp.id} value={sp.id}>
+                                            {sp.name_th || sp.name}
+                                            {sp.measure_by_height ? " • วัดตามความสูง" : ""}
+                                        </option>
+                                    ))}
+                                    <option value="__add_new_species__" className="font-semibold text-emerald-600 bg-emerald-50">
+                                        + เพิ่มพันธุ์ไม้ใหม่...
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-slate-600">
+                                    ขนาด (นิ้ว) {isHeightSpecies ? "" : <span className="text-red-500">*</span>}
+                                </label>
+                                <select
+                                    value={newSizeLabel}
+                                    onChange={(e) => setNewSizeLabel(e.target.value)}
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 disabled:text-slate-400"
+                                    disabled={!newSpeciesId || isHeightSpecies}
+                                >
+                                    <option value="">เลือกขนาด...</option>
+                                    {trunkSizeOptions.map((opt) => (
+                                        <option key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-slate-600">
+                                    ความสูง {isHeightSpecies ? <span className="text-red-500">*</span> : ""}
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newHeightLabel}
+                                    onChange={(e) => setNewHeightLabel(e.target.value.replace(/[^0-9.,]/g, ""))}
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 disabled:text-slate-400"
+                                    placeholder={isHeightSpecies ? "เช่น 1.5m" : "เช่น 1.5m (ไม่บังคับ)"}
+                                    disabled={!newSpeciesId}
+                                />
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-slate-600">จำนวนที่ปลูก</label>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    value={newPlantedCount}
+                                    onChange={(e) => setNewPlantedCount(e.target.value)}
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                    placeholder="เช่น 2,000"
+                                />
+                            </div>
+
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-slate-600">วันที่ปลูก</label>
+                                <input
+                                    type="date"
+                                    value={newPlantedDate}
+                                    onChange={(e) => setNewPlantedDate(e.target.value)}
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                />
+                                <input
+                                    type="text"
+                                    value={newNote}
+                                    onChange={(e) => setNewNote(e.target.value)}
+                                    className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                                    placeholder="หมายเหตุ (ถ้ามี)"
+                                />
+                            </div>
+
+                            <div className="flex justify-end">
+                                <button
+                                    type="submit"
+                                    disabled={!canCreatePlanting || savingNewPlant}
+                                    className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+                                >
+                                    {savingNewPlant && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    <Plus className="w-4 h-4" />
+                                    เพิ่มต้นไม้
+                                </button>
+                            </div>
+
+                            {speciesError && <div className="md:col-span-6 text-xs text-rose-500">โหลดรายชื่อชนิดต้นไม้ไม่สำเร็จ: {speciesError}</div>}
+                            {newPlantMessage && <div className="md:col-span-6 text-xs text-slate-600">{newPlantMessage}</div>}
+                        </form>
+                    </div>
+                </div>
+            );
+        }
+
+        if (activeTab === "operations") {
+            return (
+                <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
+                    <div className="flex items-center justify-between mb-3">
+                        <div>
+                            <h2 className="text-lg font-semibold text-slate-800">ประวัติคำสั่งขุดล้อมในแปลงนี้</h2>
+                            <p className="text-xs text-slate-500 mt-1">
+                                ใช้ติดตามคำสั่งขุดล้อมแต่ละชุด แก้ไขสถานะจาก แผน → กำลังขุด → ขุดแล้ว หรือยกเลิกได้
+                            </p>
+                        </div>
+                    </div>
+
+                    {digupOrdersLoading && <p className="text-sm text-slate-500">กำลังโหลดประวัติคำสั่งขุดล้อม...</p>}
+                    {digupOrdersError && <p className="text-sm text-rose-500">โหลดประวัติคำสั่งขุดล้อมไม่สำเร็จ: {digupOrdersError}</p>}
+                    {!digupOrdersLoading && !digupOrdersError && digupOrders.length === 0 && (
+                        <p className="text-sm text-slate-400">ยังไม่มีการบันทึกคำสั่งขุดล้อมในแปลงนี้</p>
+                    )}
+
+                    {!digupOrdersLoading && digupOrders.length > 0 && (
+                        <div className="overflow-x-auto mt-2">
+                            <table className="min-w-full text-sm">
+                                <thead className="bg-slate-50 text-xs text-slate-500 border-b border-slate-100">
+                                    <tr>
+                                        <th className="px-3 py-2 text-left font-medium">วันที่ขุด</th>
+                                        <th className="px-3 py-2 text-left font-medium">ชนิด/พันธุ์ต้นไม้</th>
+                                        <th className="px-3 py-2 text-left font-medium">ขนาด</th>
+                                        <th className="px-3 py-2 text-right font-medium">จำนวน</th>
+                                        <th className="px-3 py-2 text-left font-medium">สถานะ</th>
+                                        <th className="px-3 py-2 text-left font-medium">หมายเหตุ</th>
+                                        <th className="px-3 py-2 text-right font-medium">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {digupOrders.map((o) => (
+                                        <tr key={o.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                            <td className="px-3 py-2 text-slate-700">{o.digup_date ? new Date(o.digup_date).toLocaleDateString("th-TH") : "-"}</td>
+                                            <td className="px-3 py-2 text-slate-800 font-medium">{o.species_name_th || "-"}</td>
+                                            <td className="px-3 py-2 text-slate-600">{o.size_label ? `${o.size_label} นิ้ว` : "-"}</td>
+                                            <td className="px-3 py-2 text-right text-slate-800">{o.qty.toLocaleString("th-TH")}</td>
+                                            <td className="px-3 py-2">
+                                                <span className={"inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium " + (statusBadgeClass[o.status] || "")}>
+                                                    {statusLabel[o.status] || o.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2 text-xs text-slate-500">{o.notes || "-"}</td>
+                                            <td className="px-3 py-2 text-right">
+                                                <div className="inline-flex gap-1">
+                                                    {(o.status === "planned" || o.status === "cancelled") && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={async () => {
+                                                                try {
+                                                                    await updateDigupStatus(o.id, "in_progress");
+                                                                } catch {
+                                                                    alert("อัปเดตสถานะไม่สำเร็จ");
+                                                                }
+                                                            }}
+                                                            className="px-2 py-1 rounded-lg text-xs bg-amber-100 text-amber-700 hover:bg-amber-200"
+                                                        >
+                                                            เริ่มขุด
+                                                        </button>
+                                                    )}
+
+                                                    {o.status !== "done" && o.status !== "cancelled" && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={async () => {
+                                                                try {
+                                                                    await updateDigupStatus(o.id, "done");
+                                                                } catch {
+                                                                    alert("อัปเดตสถานะไม่สำเร็จ");
+                                                                }
+                                                            }}
+                                                            className="px-2 py-1 rounded-lg text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                                                        >
+                                                            เสร็จแล้ว
+                                                        </button>
+                                                    )}
+
+                                                    {o.status !== "cancelled" && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={async () => {
+                                                                if (!window.confirm("ยกเลิกคำสั่งขุดล้อมนี้หรือไม่?")) return;
+                                                                try {
+                                                                    await updateDigupStatus(o.id, "cancelled");
+                                                                } catch {
+                                                                    alert("อัปเดตสถานะไม่สำเร็จ");
+                                                                }
+                                                            }}
+                                                            className="px-2 py-1 rounded-lg text-xs bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                                        >
+                                                            ยกเลิก
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </section>
+            );
+        }
+
+        if (activeTab === "audit") {
+            return (
+                <>
+                    {/* Growth Log */}
+                    <section className="rounded-2xl border border-slate-200 bg-white p-5 mb-6 space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                                <History className="h-4 w-4 text-slate-500" />
+                                <h3 className="text-sm font-semibold text-slate-900">ประวัติการย้ายขนาด (Growth Log)</h3>
+                                <span className="text-xs text-slate-500">{filteredSizeMoves.length.toLocaleString("th-TH")} รายการ</span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <select value={moveFilterSpecies} onChange={(e) => setMoveFilterSpecies(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs">
+                                    <option value="all">ทุกชนิด</option>
+                                    {speciesOptions.map((s) => (
+                                        <option key={s.id} value={s.id}>
+                                            {s.name_th || s.name}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <select value={moveFilterReason} onChange={(e) => setMoveFilterReason(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs">
+                                    <option value="all">ทุกเหตุผล</option>
+                                    <option value="growth">โตขึ้น</option>
+                                    <option value="sale">ขายออก</option>
+                                    <option value="loss">สูญหาย/ตาย</option>
+                                    <option value="correction">แก้ไขข้อมูล</option>
+                                    <option value="transfer">ย้ายแปลง</option>
+                                </select>
+
+                                <button type="button" onClick={() => reloadSizeMoves?.()} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">
+                                    รีเฟรช
+                                </button>
+                            </div>
+                        </div>
+
+                        {sizeMoveLoading && <div className="text-xs text-slate-500">กำลังโหลดประวัติ...</div>}
+                        {!sizeMoveLoading && sizeMoveError && <div className="text-xs text-rose-600">โหลดไม่สำเร็จ: {sizeMoveError}</div>}
+
+                        <div className="overflow-x-auto border rounded-xl border-slate-100">
+                            <table className="min-w-full text-sm">
+                                <thead className="bg-slate-50 text-xs text-slate-500 border-b border-slate-100">
+                                    <tr>
+                                        <th className="px-3 py-2 text-left font-medium">วันที่มีผล</th>
+                                        <th className="px-3 py-2 text-left font-medium">ชนิดต้นไม้</th>
+                                        <th className="px-3 py-2 text-left font-medium">ย้าย</th>
+                                        <th className="px-3 py-2 text-right font-medium">จำนวน</th>
+                                        <th className="px-3 py-2 text-left font-medium">เหตุผล</th>
+                                        <th className="px-3 py-2 text-left font-medium">หมายเหตุ</th>
+                                        <th className="px-3 py-2 text-left font-medium">บันทึกเมื่อ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {!sizeMoveLoading && filteredSizeMoves.length === 0 && (
+                                        <tr>
+                                            <td colSpan={7} className="px-3 py-6 text-center text-slate-400">
+                                                ยังไม่มีประวัติการย้ายขนาด
+                                            </td>
+                                        </tr>
+                                    )}
+
+                                    {filteredSizeMoves.map((r) => (
+                                        <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50">
+                                            <td className="px-3 py-2 text-slate-700">{r.effective_date ? new Date(r.effective_date).toLocaleDateString("th-TH") : "-"}</td>
+                                            <td className="px-3 py-2 text-slate-800 font-medium">{r.species_name_th || "-"}</td>
+                                            <td className="px-3 py-2 text-slate-700">
+                                                <span className="font-medium">{r.from_size_label}</span>
+                                                <span className="mx-2 text-slate-400">→</span>
+                                                <span className="font-medium">{r.to_size_label}</span>
+                                                <span className="ml-1 text-slate-500 text-xs">นิ้ว</span>
+                                            </td>
+                                            <td className="px-3 py-2 text-right text-slate-800 font-semibold">{Number(r.qty || 0).toLocaleString("th-TH")}</td>
+                                            <td className="px-3 py-2">
+                                                <span className={"inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium " + (reasonBadgeClass[r.reason] || "bg-slate-50 text-slate-700 border-slate-100")}>
+                                                    {reasonLabelMap[r.reason] || r.reason}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2 text-slate-600 text-xs">{r.note || "-"}</td>
+                                            <td className="px-3 py-2 text-slate-500 text-xs">{r.created_at ? new Date(r.created_at).toLocaleString("th-TH") : "-"}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    {/* Inspection Results */}
+                    <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
+                        <div className="flex items-center justify-between mb-1">
+                            <h3 className="text-base font-semibold text-slate-800">ผลสำรวจจำนวนต้นไม้ในแปลง (ตามขนาด)</h3>
+                            {inspectionsLoading && <span className="text-xs text-slate-500">กำลังโหลด...</span>}
+                        </div>
+                        <p className="mb-3 text-xs text-slate-500">
+                            ใช้บันทึกผลสำรวจจำนวนต้นไม้จริงในแปลง ณ วันที่ตรวจสอบ เพื่อเปรียบเทียบกับจำนวน Tag และวางแผนการผลิตในระยะยาว{" "}
+                            <span className="font-medium text-slate-600">ข้อมูลส่วนนี้ไม่ได้ใช้เป็นฐานในการสร้างคำสั่งขุดล้อมโดยตรง</span>
+                        </p>
+
+                        {inspectionsError && <div className="mb-3 text-sm text-rose-600">เกิดข้อผิดพลาดในการโหลดผลสำรวจ: {inspectionsError}</div>}
+
+                        <div className="mb-6">
+                            <h4 className="text-sm font-medium text-slate-700 mb-2">สรุปภาพรวม</h4>
+                            <div className="overflow-x-auto border rounded-lg border-slate-100">
+                                <table className="min-w-full text-sm">
+                                    <thead className="bg-slate-50 text-slate-600">
+                                        <tr>
+                                            <th className="px-3 py-2 text-left font-medium">ชนิดต้นไม้</th>
+                                            <th className="px-3 py-2 text-center font-medium">ขนาด (นิ้ว)</th>
+                                            <th className="px-3 py-2 text-right font-medium">จำนวนที่ประเมินได้ (ต้น)</th>
+                                            <th className="px-3 py-2 text-left font-medium">วันที่สำรวจ</th>
+                                            <th className="px-3 py-2 text-left font-medium">เกรด</th>
+                                            <th className="px-3 py-2 text-left font-medium">หมายเหตุ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {!summaryLoading && summaryRows.length === 0 && (
+                                            <tr>
+                                                <td colSpan={6} className="px-3 py-4 text-center text-slate-400">
+                                                    ไม่มีข้อมูลสรุป
+                                                </td>
+                                            </tr>
+                                        )}
+                                        {summaryRows.map((row) => (
+                                            <tr key={`${row.species_id}__${row.size_label}`} className="border-t border-slate-50 hover:bg-slate-50">
+                                                <td className="px-3 py-2 text-slate-800 font-medium">{row.species_name_th || "-"}</td>
+                                                <td className="px-3 py-2 text-center text-slate-600">{row.size_label || "-"}</td>
+                                                <td className="px-3 py-2 text-right text-slate-800 font-semibold">{row.total_estimated_qty?.toLocaleString() ?? "-"}</td>
+                                                <td className="px-3 py-2 text-slate-600">{row.last_inspection_date ? new Date(row.last_inspection_date).toLocaleDateString("th-TH") : "-"}</td>
+                                                <td className="px-3 py-2 text-slate-600">{row.grades || "-"}</td>
+                                                <td className="px-3 py-2 text-slate-600">-</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div className="mb-4">
+                            <h4 className="text-sm font-medium text-slate-700 mb-2">รายการบันทึกละเอียด</h4>
+                            <div className="overflow-x-auto border rounded-lg border-slate-100">
+                                <table className="min-w-full text-sm">
+                                    <thead>
+                                        <tr className="bg-gray-50">
+                                            <th className="px-3 py-2 text-left text-xs font-semibold">ชนิดต้นไม้</th>
+                                            <th className="px-3 py-2 text-center text-xs font-semibold">ขนาด</th>
+                                            <th className="px-3 py-2 text-left text-xs font-semibold">เกรด</th>
+                                            <th className="px-3 py-2 text-right text-xs font-semibold">จำนวน (ต้น)</th>
+                                            <th className="px-3 py-2 text-left text-xs font-semibold">วันที่สำรวจ</th>
+                                            <th className="px-3 py-2 text-left text-xs font-semibold">หมายเหตุ</th>
+                                            <th className="px-3 py-2 text-right text-xs font-semibold">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {!inspectionsLoading && inspectionRows.length === 0 && (
+                                            <tr>
+                                                <td colSpan={7} className="px-3 py-4 text-center text-slate-400">
+                                                    ยังไม่มีข้อมูลสำรวจ
+                                                </td>
+                                            </tr>
+                                        )}
+                                        {inspectionRows.map((row) => (
+                                            <tr key={row.id} className="border-t">
+                                                <td className="px-3 py-1 text-sm">{row.species_name_th ?? "-"}</td>
+                                                <td className="px-3 py-1 text-center text-sm">{row.size_label ?? "-"}</td>
+                                                <td className="px-3 py-1 text-sm">{row.grade ?? "-"}</td>
+                                                <td className="px-3 py-1 text-right text-sm">{row.estimated_qty?.toLocaleString() ?? "-"}</td>
+                                                <td className="px-3 py-1 text-sm">{row.inspection_date ?? "-"}</td>
+                                                <td className="px-3 py-1 text-sm">{row.notes ?? "-"}</td>
+                                                <td className="px-3 py-1 text-right text-xs">
+                                                    <button type="button" onClick={() => setEditingInspection(row)} className="text-blue-600 hover:underline mr-2">
+                                                        แก้ไข
+                                                    </button>
+                                                    <button type="button" onClick={() => handleDeleteInspection(row)} className="text-red-600 hover:underline">
+                                                        ลบ
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* Add Inspection Form */}
+                        {/* TODO: Inspection Form - temporarily commented out due to missing state
+                        <div className="mt-6 border-t pt-4">
+                            ... inspection form temporarily disabled ...
+                        </div>
+                        */}
+                        {/* Optional: history component ถ้าต้องการ */}
+                        <ZoneInspectionHistory zoneId={zoneId} />
+                    </section>
+                </>
+            );
+        }
+
+        return null;
+    };
     if (loadingZone || loadingOverview) {
         return (
             <div className="flex items-center justify-center h-64">
@@ -917,6 +1635,7 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
                 {[
                     { id: "overview" as const, label: "ภาพรวม", icon: "📊" },
                     { id: "tags" as const, label: "Tags (ขายจากแปลง)", icon: "🏷️" },
+                    { id: "plot" as const, label: "จัดการต้นไม้ในแปลง", icon: "🌱" },
                     { id: "operations" as const, label: "ขุดล้อม", icon: "🚜" },
                     { id: "audit" as const, label: "ตรวจแปลง", icon: "📋" },
                 ].map((tab) => (
@@ -939,14 +1658,15 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
             {/* ===================== TAB: OVERVIEW ===================== */}
             {activeTab === "overview" && (
                 <div className="space-y-6">
-                    {/* 1. KPI Cards / Lifecycle Summary */}
+                    {/* 1. KPI Cards / Lifecycle Summary -- COMMENTED: redundant with SECTION 1 above
                     <TagLifecycleSummaryCard
-                        data={tagLifecycleTotals}
+                        data={tagLifecycleTotals ? { ...tagLifecycleTotals, zone_id: zoneId } : null}
                         loading={tagLifecycleLoading}
                         zoneId={zoneId}
                         isDarkMode={false}
                         className="bg-white"
                     />
+                    */}
 
                     {/* 2. Layout Grid */}
                     <div className="grid gap-6 lg:grid-cols-2 items-start">
@@ -1050,1163 +1770,1066 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
                         </div>
                     )}
 
-                    {/* === กำหนดจำนวนต้นไม้ในแปลง (ระบบ) === */}
-                    <section className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
-                        <div className="flex items-center justify-between gap-2">
-                            <div>
-                                <h3 className="text-sm font-semibold text-slate-900">กำหนดจำนวนต้นไม้ในแปลง (ระบบ)</h3>
-                                <p className="text-xs text-slate-500">บันทึกลงตาราง planting_plot_trees (มีผลกับสรุประบบ/Inventory Flow)</p>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={addPlantCountRow}
-                                    className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
-                                >
-                                    <Plus className="h-4 w-4" />
-                                    เพิ่มแถว
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={savePlantCounts}
-                                    disabled={savingPlantCounts || plantCountDrafts.length === 0}
-                                    className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
-                                >
-                                    {savingPlantCounts ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                                    บันทึกครั้งเดียว
-                                </button>
-                            </div>
-                        </div>
-
-                        {plantCountsMsg && <div className="text-xs text-slate-600">{plantCountsMsg}</div>}
-
-                        <div className="overflow-x-auto border rounded-xl border-slate-100">
-                            <table className="min-w-full text-sm">
-                                <thead className="bg-slate-50 text-xs text-slate-500 border-b border-slate-100">
-                                    <tr>
-                                        <th className="px-3 py-2 text-left font-medium">ชนิดต้นไม้</th>
-                                        <th className="px-3 py-2 text-left font-medium">ขนาด</th>
-                                        <th className="px-3 py-2 text-right font-medium">จำนวนปลูก</th>
-                                        <th className="px-3 py-2 text-left font-medium">สถานะ</th>
-                                        <th className="px-3 py-2 text-right font-medium">จัดการ</th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {plantCountDrafts.length === 0 && (
-                                        <tr>
-                                            <td colSpan={5} className="px-3 py-6 text-center text-slate-400">
-                                                ยังไม่มีข้อมูล planting_plot_trees
-                                            </td>
-                                        </tr>
-                                    )}
-
-                                    {plantCountDrafts.map((d) => {
-                                        const sp = speciesOptions.find((x) => x.id === d.species_id);
-                                        const rowStatus = d._error ? (
-                                            <span className="text-xs text-rose-600">{d._error}</span>
-                                        ) : d._dirty ? (
-                                            <span className="text-xs text-amber-600">มีการแก้ไข</span>
-                                        ) : (
-                                            <span className="text-xs text-slate-400">-</span>
-                                        );
-
-                                        return (
-                                            <tr key={d.id} className="border-b border-slate-50 hover:bg-slate-50">
-                                                <td className="px-3 py-2">
-                                                    <select
-                                                        value={d.species_id}
-                                                        onChange={(e) => updatePlantCountRow(d.id, { species_id: e.target.value })}
-                                                        className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm"
-                                                    >
-                                                        <option value="">เลือกชนิด...</option>
-                                                        {speciesOptions.map((s) => (
-                                                            <option key={s.id} value={s.id}>
-                                                                {s.name_th || s.name}
-                                                                {s.measure_by_height ? " • (วัดตามความสูง)" : ""}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-
-                                                    {sp?.measure_by_height && (
-                                                        <div className="mt-1 text-[11px] text-amber-700">
-                                                            ชนิดนี้ตั้งค่าแบบ "ความสูง" — ตารางนี้รองรับเฉพาะ size_label (นิ้ว) ในเวอร์ชันนี้
-                                                        </div>
-                                                    )}
-                                                </td>
-
-                                                <td className="px-3 py-2">
-                                                    <select
-                                                        value={d.size_label}
-                                                        onChange={(e) => updatePlantCountRow(d.id, { size_label: e.target.value })}
-                                                        className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm"
-                                                    >
-                                                        <option value="">เลือกขนาด...</option>
-                                                        {trunkSizeOptions.map((opt) => (
-                                                            <option key={opt.value} value={opt.value}>
-                                                                {opt.label}
-                                                            </option>
-                                                        ))}
-                                                    </select>
-                                                </td>
-
-                                                <td className="px-3 py-2 text-right">
-                                                    <input
-                                                        type="number"
-                                                        min={0}
-                                                        value={d.planted_count}
-                                                        onChange={(e) =>
-                                                            updatePlantCountRow(d.id, {
-                                                                planted_count: e.target.value === "" ? "" : Number(e.target.value),
-                                                            })
-                                                        }
-                                                        className="w-28 rounded-lg border border-slate-300 px-2 py-1.5 text-right text-sm"
-                                                    />
-                                                </td>
-
-                                                <td className="px-3 py-2">{rowStatus}</td>
-
-                                                <td className="px-3 py-2 text-right">
-                                                    <div className="flex items-center justify-end gap-1">
-                                                        {d.species_id && d.size_label && Number(d.planted_count) > 0 && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => {
-                                                                    const hasDirty = plantCountDrafts.some((x) => x._dirty);
-                                                                    if (hasDirty) {
-                                                                        if (
-                                                                            !window.confirm(
-                                                                                "มีข้อมูลที่แก้ไขแต่ยังไม่บันทึก ต้องการดำเนินการต่อหรือไม่?\n(ข้อมูลที่ยังไม่บันทึกจะถูก reset หลังย้ายเสร็จ)"
-                                                                            )
-                                                                        ) {
-                                                                            return;
-                                                                        }
-                                                                    }
-                                                                    const sp = speciesOptions.find((x) => x.id === d.species_id);
-                                                                    setSizeTransitionData({
-                                                                        speciesId: d.species_id,
-                                                                        speciesName: sp?.name_th || sp?.name || "-",
-                                                                        fromSizeLabel: d.size_label,
-                                                                        maxQty: Number(d.planted_count) || 0,
-                                                                    });
-                                                                    setToSizeLabel("");
-                                                                    setTransitionQty("");
-                                                                    setTransitionDate(new Date().toISOString().split("T")[0]);
-                                                                    setTransitionReason("growth");
-                                                                    setTransitionNote("");
-                                                                    setTransitionMsg(null);
-                                                                    setSizeTransitionOpen(true);
-                                                                }}
-                                                                className="inline-flex items-center gap-1 rounded-lg bg-sky-50 px-2 py-1 text-xs text-sky-700 border border-sky-100 hover:bg-sky-100"
-                                                                title="โตขึ้น/ย้ายขนาด"
-                                                            >
-                                                                <ArrowRightLeft className="h-3.5 w-3.5" />
-                                                                ย้าย
-                                                            </button>
-                                                        )}
-
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => removePlantCountRow(d.id)}
-                                                            className="inline-flex items-center gap-1 rounded-lg bg-rose-50 px-2 py-1 text-xs text-rose-700 border border-rose-100 hover:bg-rose-100"
-                                                        >
-                                                            <Trash2 className="h-3.5 w-3.5" />
-                                                            ลบ
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
+                    {/* Mismatch Detail */}
+                    <div className="space-y-6">
+                        <ZoneMismatchDetailTable zoneId={zoneId} speciesOptions={speciesOptions} />
+                    </div>
                 </div>
-            )
-            }
+            )}
 
             {/* ===================== TAB: TAGS ===================== */}
-            {
-                activeTab === "tags" && (
-                    <div className="space-y-6">
-                        <ZoneTreeTagsTable zoneId={zoneId} onTagsChanged={onTagMutated} />
+            {activeTab === "tags" && (
+                <div className="space-y-6">
+                    <ZoneTreeTagsTable zoneId={zoneId} onTagsChanged={onTagMutated} />
 
-                        {/* === Plot Inventory Table + Create Tag === */}
-                        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
-                            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                                <span className="text-sm font-semibold text-slate-700">รายการต้นไม้ในแปลง (Plot Inventory)</span>
-                                <span className="text-xs text-slate-500">รวมทั้งสิ้น {inventoryItems.length} รายการ</span>
+                    {/* === Plot Inventory Table + Create Tag === */}
+                    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
+                        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+                            <span className="text-sm font-semibold text-slate-700">รายการต้นไม้ในแปลง (Plot Inventory)</span>
+                            <span className="text-xs text-slate-500">รวมทั้งสิ้น {inventoryItems.length} รายการ</span>
+                        </div>
+
+                        <div className="mx-4 mt-3 rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-xs text-emerald-900">
+                            <div className="font-semibold mb-1">ขั้นตอนการทำงานในแปลงนี้</div>
+                            <ol className="list-decimal pl-4 space-y-0.5">
+                                <li>กำหนดแผนปลูกในตาราง <span className="font-medium">"รายการต้นไม้ในแปลง (Plot Inventory)"</span></li>
+                                <li>สร้าง <span className="font-medium">Tag</span> สำหรับต้นไม้ที่จะขาย/ขุดล้อม จากปุ่ม <span className="font-medium">"+ Tag"</span> ในแต่ละแถว</li>
+                                <li>วางแผนคำสั่งขุดล้อมจาก <span className="font-medium">Tag</span> ที่สร้างแล้ว (ระบบจะดึงเฉพาะต้นที่มี Tag)</li>
+                            </ol>
+                            <p className="mt-2 text-[11px] text-emerald-800">
+                                * ผลสำรวจใช้สำหรับตรวจสอบจำนวนจริง เปรียบเทียบกับจำนวน Tag (ไม่ได้ใช้เป็นฐานขุดล้อมโดยตรง)
+                            </p>
+                        </div>
+
+                        <div className="px-4 py-2 flex flex-wrap gap-2 bg-slate-50 border-b border-slate-100">
+                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1 text-xs">
+                                พร้อมขาย: <span className="font-semibold">{readyStockSummary.available.toLocaleString("th-TH")} ต้น</span>
+                            </span>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100 px-3 py-1 text-xs">
+                                จองแล้ว: <span className="font-semibold">{readyStockSummary.reserved.toLocaleString("th-TH")} ต้น</span>
+                            </span>
+                            <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 text-sky-700 border border-sky-100 px-3 py-1 text-xs">
+                                อยู่ในใบสั่งขุด: <span className="font-semibold">{readyStockSummary.digOrdered.toLocaleString("th-TH")} ต้น</span>
+                            </span>
+                        </div>
+
+                        {plotInventoryLoading && (
+                            <div className="py-8 text-center text-slate-500">
+                                <Loader2 className="w-5 h-5 animate-spin inline-block mr-2" />
+                                กำลังโหลดรายการต้นไม้...
                             </div>
+                        )}
 
-                            <div className="mx-4 mt-3 rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-xs text-emerald-900">
-                                <div className="font-semibold mb-1">ขั้นตอนการทำงานในแปลงนี้</div>
-                                <ol className="list-decimal pl-4 space-y-0.5">
-                                    <li>กำหนดแผนปลูกในตาราง <span className="font-medium">"รายการต้นไม้ในแปลง (Plot Inventory)"</span></li>
-                                    <li>สร้าง <span className="font-medium">Tag</span> สำหรับต้นไม้ที่จะขาย/ขุดล้อม จากปุ่ม <span className="font-medium">"+ Tag"</span> ในแต่ละแถว</li>
-                                    <li>วางแผนคำสั่งขุดล้อมจาก <span className="font-medium">Tag</span> ที่สร้างแล้ว (ระบบจะดึงเฉพาะต้นที่มี Tag)</li>
-                                </ol>
-                                <p className="mt-2 text-[11px] text-emerald-800">
-                                    * ผลสำรวจใช้สำหรับตรวจสอบจำนวนจริง เปรียบเทียบกับจำนวน Tag (ไม่ได้ใช้เป็นฐานขุดล้อมโดยตรง)
-                                </p>
-                            </div>
+                        {!plotInventoryLoading && plotInventoryError && <div className="py-8 text-center text-rose-500 text-sm">{plotInventoryError}</div>}
 
-                            <div className="px-4 py-2 flex flex-wrap gap-2 bg-slate-50 border-b border-slate-100">
-                                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1 text-xs">
-                                    พร้อมขาย: <span className="font-semibold">{readyStockSummary.available.toLocaleString("th-TH")} ต้น</span>
-                                </span>
-                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100 px-3 py-1 text-xs">
-                                    จองแล้ว: <span className="font-semibold">{readyStockSummary.reserved.toLocaleString("th-TH")} ต้น</span>
-                                </span>
-                                <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 text-sky-700 border border-sky-100 px-3 py-1 text-xs">
-                                    อยู่ในใบสั่งขุด: <span className="font-semibold">{readyStockSummary.digOrdered.toLocaleString("th-TH")} ต้น</span>
-                                </span>
-                            </div>
-
-                            {plotInventoryLoading && (
-                                <div className="py-8 text-center text-slate-500">
-                                    <Loader2 className="w-5 h-5 animate-spin inline-block mr-2" />
-                                    กำลังโหลดรายการต้นไม้...
-                                </div>
-                            )}
-
-                            {!plotInventoryLoading && plotInventoryError && <div className="py-8 text-center text-rose-500 text-sm">{plotInventoryError}</div>}
-
-                            {!plotInventoryLoading && !plotInventoryError && (
-                                <div className="overflow-x-auto">
-                                    <table className="min-w-full text-sm">
-                                        <thead className="bg-slate-50 text-xs text-slate-500 border-b border-slate-100">
+                        {!plotInventoryLoading && !plotInventoryError && (
+                            <div className="overflow-x-auto">
+                                <table className="min-w-full text-sm">
+                                    <thead className="bg-slate-50 text-xs text-slate-500 border-b border-slate-100">
+                                        <tr>
+                                            <th className="px-3 py-2 text-left font-medium">ชนิดต้นไม้</th>
+                                            <th className="px-3 py-2 text-left font-medium">ขนาด</th>
+                                            <th className="px-3 py-2 text-left font-medium">ความสูง</th>
+                                            <th className="px-3 py-2 text-right font-medium">จำนวนที่ปลูก</th>
+                                            <th className="px-3 py-2 text-right font-medium">สร้าง Tag แล้ว</th>
+                                            <th className="px-3 py-2 text-right font-medium">คงเหลือให้สร้าง Tag</th>
+                                            <th className="px-3 py-2 text-left font-medium">วันที่ปลูก</th>
+                                            <th className="px-3 py-2 text-left font-medium">หมายเหตุ</th>
+                                            <th className="px-3 py-2 text-right font-medium">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {inventoryItems.length === 0 && (
                                             <tr>
-                                                <th className="px-3 py-2 text-left font-medium">ชนิดต้นไม้</th>
-                                                <th className="px-3 py-2 text-left font-medium">ขนาด</th>
-                                                <th className="px-3 py-2 text-left font-medium">ความสูง</th>
-                                                <th className="px-3 py-2 text-right font-medium">จำนวนที่ปลูก</th>
-                                                <th className="px-3 py-2 text-right font-medium">สร้าง Tag แล้ว</th>
-                                                <th className="px-3 py-2 text-right font-medium">คงเหลือให้สร้าง Tag</th>
-                                                <th className="px-3 py-2 text-left font-medium">วันที่ปลูก</th>
-                                                <th className="px-3 py-2 text-left font-medium">หมายเหตุ</th>
-                                                <th className="px-3 py-2 text-right font-medium">จัดการ</th>
+                                                <td colSpan={9} className="py-8 text-center text-slate-400 text-sm">
+                                                    ยังไม่มีข้อมูลต้นไม้ในแปลงนี้
+                                                </td>
                                             </tr>
-                                        </thead>
-                                        <tbody>
-                                            {inventoryItems.length === 0 && (
-                                                <tr>
-                                                    <td colSpan={9} className="py-8 text-center text-slate-400 text-sm">
-                                                        ยังไม่มีข้อมูลต้นไม้ในแปลงนี้
+                                        )}
+
+                                        {inventoryItems.map((row) => {
+                                            const isEditing = editingInventoryId === row.id;
+                                            const editingSpeciesId = editFormData?.speciesId;
+                                            const editingSpecies = speciesOptions.find((s) => s.id === editingSpeciesId);
+                                            const isEditingHeightSpecies = editingSpecies?.measure_by_height === true;
+
+                                            return (
+                                                <tr key={row.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                                    <td className="px-3 py-2 text-slate-800 font-medium">
+                                                        {isEditing ? (
+                                                            <select
+                                                                value={editFormData?.speciesId}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value;
+                                                                    const sp = speciesOptions.find((s) => s.id === val);
+                                                                    setEditFormData((prev) => {
+                                                                        if (!prev) return null;
+                                                                        const next = { ...prev, speciesId: val };
+                                                                        if (sp?.measure_by_height) next.sizeLabel = "";
+                                                                        else next.heightLabel = "";
+                                                                        return next;
+                                                                    });
+                                                                }}
+                                                                className="w-full px-2 py-1 rounded border border-slate-300 text-sm"
+                                                            >
+                                                                {speciesOptions.map((sp) => (
+                                                                    <option key={sp.id} value={sp.id}>
+                                                                        {sp.name_th || sp.name}
+                                                                        {sp.measure_by_height ? " • วัดตามความสูง" : ""}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        ) : (
+                                                            row.species_name_th || "-"
+                                                        )}
+                                                    </td>
+
+                                                    <td className="px-3 py-2 text-slate-600">
+                                                        {isEditing ? (
+                                                            <select
+                                                                value={editFormData?.sizeLabel}
+                                                                onChange={(e) => setEditFormData((prev) => (prev ? { ...prev, sizeLabel: e.target.value } : null))}
+                                                                className="w-full px-2 py-1 rounded border border-slate-300 text-sm disabled:bg-slate-100 disabled:text-slate-400"
+                                                                disabled={isEditingHeightSpecies}
+                                                            >
+                                                                {trunkSizeOptions.map((opt) => (
+                                                                    <option key={opt.value} value={opt.value}>
+                                                                        {opt.label}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        ) : (
+                                                            `${row.size_label} นิ้ว`
+                                                        )}
+                                                    </td>
+
+                                                    <td className="px-3 py-2 text-slate-600">
+                                                        {isEditing ? (
+                                                            <input
+                                                                type="text"
+                                                                value={editFormData?.heightLabel}
+                                                                onChange={(e) => {
+                                                                    const val = e.target.value.replace(/[^0-9.,]/g, "");
+                                                                    setEditFormData((prev) => (prev ? { ...prev, heightLabel: val } : null));
+                                                                }}
+                                                                className="w-full px-2 py-1 rounded border border-slate-300 text-sm disabled:bg-slate-100 disabled:text-slate-400"
+                                                                placeholder={isEditingHeightSpecies ? "เช่น 1.5" : "-"}
+                                                            />
+                                                        ) : (
+                                                            formatHeightLabel(row.height_label)
+                                                        )}
+                                                    </td>
+
+                                                    <td className="px-3 py-2 text-right text-slate-600">
+                                                        {isEditing ? (
+                                                            <input
+                                                                type="number"
+                                                                value={editFormData?.plantedQty}
+                                                                onChange={(e) => setEditFormData((prev) => (prev ? { ...prev, plantedQty: Number(e.target.value) } : null))}
+                                                                className="w-20 px-2 py-1 rounded border border-slate-300 text-sm text-right"
+                                                            />
+                                                        ) : (
+                                                            row.planted_qty.toLocaleString("th-TH")
+                                                        )}
+                                                    </td>
+
+                                                    <td className="px-3 py-2 text-right text-slate-600">{row.created_tag_qty.toLocaleString("th-TH")}</td>
+
+                                                    <td className="px-3 py-2 text-right text-emerald-600 font-semibold">
+                                                        {row.remaining_for_tag.toLocaleString("th-TH")}
+                                                    </td>
+
+                                                    <td className="px-3 py-2 text-slate-600">
+                                                        {isEditing ? (
+                                                            <input
+                                                                type="date"
+                                                                value={editFormData?.plantedDate}
+                                                                onChange={(e) => setEditFormData((prev) => (prev ? { ...prev, plantedDate: e.target.value } : null))}
+                                                                className="w-full px-2 py-1 rounded border border-slate-300 text-sm"
+                                                            />
+                                                        ) : (
+                                                            row.planted_date ? new Date(row.planted_date).toLocaleDateString("th-TH") : "-"
+                                                        )}
+                                                    </td>
+
+                                                    <td className="px-3 py-2 text-xs text-slate-500">
+                                                        {isEditing ? (
+                                                            <input
+                                                                type="text"
+                                                                value={editFormData?.note}
+                                                                onChange={(e) => setEditFormData((prev) => (prev ? { ...prev, note: e.target.value } : null))}
+                                                                className="w-full px-2 py-1 rounded border border-slate-300 text-xs"
+                                                            />
+                                                        ) : (
+                                                            row.note || "-"
+                                                        )}
+                                                    </td>
+
+                                                    <td className="px-3 py-2 text-right">
+                                                        {isEditing ? (
+                                                            <div className="flex items-center justify-end gap-2">
+                                                                <button onClick={handleSaveEditInventory} className="text-emerald-600 hover:text-emerald-700 font-medium text-xs">
+                                                                    บันทึก
+                                                                </button>
+                                                                <button onClick={handleCancelEditInventory} className="text-slate-400 hover:text-slate-600 text-xs">
+                                                                    ยกเลิก
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            <div className="flex items-center justify-end gap-2">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setSelectedInventoryForTag(row);
+                                                                        setCreateTagDialogOpen(true);
+                                                                    }}
+                                                                    disabled={row.remaining_for_tag <= 0}
+                                                                    className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                                                    title="สร้าง Tag"
+                                                                >
+                                                                    <Plus className="w-3 h-3" />
+                                                                    Tag
+                                                                </button>
+
+                                                                <button onClick={() => handleEditInventory(row)} className="p-1 text-slate-400 hover:text-indigo-600 transition-colors" title="แก้ไข">
+                                                                    <Edit3 className="w-3.5 h-3.5" />
+                                                                </button>
+
+                                                                <button onClick={() => handleDeleteInventory(row.id)} className="p-1 text-slate-400 hover:text-rose-600 transition-colors" title="ลบ">
+                                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                                </button>
+                                                            </div>
+                                                        )}
                                                     </td>
                                                 </tr>
-                                            )}
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
 
-                                            {inventoryItems.map((row) => {
-                                                const isEditing = editingInventoryId === row.id;
-                                                const editingSpeciesId = editFormData?.speciesId;
-                                                const editingSpecies = speciesOptions.find((s) => s.id === editingSpeciesId);
-                                                const isEditingHeightSpecies = editingSpecies?.measure_by_height === true;
+                        {!plotInventoryLoading && !plotInventoryError && (
+                            <ZoneReadyStockFromPlotSection
+                                zoneId={zoneId}
+                                rows={inventoryItems}
+                                onReload={reloadPlotInventory}
+                                onReloadLifecycle={reloadLifecycle}
+                                createTagsFromInventory={createTagsFromInventory}
+                            />
+                        )}
 
-                                                return (
-                                                    <tr key={row.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                                                        <td className="px-3 py-2 text-slate-800 font-medium">
-                                                            {isEditing ? (
-                                                                <select
-                                                                    value={editFormData?.speciesId}
-                                                                    onChange={(e) => {
-                                                                        const val = e.target.value;
-                                                                        const sp = speciesOptions.find((s) => s.id === val);
-                                                                        setEditFormData((prev) => {
-                                                                            if (!prev) return null;
-                                                                            const next = { ...prev, speciesId: val };
-                                                                            if (sp?.measure_by_height) next.sizeLabel = "";
-                                                                            else next.heightLabel = "";
-                                                                            return next;
-                                                                        });
-                                                                    }}
-                                                                    className="w-full px-2 py-1 rounded border border-slate-300 text-sm"
-                                                                >
-                                                                    {speciesOptions.map((sp) => (
-                                                                        <option key={sp.id} value={sp.id}>
-                                                                            {sp.name_th || sp.name}
-                                                                            {sp.measure_by_height ? " • วัดตามความสูง" : ""}
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
-                                                            ) : (
-                                                                row.species_name_th || "-"
-                                                            )}
-                                                        </td>
+                        <div className="border-t border-slate-100 mt-4 pt-4 px-4 pb-2">
+                            <h4 className="text-sm font-semibold text-slate-700 mb-2">+ เพิ่มต้นไม้ใหม่</h4>
+                        </div>
 
-                                                        <td className="px-3 py-2 text-slate-600">
-                                                            {isEditing ? (
-                                                                <select
-                                                                    value={editFormData?.sizeLabel}
-                                                                    onChange={(e) => setEditFormData((prev) => (prev ? { ...prev, sizeLabel: e.target.value } : null))}
-                                                                    className="w-full px-2 py-1 rounded border border-slate-300 text-sm disabled:bg-slate-100 disabled:text-slate-400"
-                                                                    disabled={isEditingHeightSpecies}
-                                                                >
-                                                                    {trunkSizeOptions.map((opt) => (
-                                                                        <option key={opt.value} value={opt.value}>
-                                                                            {opt.label}
-                                                                        </option>
-                                                                    ))}
-                                                                </select>
-                                                            ) : (
-                                                                `${row.size_label} นิ้ว`
-                                                            )}
-                                                        </td>
-
-                                                        <td className="px-3 py-2 text-slate-600">
-                                                            {isEditing ? (
-                                                                <input
-                                                                    type="text"
-                                                                    value={editFormData?.heightLabel}
-                                                                    onChange={(e) => {
-                                                                        const val = e.target.value.replace(/[^0-9.,]/g, "");
-                                                                        setEditFormData((prev) => (prev ? { ...prev, heightLabel: val } : null));
-                                                                    }}
-                                                                    className="w-full px-2 py-1 rounded border border-slate-300 text-sm disabled:bg-slate-100 disabled:text-slate-400"
-                                                                    placeholder={isEditingHeightSpecies ? "เช่น 1.5" : "-"}
-                                                                />
-                                                            ) : (
-                                                                formatHeightLabel(row.height_label)
-                                                            )}
-                                                        </td>
-
-                                                        <td className="px-3 py-2 text-right text-slate-600">
-                                                            {isEditing ? (
-                                                                <input
-                                                                    type="number"
-                                                                    value={editFormData?.plantedQty}
-                                                                    onChange={(e) => setEditFormData((prev) => (prev ? { ...prev, plantedQty: Number(e.target.value) } : null))}
-                                                                    className="w-20 px-2 py-1 rounded border border-slate-300 text-sm text-right"
-                                                                />
-                                                            ) : (
-                                                                row.planted_qty.toLocaleString("th-TH")
-                                                            )}
-                                                        </td>
-
-                                                        <td className="px-3 py-2 text-right text-slate-600">{row.created_tag_qty.toLocaleString("th-TH")}</td>
-
-                                                        <td className="px-3 py-2 text-right text-emerald-600 font-semibold">
-                                                            {row.remaining_for_tag.toLocaleString("th-TH")}
-                                                        </td>
-
-                                                        <td className="px-3 py-2 text-slate-600">
-                                                            {isEditing ? (
-                                                                <input
-                                                                    type="date"
-                                                                    value={editFormData?.plantedDate}
-                                                                    onChange={(e) => setEditFormData((prev) => (prev ? { ...prev, plantedDate: e.target.value } : null))}
-                                                                    className="w-full px-2 py-1 rounded border border-slate-300 text-sm"
-                                                                />
-                                                            ) : (
-                                                                row.planted_date ? new Date(row.planted_date).toLocaleDateString("th-TH") : "-"
-                                                            )}
-                                                        </td>
-
-                                                        <td className="px-3 py-2 text-xs text-slate-500">
-                                                            {isEditing ? (
-                                                                <input
-                                                                    type="text"
-                                                                    value={editFormData?.note}
-                                                                    onChange={(e) => setEditFormData((prev) => (prev ? { ...prev, note: e.target.value } : null))}
-                                                                    className="w-full px-2 py-1 rounded border border-slate-300 text-xs"
-                                                                />
-                                                            ) : (
-                                                                row.note || "-"
-                                                            )}
-                                                        </td>
-
-                                                        <td className="px-3 py-2 text-right">
-                                                            {isEditing ? (
-                                                                <div className="flex items-center justify-end gap-2">
-                                                                    <button onClick={handleSaveEditInventory} className="text-emerald-600 hover:text-emerald-700 font-medium text-xs">
-                                                                        บันทึก
-                                                                    </button>
-                                                                    <button onClick={handleCancelEditInventory} className="text-slate-400 hover:text-slate-600 text-xs">
-                                                                        ยกเลิก
-                                                                    </button>
-                                                                </div>
-                                                            ) : (
-                                                                <div className="flex items-center justify-end gap-2">
-                                                                    <button
-                                                                        onClick={() => {
-                                                                            setSelectedInventoryForTag(row);
-                                                                            setCreateTagDialogOpen(true);
-                                                                        }}
-                                                                        disabled={row.remaining_for_tag <= 0}
-                                                                        className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                                                        title="สร้าง Tag"
-                                                                    >
-                                                                        <Plus className="w-3 h-3" />
-                                                                        Tag
-                                                                    </button>
-
-                                                                    <button onClick={() => handleEditInventory(row)} className="p-1 text-slate-400 hover:text-indigo-600 transition-colors" title="แก้ไข">
-                                                                        <Edit3 className="w-3.5 h-3.5" />
-                                                                    </button>
-
-                                                                    <button onClick={() => handleDeleteInventory(row.id)} className="p-1 text-slate-400 hover:text-rose-600 transition-colors" title="ลบ">
-                                                                        <Trash2 className="w-3.5 h-3.5" />
-                                                                    </button>
-                                                                </div>
-                                                            )}
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
-
-                            {!plotInventoryLoading && !plotInventoryError && (
-                                <ZoneReadyStockFromPlotSection
-                                    zoneId={zoneId}
-                                    rows={inventoryItems}
-                                    onReload={reloadPlotInventory}
-                                    onReloadLifecycle={reloadLifecycle}
-                                    createTagsFromInventory={createTagsFromInventory}
-                                />
-                            )}
-
-                            <div className="border-t border-slate-100 mt-4 pt-4 px-4 pb-2">
-                                <h4 className="text-sm font-semibold text-slate-700 mb-2">+ เพิ่มต้นไม้ใหม่</h4>
+                        <form
+                            onSubmit={handleCreatePlanting}
+                            className="px-4 pb-6 grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto] items-end"
+                        >
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-slate-600">ชนิด/พันธุ์ต้นไม้</label>
+                                <select
+                                    value={newSpeciesId}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val === "__add_new_species__") setShowSpeciesDialog(true);
+                                        else {
+                                            setNewSpeciesId(val);
+                                            const sp = speciesOptions.find((s) => s.id === val);
+                                            if (sp?.measure_by_height) setNewSizeLabel("");
+                                            else setNewHeightLabel("");
+                                        }
+                                    }}
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
+                                    disabled={speciesLoading || savingNewPlant}
+                                >
+                                    <option value="">เลือกชนิดต้นไม้...</option>
+                                    {speciesOptions.map((sp) => (
+                                        <option key={sp.id} value={sp.id}>
+                                            {sp.name_th || sp.name}
+                                            {sp.measure_by_height ? " • วัดตามความสูง" : ""}
+                                        </option>
+                                    ))}
+                                    <option value="__add_new_species__" className="font-semibold text-emerald-600 bg-emerald-50">
+                                        + เพิ่มพันธุ์ไม้ใหม่...
+                                    </option>
+                                </select>
                             </div>
 
-                            <form
-                                onSubmit={handleCreatePlanting}
-                                className="px-4 pb-6 grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto] items-end"
-                            >
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-slate-600">ชนิด/พันธุ์ต้นไม้</label>
-                                    <select
-                                        value={newSpeciesId}
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            if (val === "__add_new_species__") setShowSpeciesDialog(true);
-                                            else {
-                                                setNewSpeciesId(val);
-                                                const sp = speciesOptions.find((s) => s.id === val);
-                                                if (sp?.measure_by_height) setNewSizeLabel("");
-                                                else setNewHeightLabel("");
-                                            }
-                                        }}
-                                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                        disabled={speciesLoading || savingNewPlant}
-                                    >
-                                        <option value="">เลือกชนิดต้นไม้...</option>
-                                        {speciesOptions.map((sp) => (
-                                            <option key={sp.id} value={sp.id}>
-                                                {sp.name_th || sp.name}
-                                                {sp.measure_by_height ? " • วัดตามความสูง" : ""}
-                                            </option>
-                                        ))}
-                                        <option value="__add_new_species__" className="font-semibold text-emerald-600 bg-emerald-50">
-                                            + เพิ่มพันธุ์ไม้ใหม่...
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-slate-600">
+                                    ขนาด (นิ้ว) {isHeightSpecies ? "" : <span className="text-red-500">*</span>}
+                                </label>
+                                <select
+                                    value={newSizeLabel}
+                                    onChange={(e) => setNewSizeLabel(e.target.value)}
+                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 disabled:text-slate-400"
+                                    disabled={!newSpeciesId || isHeightSpecies}
+                                >
+                                    <option value="">เลือกขนาด...</option>
+                                    {trunkSizeOptions.map((opt) => (
+                                        <option key={opt.value} value={opt.value}>
+                                            {opt.label}
                                         </option>
-                                    </select>
-                                </div>
+                                    ))}
+                                </select>
+                            </div>
 
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-slate-600">
-                                        ขนาด (นิ้ว) {isHeightSpecies ? "" : <span className="text-red-500">*</span>}
-                                    </label>
-                                    <select
-                                        value={newSizeLabel}
-                                        onChange={(e) => setNewSizeLabel(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 disabled:text-slate-400"
-                                        disabled={!newSpeciesId || isHeightSpecies}
-                                    >
-                                        <option value="">เลือกขนาด...</option>
-                                        {trunkSizeOptions.map((opt) => (
-                                            <option key={opt.value} value={opt.value}>
-                                                {opt.label}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-slate-600">
+                                    ความสูง {isHeightSpecies ? <span className="text-red-500">*</span> : ""}
+                                </label>
+                                <input
+                                    type="text"
+                                    value={newHeightLabel}
+                                    onChange={(e) => setNewHeightLabel(e.target.value.replace(/[^0-9.,]/g, ""))}
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 disabled:text-slate-400"
+                                    placeholder={isHeightSpecies ? "เช่น 1.5m" : "เช่น 1.5m (ไม่บังคับ)"}
+                                    disabled={!newSpeciesId}
+                                />
+                            </div>
 
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-slate-600">
-                                        ความสูง {isHeightSpecies ? <span className="text-red-500">*</span> : ""}
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={newHeightLabel}
-                                        onChange={(e) => setNewHeightLabel(e.target.value.replace(/[^0-9.,]/g, ""))}
-                                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 disabled:text-slate-400"
-                                        placeholder={isHeightSpecies ? "เช่น 1.5m" : "เช่น 1.5m (ไม่บังคับ)"}
-                                        disabled={!newSpeciesId}
-                                    />
-                                </div>
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-slate-600">จำนวนที่ปลูก</label>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    value={newPlantedCount}
+                                    onChange={(e) => setNewPlantedCount(e.target.value)}
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                    placeholder="เช่น 2,000"
+                                />
+                            </div>
 
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-slate-600">จำนวนที่ปลูก</label>
-                                    <input
-                                        type="number"
-                                        min={0}
-                                        value={newPlantedCount}
-                                        onChange={(e) => setNewPlantedCount(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                        placeholder="เช่น 2,000"
-                                    />
-                                </div>
+                            <div className="space-y-1">
+                                <label className="text-xs font-medium text-slate-600">วันที่ปลูก</label>
+                                <input
+                                    type="date"
+                                    value={newPlantedDate}
+                                    onChange={(e) => setNewPlantedDate(e.target.value)}
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                />
+                                <input
+                                    type="text"
+                                    value={newNote}
+                                    onChange={(e) => setNewNote(e.target.value)}
+                                    className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-400"
+                                    placeholder="หมายเหตุ (ถ้ามี)"
+                                />
+                            </div>
 
-                                <div className="space-y-1">
-                                    <label className="text-xs font-medium text-slate-600">วันที่ปลูก</label>
-                                    <input
-                                        type="date"
-                                        value={newPlantedDate}
-                                        onChange={(e) => setNewPlantedDate(e.target.value)}
-                                        className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                    />
-                                    <input
-                                        type="text"
-                                        value={newNote}
-                                        onChange={(e) => setNewNote(e.target.value)}
-                                        className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-400"
-                                        placeholder="หมายเหตุ (ถ้ามี)"
-                                    />
-                                </div>
+                            <div className="flex justify-end">
+                                <button
+                                    type="submit"
+                                    disabled={!canCreatePlanting || savingNewPlant}
+                                    className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
+                                >
+                                    {savingNewPlant && <Loader2 className="w-4 h-4 animate-spin" />}
+                                    <Plus className="w-4 h-4" />
+                                    เพิ่มต้นไม้
+                                </button>
+                            </div>
 
-                                <div className="flex justify-end">
-                                    <button
-                                        type="submit"
-                                        disabled={!canCreatePlanting || savingNewPlant}
-                                        className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
-                                    >
-                                        {savingNewPlant && <Loader2 className="w-4 h-4 animate-spin" />}
-                                        <Plus className="w-4 h-4" />
-                                        เพิ่มต้นไม้
-                                    </button>
-                                </div>
-
-                                {speciesError && <div className="md:col-span-6 text-xs text-rose-500">โหลดรายชื่อชนิดต้นไม้ไม่สำเร็จ: {speciesError}</div>}
-                                {newPlantMessage && <div className="md:col-span-6 text-xs text-slate-600">{newPlantMessage}</div>}
-                            </form>
+                            {speciesError && <div className="md:col-span-6 text-xs text-rose-500">โหลดรายชื่อชนิดต้นไม้ไม่สำเร็จ: {speciesError}</div>}
+                            {newPlantMessage && <div className="md:col-span-6 text-xs text-slate-600">{newPlantMessage}</div>}
+                        </form>
+                    </div>
+                </div>
+            )}
+            {/* ===================== TAB: PLOT MANAGEMENT ===================== */}
+            {activeTab === "plot" && (
+                <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h2 className="text-lg font-semibold text-slate-800">กำหนดจำนวนต้นไม้ในแปลง (ระบบ)</h2>
+                            <p className="text-xs text-slate-500 mt-1">บันทึกลงตาราง planting_plot_trees (มีผลกับสรุประบบ/Inventory Flow)</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={addPlantCountRow}
+                                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+                            >
+                                <Plus className="h-4 w-4" />
+                                เพิ่มแถว
+                            </button>
+                            <button
+                                type="button"
+                                onClick={savePlantCounts}
+                                disabled={savingPlantCounts || plantCountDrafts.length === 0}
+                                className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
+                            >
+                                {savingPlantCounts ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                                บันทึก
+                            </button>
                         </div>
                     </div>
-        </div>
-    )
-}
 
-{/* ===================== TAB: OPERATIONS ===================== */ }
-{
-    activeTab === "operations" && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center">
-            <div className="text-lg font-semibold text-slate-700 mb-2">🚧 กำลังจัดระเบียบ</div>
-            <p className="text-sm text-slate-500">
-                แท็บ "ขุดล้อม/คำสั่งขุด/ขนย้าย" กำลังจัดระเบียบให้ตรง workflow แล้วจะปล่อยรอบถัดไป
-            </p>
-        </div>
-    )
-}
+                    {plantCountsMsg && <div className="text-xs text-slate-600 mb-3">{plantCountsMsg}</div>}
 
-{/* ===================== TAB: AUDIT ===================== */ }
-{
-    activeTab === "audit" && (
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 text-center">
-            <div className="text-lg font-semibold text-slate-700 mb-2">🚧 กำลังจัดระเบียบ</div>
-            <p className="text-sm text-slate-500">
-                แท็บ "ตรวจแปลง/สำรวจ/ประวัติ" กำลังจัดระเบียบให้ตรง schema แล้วจะปล่อยรอบถัดไป
-            </p>
-        </div>
-    )
-}
-
-
-{/* ===== MODALS ===== */ }
-
-{/* Create Tag Dialog */ }
-{
-    createTagDialogOpen && selectedInventoryForTag && (
-        <CreateTagDialog
-            open={createTagDialogOpen}
-            inventoryItem={selectedInventoryForTag}
-            onClose={() => setCreateTagDialogOpen(false)}
-            onSuccess={onTagMutated}
-        />
-    )
-}
-
-{/* Digup Planning Modal */ }
-{
-    showDigupModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-5">
-                <h2 className="text-lg font-semibold mb-1">วางแผนคำสั่งขุดล้อมใหม่</h2>
-                <p className="text-xs text-slate-500 mb-4">
-                    ฟอร์มนี้ใช้สำหรับสร้างแผนขุดล้อมชุดใหม่ ระบบจะบันทึกเป็นคำสั่งใหม่ทุกครั้งที่กดบันทึก
-                </p>
-                <DigupOrderForm zoneId={zoneId} onSaved={handleDigupSaved} onCancel={() => setShowDigupModal(false)} />
-            </div>
-        </div>
-    )
-}
-
-{/* Species Dialog */ }
-<SpeciesFormDialog
-    open={showSpeciesDialog}
-    onClose={() => setShowSpeciesDialog(false)}
-    onSuccess={async (newId) => {
-        await loadSpecies();
-        setNewSpeciesId(newId);
-        setShowSpeciesDialog(false);
-    }}
-/>
-        </div >
-    );
-};
-
-export default ZoneDetailPage;
-
-
-            <td className="px-3 py-2 text-right text-slate-800">{o.qty.toLocaleString("th-TH")}</td>
-            <td className="px-3 py-2">
-                <span className={"inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium " + (statusBadgeClass[o.status] || "")}>
-                    {statusLabel[o.status] || o.status}
-                </span>
-            </td>
-            <td className="px-3 py-2 text-xs text-slate-500">{o.notes || "-"}</td>
-            <td className="px-3 py-2 text-right">
-                <div className="inline-flex gap-1">
-                    {(o.status === "planned" || o.status === "cancelled") && (
-                        <button
-                            type="button"
-                            onClick={async () => {
-                                try {
-                                    await updateDigupStatus(o.id, "in_progress");
-                                } catch {
-                                    alert("อัปเดตสถานะไม่สำเร็จ");
-                                }
-                            }}
-                            className="px-2 py-1 rounded-lg text-xs bg-amber-100 text-amber-700 hover:bg-amber-200"
-                        >
-                            เริ่มขุด
-                        </button>
-                    )}
-
-                    {o.status !== "done" && o.status !== "cancelled" && (
-                        <button
-                            type="button"
-                            onClick={async () => {
-                                try {
-                                    await updateDigupStatus(o.id, "done");
-                                } catch {
-                                    alert("อัปเดตสถานะไม่สำเร็จ");
-                                }
-                            }}
-                            className="px-2 py-1 rounded-lg text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                        >
-                            เสร็จแล้ว
-                        </button>
-                    )}
-
-                    {o.status !== "cancelled" && (
-                        <button
-                            type="button"
-                            onClick={async () => {
-                                if (!window.confirm("ยกเลิกคำสั่งขุดล้อมนี้หรือไม่?")) return;
-                                try {
-                                    await updateDigupStatus(o.id, "cancelled");
-                                } catch {
-                                    alert("อัปเดตสถานะไม่สำเร็จ");
-                                }
-                            }}
-                            className="px-2 py-1 rounded-lg text-xs bg-slate-100 text-slate-600 hover:bg-slate-200"
-                        >
-                            ยกเลิก
-                        </button>
-                    )}
-                </div>
-            </td>
-        </tr >
-    ))
-}
-                </tbody >
-            </table >
-        </div >
-    )
-}
-        </section >
-    )
-}
-
-{/* ===================== TAB: AUDIT ===================== */ }
-{
-    activeTab === "audit" && (
-        <>
-            {/* Growth Log */}
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 mb-6 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                        <History className="h-4 w-4 text-slate-500" />
-                        <h3 className="text-sm font-semibold text-slate-900">ประวัติการย้ายขนาด (Growth Log)</h3>
-                        <span className="text-xs text-slate-500">{filteredSizeMoves.length.toLocaleString("th-TH")} รายการ</span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <select value={moveFilterSpecies} onChange={(e) => setMoveFilterSpecies(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs">
-                            <option value="all">ทุกชนิด</option>
-                            {speciesOptions.map((s) => (
-                                <option key={s.id} value={s.id}>
-                                    {s.name_th || s.name}
-                                </option>
-                            ))}
-                        </select>
-
-                        <select value={moveFilterReason} onChange={(e) => setMoveFilterReason(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs">
-                            <option value="all">ทุกเหตุผล</option>
-                            <option value="growth">โตขึ้น</option>
-                            <option value="sale">ขายออก</option>
-                            <option value="loss">สูญหาย/ตาย</option>
-                            <option value="correction">แก้ไขข้อมูล</option>
-                            <option value="transfer">ย้ายแปลง</option>
-                        </select>
-
-                        <button type="button" onClick={() => reloadSizeMoves?.()} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">
-                            รีเฟรช
-                        </button>
-                    </div>
-                </div>
-
-                {sizeMoveLoading && <div className="text-xs text-slate-500">กำลังโหลดประวัติ...</div>}
-                {!sizeMoveLoading && sizeMoveError && <div className="text-xs text-rose-600">โหลดไม่สำเร็จ: {sizeMoveError}</div>}
-
-                <div className="overflow-x-auto border rounded-xl border-slate-100">
-                    <table className="min-w-full text-sm">
-                        <thead className="bg-slate-50 text-xs text-slate-500 border-b border-slate-100">
-                            <tr>
-                                <th className="px-3 py-2 text-left font-medium">วันที่มีผล</th>
-                                <th className="px-3 py-2 text-left font-medium">ชนิดต้นไม้</th>
-                                <th className="px-3 py-2 text-left font-medium">ย้าย</th>
-                                <th className="px-3 py-2 text-right font-medium">จำนวน</th>
-                                <th className="px-3 py-2 text-left font-medium">เหตุผล</th>
-                                <th className="px-3 py-2 text-left font-medium">หมายเหตุ</th>
-                                <th className="px-3 py-2 text-left font-medium">บันทึกเมื่อ</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {!sizeMoveLoading && filteredSizeMoves.length === 0 && (
-                                <tr>
-                                    <td colSpan={7} className="px-3 py-6 text-center text-slate-400">
-                                        ยังไม่มีประวัติการย้ายขนาด
-                                    </td>
-                                </tr>
-                            )}
-
-                            {filteredSizeMoves.map((r) => (
-                                <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50">
-                                    <td className="px-3 py-2 text-slate-700">{r.effective_date ? new Date(r.effective_date).toLocaleDateString("th-TH") : "-"}</td>
-                                    <td className="px-3 py-2 text-slate-800 font-medium">{r.species_name_th || "-"}</td>
-                                    <td className="px-3 py-2 text-slate-700">
-                                        <span className="font-medium">{r.from_size_label}</span>
-                                        <span className="mx-2 text-slate-400">→</span>
-                                        <span className="font-medium">{r.to_size_label}</span>
-                                        <span className="ml-1 text-slate-500 text-xs">นิ้ว</span>
-                                    </td>
-                                    <td className="px-3 py-2 text-right text-slate-800 font-semibold">{Number(r.qty || 0).toLocaleString("th-TH")}</td>
-                                    <td className="px-3 py-2">
-                                        <span className={"inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium " + (reasonBadgeClass[r.reason] || "bg-slate-50 text-slate-700 border-slate-100")}>
-                                            {reasonLabelMap[r.reason] || r.reason}
-                                        </span>
-                                    </td>
-                                    <td className="px-3 py-2 text-slate-600 text-xs">{r.note || "-"}</td>
-                                    <td className="px-3 py-2 text-slate-500 text-xs">{r.created_at ? new Date(r.created_at).toLocaleString("th-TH") : "-"}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            {/* Inspection Results */}
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
-                <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-base font-semibold text-slate-800">ผลสำรวจจำนวนต้นไม้ในแปลง (ตามขนาด)</h3>
-                    {inspectionsLoading && <span className="text-xs text-slate-500">กำลังโหลด...</span>}
-                </div>
-                <p className="mb-3 text-xs text-slate-500">
-                    ใช้บันทึกผลสำรวจจำนวนต้นไม้จริงในแปลง ณ วันที่ตรวจสอบ เพื่อเปรียบเทียบกับจำนวน Tag และวางแผนการผลิตในระยะยาว{" "}
-                    <span className="font-medium text-slate-600">ข้อมูลส่วนนี้ไม่ได้ใช้เป็นฐานในการสร้างคำสั่งขุดล้อมโดยตรง</span>
-                </p>
-
-                {inspectionsError && <div className="mb-3 text-sm text-rose-600">เกิดข้อผิดพลาดในการโหลดผลสำรวจ: {inspectionsError}</div>}
-
-                <div className="mb-6">
-                    <h4 className="text-sm font-medium text-slate-700 mb-2">สรุปภาพรวม</h4>
-                    <div className="overflow-x-auto border rounded-lg border-slate-100">
+                    <div className="overflow-x-auto border rounded-xl border-slate-100">
                         <table className="min-w-full text-sm">
-                            <thead className="bg-slate-50 text-slate-600">
+                            <thead className="bg-slate-50 text-xs text-slate-500 border-b border-slate-100">
                                 <tr>
                                     <th className="px-3 py-2 text-left font-medium">ชนิดต้นไม้</th>
-                                    <th className="px-3 py-2 text-center font-medium">ขนาด (นิ้ว)</th>
-                                    <th className="px-3 py-2 text-right font-medium">จำนวนที่ประเมินได้ (ต้น)</th>
-                                    <th className="px-3 py-2 text-left font-medium">วันที่สำรวจ</th>
-                                    <th className="px-3 py-2 text-left font-medium">เกรด</th>
-                                    <th className="px-3 py-2 text-left font-medium">หมายเหตุ</th>
+                                    <th className="px-3 py-2 text-left font-medium">ขนาด</th>
+                                    <th className="px-3 py-2 text-right font-medium">จำนวนปลูก</th>
+                                    <th className="px-3 py-2 text-left font-medium">สถานะ</th>
+                                    <th className="px-3 py-2 text-right font-medium">จัดการ</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {!summaryLoading && summaryRows.length === 0 && (
+                                {plantCountDrafts.length === 0 && (
                                     <tr>
-                                        <td colSpan={6} className="px-3 py-4 text-center text-slate-400">
-                                            ไม่มีข้อมูลสรุป
+                                        <td colSpan={5} className="px-3 py-6 text-center text-slate-400">
+                                            ยังไม่มีข้อมูล planting_plot_trees — กด "เพิ่มแถว" เพื่อเริ่มต้น
                                         </td>
                                     </tr>
                                 )}
-                                {summaryRows.map((row) => (
-                                    <tr key={`${row.species_id}__${row.size_label}`} className="border-t border-slate-50 hover:bg-slate-50">
-                                        <td className="px-3 py-2 text-slate-800 font-medium">{row.species_name_th || "-"}</td>
-                                        <td className="px-3 py-2 text-center text-slate-600">{row.size_label || "-"}</td>
-                                        <td className="px-3 py-2 text-right text-slate-800 font-semibold">{row.total_estimated_qty?.toLocaleString() ?? "-"}</td>
-                                        <td className="px-3 py-2 text-slate-600">{row.last_inspection_date ? new Date(row.last_inspection_date).toLocaleDateString("th-TH") : "-"}</td>
-                                        <td className="px-3 py-2 text-slate-600">{row.grades || "-"}</td>
-                                        <td className="px-3 py-2 text-slate-600">-</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <div className="mb-4">
-                    <h4 className="text-sm font-medium text-slate-700 mb-2">รายการบันทึกละเอียด</h4>
-                    <div className="overflow-x-auto border rounded-lg border-slate-100">
-                        <table className="min-w-full text-sm">
-                            <thead>
-                                <tr className="bg-gray-50">
-                                    <th className="px-3 py-2 text-left text-xs font-semibold">ชนิดต้นไม้</th>
-                                    <th className="px-3 py-2 text-center text-xs font-semibold">ขนาด</th>
-                                    <th className="px-3 py-2 text-left text-xs font-semibold">เกรด</th>
-                                    <th className="px-3 py-2 text-right text-xs font-semibold">จำนวน (ต้น)</th>
-                                    <th className="px-3 py-2 text-left text-xs font-semibold">วันที่สำรวจ</th>
-                                    <th className="px-3 py-2 text-left text-xs font-semibold">หมายเหตุ</th>
-                                    <th className="px-3 py-2 text-right text-xs font-semibold">จัดการ</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {!inspectionsLoading && inspectionRows.length === 0 && (
-                                    <tr>
-                                        <td colSpan={7} className="px-3 py-4 text-center text-slate-400">
-                                            ยังไม่มีข้อมูลสำรวจ
-                                        </td>
-                                    </tr>
-                                )}
-                                {inspectionRows.map((row) => (
-                                    <tr key={row.id} className="border-t">
-                                        <td className="px-3 py-1 text-sm">{row.species_name_th ?? "-"}</td>
-                                        <td className="px-3 py-1 text-center text-sm">{row.size_label ?? "-"}</td>
-                                        <td className="px-3 py-1 text-sm">{row.grade ?? "-"}</td>
-                                        <td className="px-3 py-1 text-right text-sm">{row.estimated_qty?.toLocaleString() ?? "-"}</td>
-                                        <td className="px-3 py-1 text-sm">{row.inspection_date ?? "-"}</td>
-                                        <td className="px-3 py-1 text-sm">{row.notes ?? "-"}</td>
-                                        <td className="px-3 py-1 text-right text-xs">
-                                            <button type="button" onClick={() => setEditingInspection(row)} className="text-blue-600 hover:underline mr-2">
-                                                แก้ไข
-                                            </button>
-                                            <button type="button" onClick={() => handleDeleteInspection(row)} className="text-red-600 hover:underline">
-                                                ลบ
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {/* ✅ Fix: ส่ง inventoryItems (PlotInventoryRow[]) ให้ถูก Type */}
-                <ZoneTreeInspectionForm
-                    zoneId={zoneId}
-                    inventoryRows={inventoryItems}
-                    editingRow={editingInspection}
-                    onCancelEdit={() => setEditingInspection(null)}
-                    onSaved={async () => {
-                        setEditingInspection(null);
-                        await Promise.all([reloadInspections(), reloadSummary(), reloadStockDiff()]);
-                    }}
-                />
-            </section>
-
-            {/* Stock vs Inspection */}
-            <section className="mt-6 mb-6">
-                <h3 className="text-sm font-semibold mb-2 text-slate-700">ความคลาดเคลื่อนระหว่างสต็อกระบบ vs ผลสำรวจ</h3>
-
-                {stockDiffLoading && <div className="text-xs text-gray-500">กำลังโหลดข้อมูล...</div>}
-                {stockDiffError && <div className="text-xs text-red-600">ไม่สามารถโหลดข้อมูลเปรียบเทียบได้: {stockDiffError}</div>}
-                {!stockDiffLoading && !stockDiffError && stockDiffRows.length === 0 && (
-                    <div className="text-xs text-gray-500">ยังไม่มีข้อมูลเปรียบเทียบ (อาจยังไม่มีการปลูกหรือยังไม่เคยบันทึกผลสำรวจ)</div>
-                )}
-
-                {stockDiffRows.length > 0 && (
-                    <div className="overflow-x-auto border rounded-lg border-slate-100">
-                        <table className="min-w-full text-xs">
-                            <thead className="bg-slate-50 text-slate-600">
-                                <tr>
-                                    <th className="px-3 py-2 text-left font-semibold">ชนิดต้นไม้</th>
-                                    <th className="px-3 py-2 text-center font-semibold">ขนาด (นิ้ว)</th>
-                                    <th className="px-3 py-2 text-right font-semibold">ยอดตามระบบ (ต้น)</th>
-                                    <th className="px-3 py-2 text-right font-semibold">ยอดจากสำรวจ (ต้น)</th>
-                                    <th className="px-3 py-2 text-right font-semibold">ส่วนต่าง</th>
-                                    <th className="px-3 py-2 text-left font-semibold">วันที่สำรวจล่าสุด</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {stockDiffRows.map((r, idx) => {
-                                    const sp = speciesOptions.find((s) => s.id === r.species_id);
-                                    const speciesName = sp?.name_th || sp?.name || r.species_id;
-                                    const sizeLabel = r.size_label || "-";
-                                    const systemQty = r.system_qty ?? 0;
-                                    const inspectedQty = r.inspected_qty ?? 0;
-                                    const diff = r.diff_qty ?? 0;
-
-                                    const diffClass = diff === 0 ? "text-gray-700" : diff > 0 ? "text-emerald-700" : "text-red-600";
+                                {plantCountDrafts.map((d) => {
+                                    const sp = speciesOptions.find((x) => x.id === d.species_id);
+                                    const rowStatus = d._error ? (
+                                        <span className="text-xs text-rose-600">{d._error}</span>
+                                    ) : d._dirty ? (
+                                        <span className="text-xs text-amber-600">มีการแก้ไข</span>
+                                    ) : (
+                                        <span className="text-xs text-slate-400">-</span>
+                                    );
 
                                     return (
-                                        <tr key={idx} className="border-t border-slate-50 hover:bg-slate-50">
-                                            <td className="px-3 py-2 text-slate-800 font-medium">{speciesName}</td>
-                                            <td className="px-3 py-2 text-center text-slate-600">{sizeLabel}</td>
-                                            <td className="px-3 py-2 text-right text-slate-600">{systemQty.toLocaleString()}</td>
-                                            <td className="px-3 py-2 text-right text-slate-600">{inspectedQty.toLocaleString()}</td>
-                                            <td className={`px-3 py-2 text-right font-semibold ${diffClass}`}>{diff > 0 ? "+" : ""}{diff.toLocaleString()}</td>
-                                            <td className="px-3 py-2 text-slate-600">{r.last_inspection_date ? new Date(r.last_inspection_date).toLocaleDateString("th-TH") : "-"}</td>
+                                        <tr key={d.id} className="border-b border-slate-50 hover:bg-slate-50">
+                                            <td className="px-3 py-2">
+                                                <select
+                                                    value={d.species_id}
+                                                    onChange={(e) => updatePlantCountRow(d.id, { species_id: e.target.value })}
+                                                    className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm"
+                                                >
+                                                    <option value="">เลือกชนิด...</option>
+                                                    {speciesOptions.map((s) => (
+                                                        <option key={s.id} value={s.id}>
+                                                            {s.name_th || s.name}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </td>
+                                            <td className="px-3 py-2">
+                                                <select
+                                                    value={d.size_label}
+                                                    onChange={(e) => updatePlantCountRow(d.id, { size_label: e.target.value })}
+                                                    className="w-full rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-sm"
+                                                >
+                                                    <option value="">เลือกขนาด...</option>
+                                                    {trunkSizeOptions.map((opt) => (
+                                                        <option key={opt.value} value={opt.value}>
+                                                            {opt.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </td>
+                                            <td className="px-3 py-2 text-right">
+                                                <input
+                                                    type="number"
+                                                    min={0}
+                                                    value={d.planted_count}
+                                                    onChange={(e) =>
+                                                        updatePlantCountRow(d.id, {
+                                                            planted_count: e.target.value === "" ? "" : Number(e.target.value),
+                                                        })
+                                                    }
+                                                    className="w-28 rounded-lg border border-slate-300 px-2 py-1.5 text-right text-sm"
+                                                />
+                                            </td>
+                                            <td className="px-3 py-2">{rowStatus}</td>
+                                            <td className="px-3 py-2 text-right">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removePlantCountRow(d.id)}
+                                                    className="inline-flex items-center gap-1 rounded-lg bg-rose-50 px-2 py-1 text-xs text-rose-700 border border-rose-100 hover:bg-rose-100"
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                    ลบ
+                                                </button>
+                                            </td>
                                         </tr>
                                     );
                                 })}
                             </tbody>
                         </table>
                     </div>
-                )}
-            </section>
+                </section>
+            )}
 
-            {/* Optional: history component ถ้าต้องการ */}
-            <ZoneInspectionHistory zoneId={zoneId} />
-        </>
-    )
-}
-
-{/* ===================== MODALS / DIALOGS (GLOBAL) ===================== */ }
-
-{/* MODAL: ย้ายขนาด/โตขึ้น */ }
-{
-    sizeTransitionOpen && sizeTransitionData && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 space-y-4">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-slate-900">โตขึ้น / ย้ายขนาด</h3>
-                    <button type="button" onClick={() => setSizeTransitionOpen(false)} className="text-slate-400 hover:text-slate-600">
-                        ✕
-                    </button>
-                </div>
-
-                <div className="text-sm text-slate-600">
-                    <strong>{sizeTransitionData.speciesName}</strong> ขนาด <strong>{sizeTransitionData.fromSizeLabel} นิ้ว</strong>
-                    <span className="ml-2 text-slate-500">(คงเหลือ {sizeTransitionData.maxQty.toLocaleString("th-TH")} ต้น)</span>
-                </div>
-
-                <div className="space-y-3">
-                    <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">ย้ายไปขนาด</label>
-                        <select value={toSizeLabel} onChange={(e) => setToSizeLabel(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                            <option value="">เลือกขนาดใหม่...</option>
-                            {(() => {
-                                const fromIdx = trunkSizeOptions.findIndex((opt) => opt.value === sizeTransitionData.fromSizeLabel);
-                                const toOptions = trunkSizeOptions
-                                    .filter((opt) => opt.value !== sizeTransitionData.fromSizeLabel)
-                                    .filter((opt) => {
-                                        if (transitionReason !== "growth") return true;
-                                        const toIdx = trunkSizeOptions.findIndex((x) => x.value === opt.value);
-                                        if (fromIdx < 0 || toIdx < 0) return true;
-                                        return toIdx > fromIdx;
-                                    });
-                                return toOptions.map((opt) => (
-                                    <option key={opt.value} value={opt.value}>
-                                        {opt.label}
-                                    </option>
-                                ));
-                            })()}
-                        </select>
-                        {transitionReason === "growth" && <p className="mt-1 text-[11px] text-slate-500">เมื่อเลือก "โตขึ้น" จะแสดงเฉพาะขนาดที่ใหญ่ขึ้นเท่านั้น</p>}
+            {/* ===================== TAB: OPERATIONS ===================== */}
+            {activeTab === "operations" && (
+                <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
+                    <div className="flex items-center justify-between mb-3">
+                        <div>
+                            <h2 className="text-lg font-semibold text-slate-800">ประวัติคำสั่งขุดล้อมในแปลงนี้</h2>
+                            <p className="text-xs text-slate-500 mt-1">
+                                ใช้ติดตามคำสั่งขุดล้อมแต่ละชุด แก้ไขสถานะจาก แผน → กำลังขุด → ขุดแล้ว หรือยกเลิกได้
+                            </p>
+                        </div>
                     </div>
 
-                    <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">จำนวนที่ย้าย</label>
-                        <input
-                            type="number"
-                            min={1}
-                            max={sizeTransitionData.maxQty}
-                            value={transitionQty}
-                            onChange={(e) => setTransitionQty(e.target.value === "" ? "" : Number(e.target.value))}
-                            className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                            placeholder={`สูงสุด ${sizeTransitionData.maxQty}`}
+                    {digupOrdersLoading && <p className="text-sm text-slate-500">กำลังโหลดประวัติคำสั่งขุดล้อม...</p>}
+                    {digupOrdersError && <p className="text-sm text-rose-500">โหลดประวัติคำสั่งขุดล้อมไม่สำเร็จ: {digupOrdersError}</p>}
+                    {!digupOrdersLoading && !digupOrdersError && digupOrders.length === 0 && (
+                        <p className="text-sm text-slate-400">ยังไม่มีการบันทึกคำสั่งขุดล้อมในแปลงนี้</p>
+                    )}
+
+                    {!digupOrdersLoading && digupOrders.length > 0 && (
+                        <div className="overflow-x-auto mt-2">
+                            <table className="min-w-full text-sm">
+                                <thead className="bg-slate-50 text-xs text-slate-500 border-b border-slate-100">
+                                    <tr>
+                                        <th className="px-3 py-2 text-left font-medium">วันที่ขุด</th>
+                                        <th className="px-3 py-2 text-left font-medium">ชนิด/พันธุ์ต้นไม้</th>
+                                        <th className="px-3 py-2 text-left font-medium">ขนาด</th>
+                                        <th className="px-3 py-2 text-right font-medium">จำนวน</th>
+                                        <th className="px-3 py-2 text-left font-medium">สถานะ</th>
+                                        <th className="px-3 py-2 text-left font-medium">หมายเหตุ</th>
+                                        <th className="px-3 py-2 text-right font-medium">จัดการ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {digupOrders.map((o) => (
+                                        <tr key={o.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
+                                            <td className="px-3 py-2 text-slate-700">{o.digup_date ? new Date(o.digup_date).toLocaleDateString("th-TH") : "-"}</td>
+                                            <td className="px-3 py-2 text-slate-800 font-medium">{o.species_name_th || "-"}</td>
+                                            <td className="px-3 py-2 text-slate-600">{o.size_label ? `${o.size_label} นิ้ว` : "-"}</td>
+                                            <td className="px-3 py-2 text-right text-slate-800">{o.qty.toLocaleString("th-TH")}</td>
+                                            <td className="px-3 py-2">
+                                                <span className={"inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium " + (statusBadgeClass[o.status] || "")}>
+                                                    {statusLabel[o.status] || o.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2 text-xs text-slate-500">{o.notes || "-"}</td>
+                                            <td className="px-3 py-2 text-right">
+                                                <div className="inline-flex gap-1">
+                                                    {(o.status === "planned" || o.status === "cancelled") && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={async () => {
+                                                                try {
+                                                                    await updateDigupStatus(o.id, "in_progress");
+                                                                } catch {
+                                                                    alert("อัปเดตสถานะไม่สำเร็จ");
+                                                                }
+                                                            }}
+                                                            className="px-2 py-1 rounded-lg text-xs bg-amber-100 text-amber-700 hover:bg-amber-200"
+                                                        >
+                                                            เริ่มขุด
+                                                        </button>
+                                                    )}
+
+                                                    {o.status !== "done" && o.status !== "cancelled" && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={async () => {
+                                                                try {
+                                                                    await updateDigupStatus(o.id, "done");
+                                                                } catch {
+                                                                    alert("อัปเดตสถานะไม่สำเร็จ");
+                                                                }
+                                                            }}
+                                                            className="px-2 py-1 rounded-lg text-xs bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                                                        >
+                                                            เสร็จแล้ว
+                                                        </button>
+                                                    )}
+
+                                                    {o.status !== "cancelled" && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={async () => {
+                                                                if (!window.confirm("ยกเลิกคำสั่งขุดล้อมนี้หรือไม่?")) return;
+                                                                try {
+                                                                    await updateDigupStatus(o.id, "cancelled");
+                                                                } catch {
+                                                                    alert("อัปเดตสถานะไม่สำเร็จ");
+                                                                }
+                                                            }}
+                                                            className="px-2 py-1 rounded-lg text-xs bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                                        >
+                                                            ยกเลิก
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </section>
+            )}
+
+            {/* ===================== TAB: AUDIT ===================== */}
+
+            {activeTab === "audit" && (
+                <>
+                    {/* Growth Log */}
+                    <section className="rounded-2xl border border-slate-200 bg-white p-5 mb-6 space-y-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                                <History className="h-4 w-4 text-slate-500" />
+                                <h3 className="text-sm font-semibold text-slate-900">ประวัติการย้ายขนาด (Growth Log)</h3>
+                                <span className="text-xs text-slate-500">{filteredSizeMoves.length.toLocaleString("th-TH")} รายการ</span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <select value={moveFilterSpecies} onChange={(e) => setMoveFilterSpecies(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs">
+                                    <option value="all">ทุกชนิด</option>
+                                    {speciesOptions.map((s) => (
+                                        <option key={s.id} value={s.id}>
+                                            {s.name_th || s.name}
+                                        </option>
+                                    ))}
+                                </select>
+
+                                <select value={moveFilterReason} onChange={(e) => setMoveFilterReason(e.target.value)} className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs">
+                                    <option value="all">ทุกเหตุผล</option>
+                                    <option value="growth">โตขึ้น</option>
+                                    <option value="sale">ขายออก</option>
+                                    <option value="loss">สูญหาย/ตาย</option>
+                                    <option value="correction">แก้ไขข้อมูล</option>
+                                    <option value="transfer">ย้ายแปลง</option>
+                                </select>
+
+                                <button type="button" onClick={() => reloadSizeMoves?.()} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">
+                                    รีเฟรช
+                                </button>
+                            </div>
+                        </div>
+
+                        {sizeMoveLoading && <div className="text-xs text-slate-500">กำลังโหลดประวัติ...</div>}
+                        {!sizeMoveLoading && sizeMoveError && <div className="text-xs text-rose-600">โหลดไม่สำเร็จ: {sizeMoveError}</div>}
+
+                        <div className="overflow-x-auto border rounded-xl border-slate-100">
+                            <table className="min-w-full text-sm">
+                                <thead className="bg-slate-50 text-xs text-slate-500 border-b border-slate-100">
+                                    <tr>
+                                        <th className="px-3 py-2 text-left font-medium">วันที่มีผล</th>
+                                        <th className="px-3 py-2 text-left font-medium">ชนิดต้นไม้</th>
+                                        <th className="px-3 py-2 text-left font-medium">ย้าย</th>
+                                        <th className="px-3 py-2 text-right font-medium">จำนวน</th>
+                                        <th className="px-3 py-2 text-left font-medium">เหตุผล</th>
+                                        <th className="px-3 py-2 text-left font-medium">หมายเหตุ</th>
+                                        <th className="px-3 py-2 text-left font-medium">บันทึกเมื่อ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {!sizeMoveLoading && filteredSizeMoves.length === 0 && (
+                                        <tr>
+                                            <td colSpan={7} className="px-3 py-6 text-center text-slate-400">
+                                                ยังไม่มีประวัติการย้ายขนาด
+                                            </td>
+                                        </tr>
+                                    )}
+
+                                    {filteredSizeMoves.map((r) => (
+                                        <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50">
+                                            <td className="px-3 py-2 text-slate-700">{r.effective_date ? new Date(r.effective_date).toLocaleDateString("th-TH") : "-"}</td>
+                                            <td className="px-3 py-2 text-slate-800 font-medium">{r.species_name_th || "-"}</td>
+                                            <td className="px-3 py-2 text-slate-700">
+                                                <span className="font-medium">{r.from_size_label}</span>
+                                                <span className="mx-2 text-slate-400">→</span>
+                                                <span className="font-medium">{r.to_size_label}</span>
+                                                <span className="ml-1 text-slate-500 text-xs">นิ้ว</span>
+                                            </td>
+                                            <td className="px-3 py-2 text-right text-slate-800 font-semibold">{Number(r.qty || 0).toLocaleString("th-TH")}</td>
+                                            <td className="px-3 py-2">
+                                                <span className={"inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium " + (reasonBadgeClass[r.reason] || "bg-slate-50 text-slate-700 border-slate-100")}>
+                                                    {reasonLabelMap[r.reason] || r.reason}
+                                                </span>
+                                            </td>
+                                            <td className="px-3 py-2 text-slate-600 text-xs">{r.note || "-"}</td>
+                                            <td className="px-3 py-2 text-slate-500 text-xs">{r.created_at ? new Date(r.created_at).toLocaleString("th-TH") : "-"}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    {/* Inspection Results */}
+                    <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
+                        <div className="flex items-center justify-between mb-1">
+                            <h3 className="text-base font-semibold text-slate-800">ผลสำรวจจำนวนต้นไม้ในแปลง (ตามขนาด)</h3>
+                            {inspectionsLoading && <span className="text-xs text-slate-500">กำลังโหลด...</span>}
+                        </div>
+                        <p className="mb-3 text-xs text-slate-500">
+                            ใช้บันทึกผลสำรวจจำนวนต้นไม้จริงในแปลง ณ วันที่ตรวจสอบ เพื่อเปรียบเทียบกับจำนวน Tag และวางแผนการผลิตในระยะยาว{" "}
+                            <span className="font-medium text-slate-600">ข้อมูลส่วนนี้ไม่ได้ใช้เป็นฐานในการสร้างคำสั่งขุดล้อมโดยตรง</span>
+                        </p>
+
+                        {inspectionsError && <div className="mb-3 text-sm text-rose-600">เกิดข้อผิดพลาดในการโหลดผลสำรวจ: {inspectionsError}</div>}
+
+                        <div className="mb-6">
+                            <h4 className="text-sm font-medium text-slate-700 mb-2">สรุปภาพรวม</h4>
+                            <div className="overflow-x-auto border rounded-lg border-slate-100">
+                                <table className="min-w-full text-sm">
+                                    <thead className="bg-slate-50 text-slate-600">
+                                        <tr>
+                                            <th className="px-3 py-2 text-left font-medium">ชนิดต้นไม้</th>
+                                            <th className="px-3 py-2 text-center font-medium">ขนาด (นิ้ว)</th>
+                                            <th className="px-3 py-2 text-right font-medium">จำนวนที่ประเมินได้ (ต้น)</th>
+                                            <th className="px-3 py-2 text-left font-medium">วันที่สำรวจ</th>
+                                            <th className="px-3 py-2 text-left font-medium">เกรด</th>
+                                            <th className="px-3 py-2 text-left font-medium">หมายเหตุ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {!summaryLoading && summaryRows.length === 0 && (
+                                            <tr>
+                                                <td colSpan={6} className="px-3 py-4 text-center text-slate-400">
+                                                    ไม่มีข้อมูลสรุป
+                                                </td>
+                                            </tr>
+                                        )}
+                                        {summaryRows.map((row) => (
+                                            <tr key={`${row.species_id}__${row.size_label}`} className="border-t border-slate-50 hover:bg-slate-50">
+                                                <td className="px-3 py-2 text-slate-800 font-medium">{row.species_name_th || "-"}</td>
+                                                <td className="px-3 py-2 text-center text-slate-600">{row.size_label || "-"}</td>
+                                                <td className="px-3 py-2 text-right text-slate-800 font-semibold">{row.total_estimated_qty?.toLocaleString() ?? "-"}</td>
+                                                <td className="px-3 py-2 text-slate-600">{row.last_inspection_date ? new Date(row.last_inspection_date).toLocaleDateString("th-TH") : "-"}</td>
+                                                <td className="px-3 py-2 text-slate-600">{row.grades || "-"}</td>
+                                                <td className="px-3 py-2 text-slate-600">-</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div className="mb-4">
+                            <h4 className="text-sm font-medium text-slate-700 mb-2">รายการบันทึกละเอียด</h4>
+                            <div className="overflow-x-auto border rounded-lg border-slate-100">
+                                <table className="min-w-full text-sm">
+                                    <thead>
+                                        <tr className="bg-gray-50">
+                                            <th className="px-3 py-2 text-left text-xs font-semibold">ชนิดต้นไม้</th>
+                                            <th className="px-3 py-2 text-center text-xs font-semibold">ขนาด</th>
+                                            <th className="px-3 py-2 text-left text-xs font-semibold">เกรด</th>
+                                            <th className="px-3 py-2 text-right text-xs font-semibold">จำนวน (ต้น)</th>
+                                            <th className="px-3 py-2 text-left text-xs font-semibold">วันที่สำรวจ</th>
+                                            <th className="px-3 py-2 text-left text-xs font-semibold">หมายเหตุ</th>
+                                            <th className="px-3 py-2 text-right text-xs font-semibold">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {!inspectionsLoading && inspectionRows.length === 0 && (
+                                            <tr>
+                                                <td colSpan={7} className="px-3 py-4 text-center text-slate-400">
+                                                    ยังไม่มีข้อมูลสำรวจ
+                                                </td>
+                                            </tr>
+                                        )}
+                                        {inspectionRows.map((row) => (
+                                            <tr key={row.id} className="border-t">
+                                                <td className="px-3 py-1 text-sm">{row.species_name_th ?? "-"}</td>
+                                                <td className="px-3 py-1 text-center text-sm">{row.size_label ?? "-"}</td>
+                                                <td className="px-3 py-1 text-sm">{row.grade ?? "-"}</td>
+                                                <td className="px-3 py-1 text-right text-sm">{row.estimated_qty?.toLocaleString() ?? "-"}</td>
+                                                <td className="px-3 py-1 text-sm">{row.inspection_date ?? "-"}</td>
+                                                <td className="px-3 py-1 text-sm">{row.notes ?? "-"}</td>
+                                                <td className="px-3 py-1 text-right text-xs">
+                                                    <button type="button" onClick={() => setEditingInspection(row)} className="text-blue-600 hover:underline mr-2">
+                                                        แก้ไข
+                                                    </button>
+                                                    <button type="button" onClick={() => handleDeleteInspection(row)} className="text-red-600 hover:underline">
+                                                        ลบ
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        {/* ✅ Fix: ส่ง inventoryItems (PlotInventoryRow[]) ให้ถูก Type */}
+                        <ZoneTreeInspectionForm
+                            zoneId={zoneId}
+                            inventoryRows={inventoryItems}
+                            editingRow={editingInspection}
+                            onCancelEdit={() => setEditingInspection(null)}
+                            onSaved={async () => {
+                                setEditingInspection(null);
+                                await Promise.all([reloadInspections(), reloadSummary(), reloadStockDiff()]);
+                            }}
+                        />
+                    </section>
+
+                    {/* Stock vs Inspection */}
+                    <section className="mt-6 mb-6">
+                        <h3 className="text-sm font-semibold mb-2 text-slate-700">ความคลาดเคลื่อนระหว่างสต็อกระบบ vs ผลสำรวจ</h3>
+
+                        {stockDiffLoading && <div className="text-xs text-gray-500">กำลังโหลดข้อมูล...</div>}
+                        {stockDiffError && <div className="text-xs text-red-600">ไม่สามารถโหลดข้อมูลเปรียบเทียบได้: {stockDiffError}</div>}
+                        {!stockDiffLoading && !stockDiffError && stockDiffRows.length === 0 && (
+                            <div className="text-xs text-gray-500">ยังไม่มีข้อมูลเปรียบเทียบ (อาจยังไม่มีการปลูกหรือยังไม่เคยบันทึกผลสำรวจ)</div>
+                        )}
+
+                        {stockDiffRows.length > 0 && (
+                            <div className="overflow-x-auto border rounded-lg border-slate-100">
+                                <table className="min-w-full text-xs">
+                                    <thead className="bg-slate-50 text-slate-600">
+                                        <tr>
+                                            <th className="px-3 py-2 text-left font-semibold">ชนิดต้นไม้</th>
+                                            <th className="px-3 py-2 text-center font-semibold">ขนาด (นิ้ว)</th>
+                                            <th className="px-3 py-2 text-right font-semibold">ยอดตามระบบ (ต้น)</th>
+                                            <th className="px-3 py-2 text-right font-semibold">ยอดจากสำรวจ (ต้น)</th>
+                                            <th className="px-3 py-2 text-right font-semibold">ส่วนต่าง</th>
+                                            <th className="px-3 py-2 text-left font-semibold">วันที่สำรวจล่าสุด</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {stockDiffRows.map((r, idx) => {
+                                            const sp = speciesOptions.find((s) => s.id === r.species_id);
+                                            const speciesName = sp?.name_th || sp?.name || r.species_id;
+                                            const sizeLabel = r.size_label || "-";
+                                            const systemQty = r.system_qty ?? 0;
+                                            const inspectedQty = r.inspected_qty ?? 0;
+                                            const diff = r.diff_qty ?? 0;
+
+                                            const diffClass = diff === 0 ? "text-gray-700" : diff > 0 ? "text-emerald-700" : "text-red-600";
+
+                                            return (
+                                                <tr key={idx} className="border-t border-slate-50 hover:bg-slate-50">
+                                                    <td className="px-3 py-2 text-slate-800 font-medium">{speciesName}</td>
+                                                    <td className="px-3 py-2 text-center text-slate-600">{sizeLabel}</td>
+                                                    <td className="px-3 py-2 text-right text-slate-600">{systemQty.toLocaleString()}</td>
+                                                    <td className="px-3 py-2 text-right text-slate-600">{inspectedQty.toLocaleString()}</td>
+                                                    <td className={`px-3 py-2 text-right font-semibold ${diffClass}`}>{diff > 0 ? "+" : ""}{diff.toLocaleString()}</td>
+                                                    <td className="px-3 py-2 text-slate-600">{r.last_inspection_date ? new Date(r.last_inspection_date).toLocaleDateString("th-TH") : "-"}</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </section>
+
+                    {/* Optional: history component ถ้าต้องการ */}
+                    <ZoneInspectionHistory zoneId={zoneId} />
+                </>
+            )}
+
+            {/* ===================== MODALS / DIALOGS (GLOBAL) ===================== */}
+
+            {/* MODAL: ย้ายขนาด/โตขึ้น */}
+            {sizeTransitionOpen && sizeTransitionData && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-semibold text-slate-900">โตขึ้น / ย้ายขนาด</h3>
+                            <button type="button" onClick={() => setSizeTransitionOpen(false)} className="text-slate-400 hover:text-slate-600">
+                                ✕
+                            </button>
+                        </div>
+
+                        <div className="text-sm text-slate-600">
+                            <strong>{sizeTransitionData.speciesName}</strong> ขนาด <strong>{sizeTransitionData.fromSizeLabel} นิ้ว</strong>
+                            <span className="ml-2 text-slate-500">(คงเหลือ {sizeTransitionData.maxQty.toLocaleString("th-TH")} ต้น)</span>
+                        </div>
+
+                        <div className="space-y-3">
+                            <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">ย้ายไปขนาด</label>
+                                <select value={toSizeLabel} onChange={(e) => setToSizeLabel(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                                    <option value="">เลือกขนาดใหม่...</option>
+                                    {(() => {
+                                        const fromIdx = trunkSizeOptions.findIndex((opt) => opt.value === sizeTransitionData.fromSizeLabel);
+                                        const toOptions = trunkSizeOptions
+                                            .filter((opt) => opt.value !== sizeTransitionData.fromSizeLabel)
+                                            .filter((opt) => {
+                                                if (transitionReason !== "growth") return true;
+                                                const toIdx = trunkSizeOptions.findIndex((x) => x.value === opt.value);
+                                                if (fromIdx < 0 || toIdx < 0) return true;
+                                                return toIdx > fromIdx;
+                                            });
+                                        return toOptions.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>
+                                                {opt.label}
+                                            </option>
+                                        ));
+                                    })()}
+                                </select>
+                                {transitionReason === "growth" && <p className="mt-1 text-[11px] text-slate-500">เมื่อเลือก "โตขึ้น" จะแสดงเฉพาะขนาดที่ใหญ่ขึ้นเท่านั้น</p>}
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">จำนวนที่ย้าย</label>
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={sizeTransitionData.maxQty}
+                                    value={transitionQty}
+                                    onChange={(e) => setTransitionQty(e.target.value === "" ? "" : Number(e.target.value))}
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                                    placeholder={`สูงสุด ${sizeTransitionData.maxQty}`}
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">วันที่มีผล</label>
+                                <input type="date" value={transitionDate} onChange={(e) => setTransitionDate(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">เหตุผล</label>
+                                <select value={transitionReason} onChange={(e) => setTransitionReason(e.target.value as any)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                                    <option value="growth">โตขึ้น (Growth)</option>
+                                    <option value="sale">ขายออก (Sale)</option>
+                                    <option value="correction">แก้ไขข้อมูล (Correction)</option>
+                                    <option value="transfer">ย้ายแปลง (Transfer)</option>
+                                    <option value="loss">สูญหาย/ตาย (Loss)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-xs font-medium text-slate-600 mb-1">หมายเหตุ (ถ้ามี)</label>
+                                <input type="text" value={transitionNote} onChange={(e) => setTransitionNote(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="เช่น ตรวจพบว่าขนาดใหญ่ขึ้น" />
+                            </div>
+                        </div>
+
+                        {transitionMsg && <div className={`text-sm ${transitionMsg.includes("สำเร็จ") ? "text-emerald-600" : "text-rose-600"}`}>{transitionMsg}</div>}
+
+                        <div className="flex items-center justify-end gap-2 pt-2">
+                            <button type="button" onClick={() => setSizeTransitionOpen(false)} className="px-4 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">
+                                ยกเลิก
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={async () => {
+                                    if (!toSizeLabel) {
+                                        setTransitionMsg("กรุณาเลือกขนาดใหม่");
+                                        return;
+                                    }
+                                    if (toSizeLabel === sizeTransitionData.fromSizeLabel) {
+                                        setTransitionMsg("ไม่สามารถย้ายไปขนาดเดิมได้");
+                                        return;
+                                    }
+                                    const qty = Number(transitionQty);
+                                    if (!qty || qty <= 0) {
+                                        setTransitionMsg("กรุณาระบุจำนวนที่ต้องการย้าย");
+                                        return;
+                                    }
+                                    if (qty > sizeTransitionData.maxQty) {
+                                        setTransitionMsg(`จำนวนเกินกว่าที่มี (${sizeTransitionData.maxQty})`);
+                                        return;
+                                    }
+
+                                    setSavingTransition(true);
+                                    setTransitionMsg(null);
+
+                                    const result = await applySizeTransition({
+                                        plotId: zoneId,
+                                        speciesId: sizeTransitionData.speciesId,
+                                        fromSizeLabel: sizeTransitionData.fromSizeLabel,
+                                        toSizeLabel,
+                                        qty,
+                                        effectiveDate: transitionDate || undefined,
+                                        reason: transitionReason,
+                                        note: transitionNote || undefined,
+                                    });
+
+                                    setSavingTransition(false);
+
+                                    if (result.success) {
+                                        setTransitionMsg("ย้ายขนาดสำเร็จ ✅");
+                                        await Promise.all([reloadInventory?.(), reloadZoneInvSummary?.(), reloadPlotInventory?.(), reloadSizeMoves?.()]);
+                                        setTimeout(() => setSizeTransitionOpen(false), 1000);
+                                    } else {
+                                        setTransitionMsg("ย้ายไม่สำเร็จ: " + (result.error || "Unknown error"));
+                                    }
+                                }}
+                                disabled={savingTransition}
+                                className="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm font-medium hover:bg-sky-700 disabled:opacity-50 flex items-center gap-2"
+                            >
+                                {savingTransition && <Loader2 className="h-4 w-4 animate-spin" />}
+                                ยืนยันย้ายขนาด
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Digup Modal (legacy) */}
+            {digupModalOpen && selectedInventoryItem && (
+                <ZoneDigupOrderModal
+                    zoneId={zoneId}
+                    speciesId={selectedInventoryItem.species_id}
+                    speciesName={selectedInventoryItem.species_name_th || ""}
+                    sizeLabel={selectedInventoryItem.size_label}
+                    availableToOrder={selectedInventoryItem.available_to_order}
+                    onClose={() => setDigupModalOpen(false)}
+                    onCreated={handleDigupSaved}
+                />
+            )}
+
+            {/* Plot Digup Form */}
+            {showPlotDigupForm && selectedPlotTreeId && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-xl shadow-lg p-4 w-full max-w-md">
+                        <h2 className="text-base font-semibold mb-3">สร้างคำสั่งขุดล้อม (จากแปลง)</h2>
+                        <CreateDigupBatchForm
+                            plantingPlotTreeId={selectedPlotTreeId}
+                            onSuccess={() => {
+                                setShowPlotDigupForm(false);
+                                setSelectedPlotTreeId(null);
+                                reloadInventory?.();
+                                refetchRows?.();
+                            }}
+                            onCancel={() => {
+                                setShowPlotDigupForm(false);
+                                setSelectedPlotTreeId(null);
+                            }}
                         />
                     </div>
-
-                    <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">วันที่มีผล</label>
-                        <input type="date" value={transitionDate} onChange={(e) => setTransitionDate(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">เหตุผล</label>
-                        <select value={transitionReason} onChange={(e) => setTransitionReason(e.target.value as any)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                            <option value="growth">โตขึ้น (Growth)</option>
-                            <option value="sale">ขายออก (Sale)</option>
-                            <option value="correction">แก้ไขข้อมูล (Correction)</option>
-                            <option value="transfer">ย้ายแปลง (Transfer)</option>
-                            <option value="loss">สูญหาย/ตาย (Loss)</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-xs font-medium text-slate-600 mb-1">หมายเหตุ (ถ้ามี)</label>
-                        <input type="text" value={transitionNote} onChange={(e) => setTransitionNote(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="เช่น ตรวจพบว่าขนาดใหญ่ขึ้น" />
-                    </div>
                 </div>
+            )}
 
-                {transitionMsg && <div className={`text-sm ${transitionMsg.includes("สำเร็จ") ? "text-emerald-600" : "text-rose-600"}`}>{transitionMsg}</div>}
+            {/* Create Tag Dialog */}
 
-                <div className="flex items-center justify-end gap-2 pt-2">
-                    <button type="button" onClick={() => setSizeTransitionOpen(false)} className="px-4 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">
-                        ยกเลิก
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={async () => {
-                            if (!toSizeLabel) {
-                                setTransitionMsg("กรุณาเลือกขนาดใหม่");
-                                return;
-                            }
-                            if (toSizeLabel === sizeTransitionData.fromSizeLabel) {
-                                setTransitionMsg("ไม่สามารถย้ายไปขนาดเดิมได้");
-                                return;
-                            }
-                            const qty = Number(transitionQty);
-                            if (!qty || qty <= 0) {
-                                setTransitionMsg("กรุณาระบุจำนวนที่ต้องการย้าย");
-                                return;
-                            }
-                            if (qty > sizeTransitionData.maxQty) {
-                                setTransitionMsg(`จำนวนเกินกว่าที่มี (${sizeTransitionData.maxQty})`);
-                                return;
-                            }
-
-                            setSavingTransition(true);
-                            setTransitionMsg(null);
-
-                            const result = await applySizeTransition({
-                                plotId: zoneId,
-                                speciesId: sizeTransitionData.speciesId,
-                                fromSizeLabel: sizeTransitionData.fromSizeLabel,
-                                toSizeLabel,
-                                qty,
-                                effectiveDate: transitionDate || undefined,
-                                reason: transitionReason,
-                                note: transitionNote || undefined,
-                            });
-
-                            setSavingTransition(false);
-
-                            if (result.success) {
-                                setTransitionMsg("ย้ายขนาดสำเร็จ ✅");
-                                await Promise.all([reloadInventory?.(), reloadZoneInvSummary?.(), reloadPlotInventory?.(), reloadSizeMoves?.()]);
-                                setTimeout(() => setSizeTransitionOpen(false), 1000);
-                            } else {
-                                setTransitionMsg("ย้ายไม่สำเร็จ: " + (result.error || "Unknown error"));
-                            }
-                        }}
-                        disabled={savingTransition}
-                        className="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm font-medium hover:bg-sky-700 disabled:opacity-50 flex items-center gap-2"
-                    >
-                        {savingTransition && <Loader2 className="h-4 w-4 animate-spin" />}
-                        ยืนยันย้ายขนาด
-                    </button>
-                </div>
-            </div>
-        </div>
-    )
-}
-
-{/* Digup Modal (legacy) */ }
-{
-    digupModalOpen && selectedInventoryItem && (
-        <ZoneDigupOrderModal
-            zoneId={zoneId}
-            speciesId={selectedInventoryItem.species_id}
-            speciesName={selectedInventoryItem.species_name_th || ""}
-            sizeLabel={selectedInventoryItem.size_label}
-            availableToOrder={selectedInventoryItem.available_to_order}
-            onClose={() => setDigupModalOpen(false)}
-            onCreated={handleDigupSaved}
-        />
-    )
-}
-
-{/* Plot Digup Form */ }
-{
-    showPlotDigupForm && selectedPlotTreeId && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-            <div className="bg-white rounded-xl shadow-lg p-4 w-full max-w-md">
-                <h2 className="text-base font-semibold mb-3">สร้างคำสั่งขุดล้อม (จากแปลง)</h2>
-                <CreateDigupBatchForm
-                    plantingPlotTreeId={selectedPlotTreeId}
-                    onSuccess={() => {
-                        setShowPlotDigupForm(false);
-                        setSelectedPlotTreeId(null);
-                        reloadInventory?.();
-                        refetchRows?.();
-                    }}
-                    onCancel={() => {
-                        setShowPlotDigupForm(false);
-                        setSelectedPlotTreeId(null);
-                    }}
+            {createTagDialogOpen && selectedInventoryForTag && (
+                <CreateTagDialog
+                    open={createTagDialogOpen}
+                    inventoryItem={selectedInventoryForTag}
+                    onClose={() => setCreateTagDialogOpen(false)}
+                    onSuccess={onTagMutated}
                 />
-            </div>
+            )}
+
+            {/* Digup Planning Modal */}
+            {showDigupModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-5">
+                        <h2 className="text-lg font-semibold mb-1">วางแผนคำสั่งขุดล้อมใหม่</h2>
+                        <p className="text-xs text-slate-500 mb-4">
+                            ฟอร์มนี้ใช้สำหรับสร้างแผนขุดล้อมชุดใหม่ ระบบจะบันทึกเป็นคำสั่งใหม่ทุกครั้งที่กดบันทึก
+                        </p>
+                        <DigupOrderForm zoneId={zoneId} onSaved={handleDigupSaved} onCancel={() => setShowDigupModal(false)} />
+                    </div>
+                </div>
+            )
+            }
+
+            {/* Species Dialog */}
+            <SpeciesFormDialog
+                open={showSpeciesDialog}
+                onClose={() => setShowSpeciesDialog(false)}
+                onSuccess={async (newId) => {
+                    await loadSpecies();
+                    setNewSpeciesId(newId);
+                    setShowSpeciesDialog(false);
+                }}
+            />
         </div>
-    )
-}
-
-{/* Create Tag Dialog */ }
-{
-    createTagDialogOpen && selectedInventoryForTag && (
-        <CreateTagDialog
-            open={createTagDialogOpen}
-            inventoryItem={selectedInventoryForTag}
-            onClose={() => setCreateTagDialogOpen(false)}
-            onSuccess={onTagMutated}
-        />
-    )
-}
-
-{/* Digup Planning Modal */ }
-{
-    showDigupModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-5">
-                <h2 className="text-lg font-semibold mb-1">วางแผนคำสั่งขุดล้อมใหม่</h2>
-                <p className="text-xs text-slate-500 mb-4">
-                    ฟอร์มนี้ใช้สำหรับสร้างแผนขุดล้อมชุดใหม่ ระบบจะบันทึกเป็นคำสั่งใหม่ทุกครั้งที่กดบันทึก
-                </p>
-                <DigupOrderForm zoneId={zoneId} onSaved={handleDigupSaved} onCancel={() => setShowDigupModal(false)} />
-            </div>
-        </div>
-    )
-}
-
-{/* Species Dialog */ }
-<SpeciesFormDialog
-    open={showSpeciesDialog}
-    onClose={() => setShowSpeciesDialog(false)}
-    onSuccess={async (newId) => {
-        await loadSpecies();
-        setNewSpeciesId(newId);
-        setShowSpeciesDialog(false);
-    }}
-/>
-        </div >
     );
 };
 
