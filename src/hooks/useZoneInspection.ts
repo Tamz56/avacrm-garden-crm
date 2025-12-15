@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../supabaseClient';
+import { logZoneAuditEvent } from './useZoneAuditEvents';
 
 export interface ZoneInspectionLog {
     id: string;
@@ -83,6 +84,22 @@ export const useZoneInspection = (zoneId: string | null) => {
 
             if (error) throw error;
 
+            // Log to audit events for history timeline
+            await logZoneAuditEvent({
+                zone_id: zoneId,
+                event_type: 'inspection',
+                event_date: logData.check_date,
+                actor_name: 'ระบบ',
+                notes: logData.maintenance_notes || `ตรวจแปลง: ${logData.tree_count ?? '-'} ต้น`,
+                payload: {
+                    tree_count: logData.tree_count,
+                    trunk_size_inch: logData.trunk_size_inch,
+                    height_m: logData.height_m,
+                    pot_size_inch: logData.pot_size_inch,
+                    maintenance_notes: logData.maintenance_notes,
+                },
+            });
+
             await fetchLogs();
             await fetchLatestInspection();
             return true;
@@ -94,6 +111,7 @@ export const useZoneInspection = (zoneId: string | null) => {
             setLoading(false);
         }
     };
+
 
     useEffect(() => {
         if (zoneId) {

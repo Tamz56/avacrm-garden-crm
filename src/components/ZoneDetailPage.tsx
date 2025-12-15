@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+﻿import React, { useMemo } from "react";
 import {
     ArrowLeft,
     Loader2,
@@ -197,10 +197,16 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
         reload: reloadZoneInvSummary,
     } = useZoneInventorySummary(zoneId);
 
-    // --- Tag Lifecycle Totals ---
     const { data: tagLifecycleTotals, loading: tagLifecycleLoading, reload: reloadTagLife } =
         useTagLifecycleTotals({ zoneId });
 
+    // --- Average Tree Size (from RPC) ---
+    const [avgTreeSize, setAvgTreeSize] = React.useState<{
+        value: number | null;
+        unit: "inch" | "m" | null;
+        sourceCount: number;
+        note?: string;
+    } | null>(null);
 
 
     const readyStockSummary = React.useMemo(() => {
@@ -376,6 +382,39 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
         }
 
         loadOverview();
+        return () => {
+            cancelled = true;
+        };
+    }, [zoneId]);
+
+    // Load Average Tree Size from RPC
+    React.useEffect(() => {
+        let cancelled = false;
+
+        async function loadAvgSize() {
+            if (!zoneId) return;
+
+            const { data, error } = await supabase
+                .rpc("get_zone_avg_tree_size", { p_zone_id: zoneId });
+
+            if (cancelled) return;
+
+            if (error || !data || !data[0]) {
+                setAvgTreeSize(null);
+                return;
+            }
+
+            const row = data[0];
+            setAvgTreeSize({
+                value: row.value == null ? null : Number(row.value),
+                unit: row.unit === "m" ? "m" : row.unit === "inch" ? "inch" : null,
+                sourceCount: Number(row.source_count ?? 0),
+                note: row.note ?? undefined,
+            });
+        }
+
+        loadAvgSize();
+
         return () => {
             cancelled = true;
         };
@@ -1656,124 +1695,42 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
             {/* ===================== TAB: OVERVIEW ===================== */}
             {/* ===================== TAB: OVERVIEW ===================== */}
             {/* ===================== TAB: OVERVIEW ===================== */}
+            {/* ===================== TAB: OVERVIEW ===================== */}
             {activeTab === "overview" && (
-                <div className="space-y-6">
-                    {/* 1. KPI Cards / Lifecycle Summary -- COMMENTED: redundant with SECTION 1 above
-                    <TagLifecycleSummaryCard
-                        data={tagLifecycleTotals ? { ...tagLifecycleTotals, zone_id: zoneId } : null}
-                        loading={tagLifecycleLoading}
+                <div className="space-y-2">
+                    <ZoneOverviewTab
                         zoneId={zoneId}
-                        isDarkMode={false}
-                        className="bg-white"
+                        zone={zone}
+                        readyStockSummary={readyStockSummary}
+                        tagLifeTotals={tagLifecycleTotals || undefined}
+                        inventorySummary={inventorySummary}
+                        plotTotals={plotTotals}
+                        zoneInvSummary={zoneInvSummary}
+                        isMapOpen={isMapOpen}
+                        setIsMapOpen={setIsMapOpen}
+                        onReload={onTagMutated}
+                        avgTreeSize={avgTreeSize}
                     />
-                    */}
 
-                    {/* 2. Layout Grid */}
-                    <div className="grid gap-6 lg:grid-cols-2 items-start">
-                        {/* LEFT COLUMN: Zone Details & Plot Type */}
-                        <div className="space-y-6">
-                            {/* ข้อมูลแปลง + note ล่าสุด */}
-                            <div className="bg-white rounded-2xl border border-slate-200 p-4">
-                                <h3 className="text-sm font-semibold text-slate-900 mb-3">ข้อมูลแปลง</h3>
-                                <div className="grid gap-3 grid-cols-2 text-sm text-slate-600">
-                                    <div className="space-y-2">
-                                        <div>
-                                            <span className="text-slate-500">สถานที่:</span> {zone.farm_name || "-"}
-                                        </div>
-                                        <div>
-                                            <span className="text-slate-500">ขนาดแปลง:</span>{" "}
-                                            {zone.area_width_m && zone.area_length_m ? `${zone.area_width_m} × ${zone.area_length_m} ม.` : "-"}
-                                        </div>
-                                        <div>
-                                            <span className="text-slate-500">จำนวนแถวปลูก:</span> {zone.planting_rows != null ? `${zone.planting_rows} แถว` : "-"}
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <div>
-                                            <span className="text-slate-500">ระบบน้ำ:</span> ปั๊ม {zone.pump_size_hp != null ? `${zone.pump_size_hp} แรงม้า` : "-"}
-                                        </div>
-                                        <div>
-                                            <span className="text-slate-500">แหล่งน้ำ:</span> {zone.water_source || "-"}
-                                        </div>
-                                        <div>
-                                            <span className="text-slate-500">ตรวจล่าสุด:</span>{" "}
-                                            {zone.inspection_date ? new Date(zone.inspection_date).toLocaleDateString("th-TH") : "ยังไม่เคยบันทึก"}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {zone.inspection_notes && (
-                                    <div className="mt-4 text-sm text-slate-700 bg-slate-50 rounded-xl px-4 py-3 border border-slate-100">
-                                        <div className="font-medium mb-1 text-slate-600 text-xs uppercase tracking-wider">บันทึกงานแปลงล่าสุด</div>
-                                        <div className="italic">{zone.inspection_notes}</div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* ตั้งค่าประเภทแปลง */}
-                            <section className="border border-slate-200 rounded-xl p-4 bg-slate-50">
-                                <h2 className="text-sm font-semibold text-slate-800 mb-3">ตั้งค่าประเภทแปลง</h2>
-
-                                {plotTypesError && <div className="text-xs text-red-500 mb-2">โหลดรายการประเภทแปลงไม่สำเร็จ: {plotTypesError}</div>}
-
-                                <div className="flex flex-col gap-3">
-                                    <div className="flex items-center gap-3">
-                                        <select
-                                            className="flex-1 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm"
-                                            value={selectedPlotTypeId ?? ""}
-                                            onChange={(e) => setSelectedPlotTypeId(e.target.value)}
-                                            disabled={plotTypesLoading || savingPlotType}
-                                        >
-                                            <option value="">- ยังไม่กำหนดประเภทแปลง -</option>
-                                            {plotTypes.map((pt) => (
-                                                <option key={pt.id} value={pt.id}>
-                                                    {pt.name_th} ({pt.code})
-                                                </option>
-                                            ))}
-                                        </select>
-                                        <button
-                                            type="button"
-                                            onClick={handleSavePlotType}
-                                            disabled={savingPlotType}
-                                            className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
-                                        >
-                                            {savingPlotType && <Loader2 className="w-4 h-4 mr-1 animate-spin" />}
-                                            บันทึก
-                                        </button>
-                                    </div>
-                                    {saveMessage && <p className="text-xs text-emerald-600">{saveMessage}</p>}
-                                </div>
-                            </section>
-                        </div>
-
-                        {/* RIGHT COLUMN: Location */}
-                        <div>
-                            <ZoneLocationSection
-                                zone={zone}
-                                onSaved={() => {
-                                    supabase
-                                        .from("stock_zones")
-                                        .select("*")
-                                        .eq("id", zone.id)
-                                        .single()
-                                        .then(({ data }) => {
-                                            if (data) setZone(data);
-                                        });
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    {mismatchError && (
-                        <div className="rounded-xl border border-amber-100 bg-amber-50 p-3 text-xs text-amber-800">
-                            ไม่สามารถโหลดข้อมูลความคลาดเคลื่อนได้: {mismatchError}
-                        </div>
-                    )}
-
-                    {/* Mismatch Detail */}
-                    <div className="space-y-6">
-                        <ZoneMismatchDetailTable zoneId={zoneId} speciesOptions={speciesOptions} />
-                    </div>
+                    <ZonePlotManagementTab
+                        zoneId={zoneId}
+                        zone={zone}
+                        plantCountDrafts={plantCountDrafts}
+                        speciesOptions={speciesOptions}
+                        addPlantCountRow={addPlantCountRow}
+                        updatePlantCountRow={updatePlantCountRow}
+                        removePlantCountRow={removePlantCountRow}
+                        savePlantCounts={savePlantCounts}
+                        savingPlantCounts={savingPlantCounts}
+                        plantCountsMsg={plantCountsMsg}
+                        plotTypes={plotTypes}
+                        selectedPlotTypeId={selectedPlotTypeId}
+                        setSelectedPlotTypeId={setSelectedPlotTypeId}
+                        handleSavePlotType={handleSavePlotType}
+                        savingPlotType={savingPlotType}
+                        saveMessage={saveMessage}
+                        onReload={onTagMutated}
+                    />
                 </div>
             )}
 
@@ -1781,359 +1738,6 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
             {activeTab === "tags" && (
                 <div className="space-y-6">
                     <ZoneTreeTagsTable zoneId={zoneId} onTagsChanged={onTagMutated} />
-
-                    {/* === Plot Inventory Table + Create Tag === */}
-                    <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden mb-6">
-                        <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-                            <span className="text-sm font-semibold text-slate-700">รายการต้นไม้ในแปลง (Plot Inventory)</span>
-                            <span className="text-xs text-slate-500">รวมทั้งสิ้น {inventoryItems.length} รายการ</span>
-                        </div>
-
-                        <div className="mx-4 mt-3 rounded-xl border border-emerald-100 bg-emerald-50/60 px-4 py-3 text-xs text-emerald-900">
-                            <div className="font-semibold mb-1">ขั้นตอนการทำงานในแปลงนี้</div>
-                            <ol className="list-decimal pl-4 space-y-0.5">
-                                <li>กำหนดแผนปลูกในตาราง <span className="font-medium">"รายการต้นไม้ในแปลง (Plot Inventory)"</span></li>
-                                <li>สร้าง <span className="font-medium">Tag</span> สำหรับต้นไม้ที่จะขาย/ขุดล้อม จากปุ่ม <span className="font-medium">"+ Tag"</span> ในแต่ละแถว</li>
-                                <li>วางแผนคำสั่งขุดล้อมจาก <span className="font-medium">Tag</span> ที่สร้างแล้ว (ระบบจะดึงเฉพาะต้นที่มี Tag)</li>
-                            </ol>
-                            <p className="mt-2 text-[11px] text-emerald-800">
-                                * ผลสำรวจใช้สำหรับตรวจสอบจำนวนจริง เปรียบเทียบกับจำนวน Tag (ไม่ได้ใช้เป็นฐานขุดล้อมโดยตรง)
-                            </p>
-                        </div>
-
-                        <div className="px-4 py-2 flex flex-wrap gap-2 bg-slate-50 border-b border-slate-100">
-                            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100 px-3 py-1 text-xs">
-                                พร้อมขาย: <span className="font-semibold">{readyStockSummary.available.toLocaleString("th-TH")} ต้น</span>
-                            </span>
-                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 text-amber-700 border border-amber-100 px-3 py-1 text-xs">
-                                จองแล้ว: <span className="font-semibold">{readyStockSummary.reserved.toLocaleString("th-TH")} ต้น</span>
-                            </span>
-                            <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 text-sky-700 border border-sky-100 px-3 py-1 text-xs">
-                                อยู่ในใบสั่งขุด: <span className="font-semibold">{readyStockSummary.digOrdered.toLocaleString("th-TH")} ต้น</span>
-                            </span>
-                        </div>
-
-                        {plotInventoryLoading && (
-                            <div className="py-8 text-center text-slate-500">
-                                <Loader2 className="w-5 h-5 animate-spin inline-block mr-2" />
-                                กำลังโหลดรายการต้นไม้...
-                            </div>
-                        )}
-
-                        {!plotInventoryLoading && plotInventoryError && <div className="py-8 text-center text-rose-500 text-sm">{plotInventoryError}</div>}
-
-                        {!plotInventoryLoading && !plotInventoryError && (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full text-sm">
-                                    <thead className="bg-slate-50 text-xs text-slate-500 border-b border-slate-100">
-                                        <tr>
-                                            <th className="px-3 py-2 text-left font-medium">ชนิดต้นไม้</th>
-                                            <th className="px-3 py-2 text-left font-medium">ขนาด</th>
-                                            <th className="px-3 py-2 text-left font-medium">ความสูง</th>
-                                            <th className="px-3 py-2 text-right font-medium">จำนวนที่ปลูก</th>
-                                            <th className="px-3 py-2 text-right font-medium">สร้าง Tag แล้ว</th>
-                                            <th className="px-3 py-2 text-right font-medium">คงเหลือให้สร้าง Tag</th>
-                                            <th className="px-3 py-2 text-left font-medium">วันที่ปลูก</th>
-                                            <th className="px-3 py-2 text-left font-medium">หมายเหตุ</th>
-                                            <th className="px-3 py-2 text-right font-medium">จัดการ</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {inventoryItems.length === 0 && (
-                                            <tr>
-                                                <td colSpan={9} className="py-8 text-center text-slate-400 text-sm">
-                                                    ยังไม่มีข้อมูลต้นไม้ในแปลงนี้
-                                                </td>
-                                            </tr>
-                                        )}
-
-                                        {inventoryItems.map((row) => {
-                                            const isEditing = editingInventoryId === row.id;
-                                            const editingSpeciesId = editFormData?.speciesId;
-                                            const editingSpecies = speciesOptions.find((s) => s.id === editingSpeciesId);
-                                            const isEditingHeightSpecies = editingSpecies?.measure_by_height === true;
-
-                                            return (
-                                                <tr key={row.id} className="border-b border-slate-50 hover:bg-slate-50 transition-colors">
-                                                    <td className="px-3 py-2 text-slate-800 font-medium">
-                                                        {isEditing ? (
-                                                            <select
-                                                                value={editFormData?.speciesId}
-                                                                onChange={(e) => {
-                                                                    const val = e.target.value;
-                                                                    const sp = speciesOptions.find((s) => s.id === val);
-                                                                    setEditFormData((prev) => {
-                                                                        if (!prev) return null;
-                                                                        const next = { ...prev, speciesId: val };
-                                                                        if (sp?.measure_by_height) next.sizeLabel = "";
-                                                                        else next.heightLabel = "";
-                                                                        return next;
-                                                                    });
-                                                                }}
-                                                                className="w-full px-2 py-1 rounded border border-slate-300 text-sm"
-                                                            >
-                                                                {speciesOptions.map((sp) => (
-                                                                    <option key={sp.id} value={sp.id}>
-                                                                        {sp.name_th || sp.name}
-                                                                        {sp.measure_by_height ? " • วัดตามความสูง" : ""}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
-                                                        ) : (
-                                                            row.species_name_th || "-"
-                                                        )}
-                                                    </td>
-
-                                                    <td className="px-3 py-2 text-slate-600">
-                                                        {isEditing ? (
-                                                            <select
-                                                                value={editFormData?.sizeLabel}
-                                                                onChange={(e) => setEditFormData((prev) => (prev ? { ...prev, sizeLabel: e.target.value } : null))}
-                                                                className="w-full px-2 py-1 rounded border border-slate-300 text-sm disabled:bg-slate-100 disabled:text-slate-400"
-                                                                disabled={isEditingHeightSpecies}
-                                                            >
-                                                                {trunkSizeOptions.map((opt) => (
-                                                                    <option key={opt.value} value={opt.value}>
-                                                                        {opt.label}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
-                                                        ) : (
-                                                            `${row.size_label} นิ้ว`
-                                                        )}
-                                                    </td>
-
-                                                    <td className="px-3 py-2 text-slate-600">
-                                                        {isEditing ? (
-                                                            <input
-                                                                type="text"
-                                                                value={editFormData?.heightLabel}
-                                                                onChange={(e) => {
-                                                                    const val = e.target.value.replace(/[^0-9.,]/g, "");
-                                                                    setEditFormData((prev) => (prev ? { ...prev, heightLabel: val } : null));
-                                                                }}
-                                                                className="w-full px-2 py-1 rounded border border-slate-300 text-sm disabled:bg-slate-100 disabled:text-slate-400"
-                                                                placeholder={isEditingHeightSpecies ? "เช่น 1.5" : "-"}
-                                                            />
-                                                        ) : (
-                                                            formatHeightLabel(row.height_label)
-                                                        )}
-                                                    </td>
-
-                                                    <td className="px-3 py-2 text-right text-slate-600">
-                                                        {isEditing ? (
-                                                            <input
-                                                                type="number"
-                                                                value={editFormData?.plantedQty}
-                                                                onChange={(e) => setEditFormData((prev) => (prev ? { ...prev, plantedQty: Number(e.target.value) } : null))}
-                                                                className="w-20 px-2 py-1 rounded border border-slate-300 text-sm text-right"
-                                                            />
-                                                        ) : (
-                                                            row.planted_qty.toLocaleString("th-TH")
-                                                        )}
-                                                    </td>
-
-                                                    <td className="px-3 py-2 text-right text-slate-600">{row.created_tag_qty.toLocaleString("th-TH")}</td>
-
-                                                    <td className="px-3 py-2 text-right text-emerald-600 font-semibold">
-                                                        {row.remaining_for_tag.toLocaleString("th-TH")}
-                                                    </td>
-
-                                                    <td className="px-3 py-2 text-slate-600">
-                                                        {isEditing ? (
-                                                            <input
-                                                                type="date"
-                                                                value={editFormData?.plantedDate}
-                                                                onChange={(e) => setEditFormData((prev) => (prev ? { ...prev, plantedDate: e.target.value } : null))}
-                                                                className="w-full px-2 py-1 rounded border border-slate-300 text-sm"
-                                                            />
-                                                        ) : (
-                                                            row.planted_date ? new Date(row.planted_date).toLocaleDateString("th-TH") : "-"
-                                                        )}
-                                                    </td>
-
-                                                    <td className="px-3 py-2 text-xs text-slate-500">
-                                                        {isEditing ? (
-                                                            <input
-                                                                type="text"
-                                                                value={editFormData?.note}
-                                                                onChange={(e) => setEditFormData((prev) => (prev ? { ...prev, note: e.target.value } : null))}
-                                                                className="w-full px-2 py-1 rounded border border-slate-300 text-xs"
-                                                            />
-                                                        ) : (
-                                                            row.note || "-"
-                                                        )}
-                                                    </td>
-
-                                                    <td className="px-3 py-2 text-right">
-                                                        {isEditing ? (
-                                                            <div className="flex items-center justify-end gap-2">
-                                                                <button onClick={handleSaveEditInventory} className="text-emerald-600 hover:text-emerald-700 font-medium text-xs">
-                                                                    บันทึก
-                                                                </button>
-                                                                <button onClick={handleCancelEditInventory} className="text-slate-400 hover:text-slate-600 text-xs">
-                                                                    ยกเลิก
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            <div className="flex items-center justify-end gap-2">
-                                                                <button
-                                                                    onClick={() => {
-                                                                        setSelectedInventoryForTag(row);
-                                                                        setCreateTagDialogOpen(true);
-                                                                    }}
-                                                                    disabled={row.remaining_for_tag <= 0}
-                                                                    className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                                                    title="สร้าง Tag"
-                                                                >
-                                                                    <Plus className="w-3 h-3" />
-                                                                    Tag
-                                                                </button>
-
-                                                                <button onClick={() => handleEditInventory(row)} className="p-1 text-slate-400 hover:text-indigo-600 transition-colors" title="แก้ไข">
-                                                                    <Edit3 className="w-3.5 h-3.5" />
-                                                                </button>
-
-                                                                <button onClick={() => handleDeleteInventory(row.id)} className="p-1 text-slate-400 hover:text-rose-600 transition-colors" title="ลบ">
-                                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-
-                        {!plotInventoryLoading && !plotInventoryError && (
-                            <ZoneReadyStockFromPlotSection
-                                zoneId={zoneId}
-                                rows={inventoryItems}
-                                onReload={reloadPlotInventory}
-                                onReloadLifecycle={reloadLifecycle}
-                                createTagsFromInventory={createTagsFromInventory}
-                            />
-                        )}
-
-                        <div className="border-t border-slate-100 mt-4 pt-4 px-4 pb-2">
-                            <h4 className="text-sm font-semibold text-slate-700 mb-2">+ เพิ่มต้นไม้ใหม่</h4>
-                        </div>
-
-                        <form
-                            onSubmit={handleCreatePlanting}
-                            className="px-4 pb-6 grid gap-3 md:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto] items-end"
-                        >
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">ชนิด/พันธุ์ต้นไม้</label>
-                                <select
-                                    value={newSpeciesId}
-                                    onChange={(e) => {
-                                        const val = e.target.value;
-                                        if (val === "__add_new_species__") setShowSpeciesDialog(true);
-                                        else {
-                                            setNewSpeciesId(val);
-                                            const sp = speciesOptions.find((s) => s.id === val);
-                                            if (sp?.measure_by_height) setNewSizeLabel("");
-                                            else setNewHeightLabel("");
-                                        }
-                                    }}
-                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                    disabled={speciesLoading || savingNewPlant}
-                                >
-                                    <option value="">เลือกชนิดต้นไม้...</option>
-                                    {speciesOptions.map((sp) => (
-                                        <option key={sp.id} value={sp.id}>
-                                            {sp.name_th || sp.name}
-                                            {sp.measure_by_height ? " • วัดตามความสูง" : ""}
-                                        </option>
-                                    ))}
-                                    <option value="__add_new_species__" className="font-semibold text-emerald-600 bg-emerald-50">
-                                        + เพิ่มพันธุ์ไม้ใหม่...
-                                    </option>
-                                </select>
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">
-                                    ขนาด (นิ้ว) {isHeightSpecies ? "" : <span className="text-red-500">*</span>}
-                                </label>
-                                <select
-                                    value={newSizeLabel}
-                                    onChange={(e) => setNewSizeLabel(e.target.value)}
-                                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 disabled:text-slate-400"
-                                    disabled={!newSpeciesId || isHeightSpecies}
-                                >
-                                    <option value="">เลือกขนาด...</option>
-                                    {trunkSizeOptions.map((opt) => (
-                                        <option key={opt.value} value={opt.value}>
-                                            {opt.label}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">
-                                    ความสูง {isHeightSpecies ? <span className="text-red-500">*</span> : ""}
-                                </label>
-                                <input
-                                    type="text"
-                                    value={newHeightLabel}
-                                    onChange={(e) => setNewHeightLabel(e.target.value.replace(/[^0-9.,]/g, ""))}
-                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 disabled:bg-slate-100 disabled:text-slate-400"
-                                    placeholder={isHeightSpecies ? "เช่น 1.5m" : "เช่น 1.5m (ไม่บังคับ)"}
-                                    disabled={!newSpeciesId}
-                                />
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">จำนวนที่ปลูก</label>
-                                <input
-                                    type="number"
-                                    min={0}
-                                    value={newPlantedCount}
-                                    onChange={(e) => setNewPlantedCount(e.target.value)}
-                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                    placeholder="เช่น 2,000"
-                                />
-                            </div>
-
-                            <div className="space-y-1">
-                                <label className="text-xs font-medium text-slate-600">วันที่ปลูก</label>
-                                <input
-                                    type="date"
-                                    value={newPlantedDate}
-                                    onChange={(e) => setNewPlantedDate(e.target.value)}
-                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                                />
-                                <input
-                                    type="text"
-                                    value={newNote}
-                                    onChange={(e) => setNewNote(e.target.value)}
-                                    className="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-emerald-400"
-                                    placeholder="หมายเหตุ (ถ้ามี)"
-                                />
-                            </div>
-
-                            <div className="flex justify-end">
-                                <button
-                                    type="submit"
-                                    disabled={!canCreatePlanting || savingNewPlant}
-                                    className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:opacity-50"
-                                >
-                                    {savingNewPlant && <Loader2 className="w-4 h-4 animate-spin" />}
-                                    <Plus className="w-4 h-4" />
-                                    เพิ่มต้นไม้
-                                </button>
-                            </div>
-
-                            {speciesError && <div className="md:col-span-6 text-xs text-rose-500">โหลดรายชื่อชนิดต้นไม้ไม่สำเร็จ: {speciesError}</div>}
-                            {newPlantMessage && <div className="md:col-span-6 text-xs text-slate-600">{newPlantMessage}</div>}
-                        </form>
-                    </div>
                 </div>
             )}
             {/* ===================== TAB: PLOT MANAGEMENT ===================== */}
