@@ -62,6 +62,11 @@ export function ZoneOverviewTab({
     const mapOpen = isMapOpen ?? localMapOpen;
     const toggleMap = setIsMapOpen ?? setLocalMapOpen;
 
+    // Fallback location values: prefer new zone_* fields, fallback to legacy fields
+    const mapUrl = zone?.zone_map_url ?? zone?.map_url ?? null;
+    const lat = zone?.zone_lat ?? zone?.lat ?? null;
+    const lng = zone?.zone_lng ?? zone?.lng ?? null;
+
     return (
         <div className="mt-4 space-y-4">
             <div className="grid grid-cols-12 gap-4">
@@ -235,7 +240,7 @@ export function ZoneOverviewTab({
                             <div className="h-[200px] w-full lg:h-[216px]">
                                 <iframe
                                     title="Zone Map Preview"
-                                    src={toGoogleEmbedUrl(zone?.google_maps_url, zone?.latitude, zone?.longitude)}
+                                    src={toGoogleEmbedUrl(mapUrl, lat, lng)}
                                     className="h-full w-full"
                                     loading="lazy"
                                     referrerPolicy="no-referrer-when-downgrade"
@@ -246,11 +251,11 @@ export function ZoneOverviewTab({
                         {/* Lat/Lng + Open Button */}
                         <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
                             <span>
-                                Lat: {zone?.latitude ?? "-"} · Lng: {zone?.longitude ?? "-"}
+                                Lat: {lat ?? "-"} · Lng: {lng ?? "-"}
                             </span>
                             <a
                                 className="text-sky-600 hover:underline"
-                                href={zone?.google_maps_url ?? "#"}
+                                href={mapUrl ?? "#"}
                                 target="_blank"
                                 rel="noreferrer"
                             >
@@ -274,7 +279,7 @@ export function ZoneOverviewTab({
                         <div className="h-[70vh] bg-slate-50">
                             <iframe
                                 title="Zone Map Expanded"
-                                src={toGoogleEmbedUrl(zone?.google_maps_url, zone?.latitude, zone?.longitude)}
+                                src={toGoogleEmbedUrl(mapUrl, lat, lng)}
                                 className="h-full w-full"
                                 loading="lazy"
                                 referrerPolicy="no-referrer-when-downgrade"

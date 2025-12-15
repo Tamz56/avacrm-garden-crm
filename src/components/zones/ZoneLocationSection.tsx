@@ -14,18 +14,24 @@ export const ZoneLocationSection: React.FC<ZoneLocationSectionProps> = ({
 }) => {
     const { updateZoneLocation } = useZoneMutations();
 
-    const [mapUrl, setMapUrl] = React.useState<string>(zone?.zone_map_url ?? "");
-    const [lat, setLat] = React.useState<string>(zone?.zone_lat?.toString?.() ?? "");
-    const [lng, setLng] = React.useState<string>(zone?.zone_lng?.toString?.() ?? "");
+    // Fallback compatibility: zone_lat ?? lat, zone_lng ?? lng, zone_map_url ?? map_url
+    const getZoneLat = () => zone?.zone_lat ?? zone?.lat;
+    const getZoneLng = () => zone?.zone_lng ?? zone?.lng;
+    const getZoneMapUrl = () => zone?.zone_map_url ?? zone?.map_url ?? "";
+
+    const [mapUrl, setMapUrl] = React.useState<string>(getZoneMapUrl());
+    const [lat, setLat] = React.useState<string>(getZoneLat()?.toString?.() ?? "");
+    const [lng, setLng] = React.useState<string>(getZoneLng()?.toString?.() ?? "");
     const [saving, setSaving] = React.useState(false);
     const [message, setMessage] = React.useState<string | null>(null);
 
     // Reset when zone changes
     React.useEffect(() => {
-        setMapUrl(zone?.zone_map_url ?? "");
-        setLat(zone?.zone_lat?.toString?.() ?? "");
-        setLng(zone?.zone_lng?.toString?.() ?? "");
-    }, [zone?.id, zone?.zone_map_url, zone?.zone_lat, zone?.zone_lng]);
+        setMapUrl(getZoneMapUrl());
+        setLat(getZoneLat()?.toString?.() ?? "");
+        setLng(getZoneLng()?.toString?.() ?? "");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [zone?.id, zone?.zone_map_url, zone?.zone_lat, zone?.zone_lng, zone?.lat, zone?.lng, zone?.map_url]);
 
     const onMapUrlChange = (v: string) => {
         setMapUrl(v);
@@ -36,8 +42,35 @@ export const ZoneLocationSection: React.FC<ZoneLocationSectionProps> = ({
         }
     };
 
+    const [latError, setLatError] = React.useState<string | null>(null);
+    const [lngError, setLngError] = React.useState<string | null>(null);
+
+    const validateCoords = (): boolean => {
+        let valid = true;
+        setLatError(null);
+        setLngError(null);
+
+        if (lat) {
+            const latNum = Number(lat);
+            if (isNaN(latNum) || latNum < -90 || latNum > 90) {
+                setLatError("Lat ต้องอยู่ระหว่าง -90 ถึง 90");
+                valid = false;
+            }
+        }
+        if (lng) {
+            const lngNum = Number(lng);
+            if (isNaN(lngNum) || lngNum < -180 || lngNum > 180) {
+                setLngError("Lng ต้องอยู่ระหว่าง -180 ถึง 180");
+                valid = false;
+            }
+        }
+        return valid;
+    };
+
     const save = async () => {
         if (!zone?.id) return;
+        if (!validateCoords()) return;
+
         setSaving(true);
         setMessage(null);
         try {
@@ -45,8 +78,7 @@ export const ZoneLocationSection: React.FC<ZoneLocationSectionProps> = ({
                 zone.id,
                 lat ? Number(lat) : null,
                 lng ? Number(lng) : null,
-                mapUrl || null,
-                null
+                mapUrl || null
             );
             setMessage("บันทึกพิกัดแปลงเรียบร้อยแล้ว ✅");
             onSaved?.();
@@ -139,22 +171,24 @@ export const ZoneLocationSection: React.FC<ZoneLocationSectionProps> = ({
                             <input
                                 type="number"
                                 step="any"
-                                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500"
+                                className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-sky-500 ${latError ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
                                 value={lat}
-                                onChange={(e) => setLat(e.target.value)}
+                                onChange={(e) => { setLat(e.target.value); setLatError(null); }}
                                 placeholder="เช่น 14.1234567"
                             />
+                            {latError && <p className="text-[10px] text-red-500">{latError}</p>}
                         </div>
                         <div className="space-y-1">
                             <label className="text-xs font-medium text-slate-600">Longitude</label>
                             <input
                                 type="number"
                                 step="any"
-                                className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500"
+                                className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-sky-500 ${lngError ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
                                 value={lng}
-                                onChange={(e) => setLng(e.target.value)}
+                                onChange={(e) => { setLng(e.target.value); setLngError(null); }}
                                 placeholder="เช่น 101.1234567"
                             />
+                            {lngError && <p className="text-[10px] text-red-500">{lngError}</p>}
                         </div>
                     </div>
 
