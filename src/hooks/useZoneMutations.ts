@@ -121,8 +121,7 @@ export const useZoneMutations = () => {
         zoneId: string,
         lat: number | null,
         lng: number | null,
-        mapUrl: string | null,
-        boundary: any | null = null
+        mapUrl: string | null
     ) => {
         setLoading(true);
         setError(null);
@@ -132,7 +131,6 @@ export const useZoneMutations = () => {
                 p_lat: lat,
                 p_lng: lng,
                 p_map_url: mapUrl,
-                p_boundary: boundary,
             });
 
             if (error) throw error;
