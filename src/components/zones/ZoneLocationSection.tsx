@@ -2,22 +2,39 @@ import React from "react";
 import { MapPin, ExternalLink } from "lucide-react";
 import { parseLatLngFromGoogleMaps, openInGoogleMaps } from "../../utils/maps";
 import { useZoneMutations } from "../../hooks/useZoneMutations";
+import ZoneBoundaryDrawModal from "./ZoneBoundaryDrawModal";
 
 interface ZoneLocationSectionProps {
     zone: any;
     onSaved?: () => void;
+    onReload?: () => void;
 }
 
 export const ZoneLocationSection: React.FC<ZoneLocationSectionProps> = ({
     zone,
     onSaved,
+    onReload,
 }) => {
     const { updateZoneLocation } = useZoneMutations();
+    const [isBoundaryOpen, setIsBoundaryOpen] = React.useState(false);
 
     // Fallback compatibility: zone_lat ?? lat, zone_lng ?? lng, zone_map_url ?? map_url
     const getZoneLat = () => zone?.zone_lat ?? zone?.lat;
     const getZoneLng = () => zone?.zone_lng ?? zone?.lng;
     const getZoneMapUrl = () => zone?.zone_map_url ?? zone?.map_url ?? "";
+
+    // Boundary and area data
+    const hasBoundary = !!zone?.zone_boundary_geojson;
+    const areaRai =
+        zone?.area_rai != null && !Number.isNaN(Number(zone.area_rai))
+            ? Number(zone.area_rai)
+            : null;
+
+    const latNum = getZoneLat();
+    const lngNum = getZoneLng();
+    const initialCenter =
+        latNum != null && lngNum != null ? { lat: Number(latNum), lng: Number(lngNum) } : null;
+    const initialBoundary = zone?.zone_boundary_geojson ?? null;
 
     const [mapUrl, setMapUrl] = React.useState<string>(getZoneMapUrl());
     const [lat, setLat] = React.useState<string>(getZoneLat()?.toString?.() ?? "");
@@ -101,17 +118,52 @@ export const ZoneLocationSection: React.FC<ZoneLocationSectionProps> = ({
 
     return (
         <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
-            <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-lg bg-sky-50 flex items-center justify-center">
-                    <MapPin className="h-4 w-4 text-sky-600" />
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                    <div className="h-7 w-7 rounded-lg bg-sky-50 flex items-center justify-center">
+                        <MapPin className="h-4 w-4 text-sky-600" />
+                    </div>
+                    <div className="text-sm font-semibold text-slate-800">พิกัดแปลง (Zone Location)</div>
+
+                    {hasBoundary ? (
+                        <span className="ml-2 text-xs rounded-full bg-emerald-50 text-emerald-700 px-2 py-1 border border-emerald-200">
+                            มีขอบเขตแล้ว
+                        </span>
+                    ) : (
+                        <span className="ml-2 text-xs rounded-full bg-slate-50 text-slate-600 px-2 py-1 border">
+                            ยังไม่มีขอบเขต
+                        </span>
+                    )}
                 </div>
-                <div className="text-sm font-semibold text-slate-800">พิกัดแปลง (Zone Location)</div>
+
+                <button
+                    onClick={() => setIsBoundaryOpen(true)}
+                    className="rounded-xl bg-sky-600 px-3 py-2 text-sm text-white hover:bg-sky-700 disabled:opacity-60"
+                    disabled={!zone?.id}
+                >
+                    {hasBoundary ? "แก้ไขขอบเขต" : "วาดขอบเขต"}
+                </button>
+            </div>
+
+            {/* พื้นที่ (ไร่) */}
+            <div className="flex items-center justify-between text-xs text-slate-600">
+                <div>
+                    พื้นที่:{" "}
+                    {areaRai == null ? (
+                        <span className="text-slate-400">-</span>
+                    ) : (
+                        <span className="font-semibold text-slate-800">{areaRai.toFixed(2)} ไร่</span>
+                    )}
+                </div>
+                {zone?.boundary_updated_at ? (
+                    <div className="text-slate-400">อัปเดตขอบเขต: {new Date(zone.boundary_updated_at).toLocaleString()}</div>
+                ) : null}
             </div>
 
             {mapSrc && (
                 <div className="mb-2">
                     <div className="w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-                        <div className="h-56">
+                        <div className="h-72">
                             <iframe
                                 title="Zone Map"
                                 src={mapSrc}
@@ -220,6 +272,18 @@ export const ZoneLocationSection: React.FC<ZoneLocationSectionProps> = ({
                     )}
                 </div>
             </details>
+
+            <ZoneBoundaryDrawModal
+                open={isBoundaryOpen}
+                onClose={() => setIsBoundaryOpen(false)}
+                zoneId={zone?.id}
+                initialCenter={initialCenter}
+                initialBoundary={initialBoundary}
+                onSaved={() => {
+                    onSaved?.();
+                    onReload?.();
+                }}
+            />
         </div>
     );
 };

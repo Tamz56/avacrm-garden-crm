@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, ChevronLeft, ChevronRight, Tag, Edit2, ExternalLink } from 'lucide-react';
+import { Search, Filter, ChevronLeft, ChevronRight, Tag, Edit2, ExternalLink, CheckSquare, Square, ShoppingBag, Lock } from 'lucide-react';
+import { supabase } from '../../supabaseClient';
 import { useTagSearch, TagSearchFilter, TagSearchRow } from '../../hooks/useTagSearch';
 import { useStockZoneLifecycle } from '../../hooks/useStockZoneLifecycle';
 import { EditTagDialog } from './EditTagDialog';
@@ -11,7 +12,7 @@ type TagStatusFilter = "all" | TagStatus;
 const TAG_STATUS_OPTIONS: { value: TagStatusFilter; label: string }[] = [
     { value: "all", label: "ทุกสถานะ" },
     { value: "in_zone", label: "อยู่ในแปลง / ยังไม่พร้อมขาย" },
-    { value: "available", label: "พร้อมขาย (available)" },
+    { value: "ready_for_sale", label: "พร้อมขาย (ready_for_sale)" },
     { value: "reserved", label: "จองแล้ว (reserved)" },
     { value: "dig_ordered", label: "อยู่ในใบสั่งขุด (dig_ordered)" },
     { value: "dug", label: "ขุดแล้ว (dug)" },
@@ -73,6 +74,81 @@ const TagListPage: React.FC<Props> = ({ initialFilters, isDarkMode = false }) =>
 
     const [editingTag, setEditingTag] = useState<TagSearchRow | null>(null);
     const [editOpen, setEditOpen] = useState(false);
+
+    // Selection State
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
+    // Selection Handlers
+    const toggleOne = (id: string) => {
+        const next = new Set(selectedIds);
+        if (next.has(id)) {
+            next.delete(id);
+        } else {
+            next.add(id);
+        }
+        setSelectedIds(next);
+    };
+
+    const toggleAllOnPage = () => {
+        const allOnPage = rows.map(r => r.id);
+        const allSelected = allOnPage.every(id => selectedIds.has(id));
+
+        const next = new Set(selectedIds);
+        if (allSelected) {
+            allOnPage.forEach(id => next.delete(id));
+        } else {
+            allOnPage.forEach(id => next.add(id));
+        }
+        setSelectedIds(next);
+    };
+
+    const isAllSelectedOnPage = rows.length > 0 && rows.every(r => selectedIds.has(r.id));
+
+    // Clear selection when filters change or page changes
+    React.useEffect(() => {
+        setSelectedIds(new Set());
+    }, [filter, page, pageSize]);
+
+    // Bulk Actions
+    const handleReserve = async () => {
+        if (selectedIds.size === 0) return;
+        if (!window.confirm(`ยืนยันการจองจำนวน ${selectedIds.size} รายการ?`)) return;
+
+        try {
+            const { error } = await supabase.rpc('reserve_tags_v1', {
+                p_tag_ids: Array.from(selectedIds),
+                p_notes: null
+            });
+
+            if (error) throw error;
+
+            alert('จองสำเร็จ');
+            setSelectedIds(new Set());
+            reload && reload();
+        } catch (err: any) {
+            alert('เกิดข้อผิดพลาด: ' + err.message);
+        }
+    };
+
+    const handleSell = async () => {
+        if (selectedIds.size === 0) return;
+        if (!window.confirm(`ยืนยันการขายจำนวน ${selectedIds.size} รายการ?`)) return;
+
+        try {
+            const { error } = await supabase.rpc('sell_tags_v1', {
+                p_tag_ids: Array.from(selectedIds),
+                p_notes: null
+            });
+
+            if (error) throw error;
+
+            alert('ขายสำเร็จ');
+            setSelectedIds(new Set());
+            reload && reload();
+        } catch (err: any) {
+            alert('เกิดข้อผิดพลาด: ' + err.message);
+        }
+    };
 
     function openEdit(tag: TagSearchRow) {
         setEditingTag(tag);
@@ -150,6 +226,39 @@ const TagListPage: React.FC<Props> = ({ initialFilters, isDarkMode = false }) =>
                         <p className={`text-sm ${textMuted}`}>จัดการและตรวจสอบสถานะต้นไม้รายต้น</p>
                     </div>
                 </div>
+                {/* Bulk Actions Toolbar */}
+                {selectedIds.size > 0 && (
+                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+                        <span className={`text-sm font-medium ${textMain} mr-2`}>
+                            เลือก {selectedIds.size} รายการ
+                        </span>
+
+                        {selectedStatus === 'ready_for_sale' && (
+                            <button
+                                onClick={handleReserve}
+                                className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg shadow-sm text-sm font-medium transition-colors"
+                            >
+                                <Lock className="w-4 h-4" /> จอง (Reserve)
+                            </button>
+                        )}
+
+                        {selectedStatus === 'reserved' && (
+                            <button
+                                onClick={handleSell}
+                                className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-sm text-sm font-medium transition-colors"
+                            >
+                                <ShoppingBag className="w-4 h-4" /> ขาย (Sold)
+                            </button>
+                        )}
+
+                        <button
+                            onClick={() => setSelectedIds(new Set())}
+                            className={`px-3 py-2 ${isDarkMode ? "bg-slate-700 hover:bg-slate-600" : "bg-white hover:bg-slate-50 border"} rounded-lg text-sm transition-colors`}
+                        >
+                            ยกเลิก
+                        </button>
+                    </div>
+                )}
             </div>
 
             {/* Filters */}
@@ -201,6 +310,11 @@ const TagListPage: React.FC<Props> = ({ initialFilters, isDarkMode = false }) =>
                         <table className="min-w-full text-sm text-left">
                             <thead className={`${theadBg} ${theadText} font-medium border-b`}>
                                 <tr>
+                                    <th className="px-4 py-3 w-[40px]">
+                                        <button onClick={toggleAllOnPage} className={`p-1 rounded ${isDarkMode ? "hover:bg-slate-700" : "hover:bg-slate-100"}`}>
+                                            {isAllSelectedOnPage ? <CheckSquare className={`w-4 h-4 ${cyanAccent}`} /> : <Square className={`w-4 h-4 ${textMutedLight}`} />}
+                                        </button>
+                                    </th>
                                     <th className="px-4 py-3">Tag Code</th>
                                     <th className="px-4 py-3">พันธุ์ / ขนาด</th>
                                     <th className="px-4 py-3">เกรด</th>
@@ -213,7 +327,12 @@ const TagListPage: React.FC<Props> = ({ initialFilters, isDarkMode = false }) =>
                             </thead>
                             <tbody className={`divide-y ${tbodyDivide}`}>
                                 {rows.map((row) => (
-                                    <tr key={row.id} className={`${rowHover} transition-colors`}>
+                                    <tr key={row.id} className={`${rowHover} transition-colors ${selectedIds.has(row.id) ? (isDarkMode ? "bg-cyan-900/20" : "bg-cyan-50") : ""}`}>
+                                        <td className="px-4 py-3">
+                                            <button onClick={() => toggleOne(row.id)} className={`p-1 rounded ${isDarkMode ? "hover:bg-slate-600" : "hover:bg-slate-200"}`}>
+                                                {selectedIds.has(row.id) ? <CheckSquare className={`w-4 h-4 ${cyanAccent}`} /> : <Square className={`w-4 h-4 ${textMutedLight}`} />}
+                                            </button>
+                                        </td>
                                         <td className={`px-4 py-3 font-mono font-medium ${cyanAccent}`}>{row.tag_code}</td>
                                         <td className="px-4 py-3">
                                             <div className={`font-medium ${textMain}`}>{row.species_name_th}</div>

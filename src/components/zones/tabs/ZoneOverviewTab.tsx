@@ -1,5 +1,8 @@
+
 // src/components/zones/tabs/ZoneOverviewTab.tsx
 import React from "react";
+import { ZoneLocationSection } from "../ZoneLocationSection";
+import ZoneTagKpiCards from "../ZoneTagKpiCards";
 
 type Props = {
     zoneId: string;
@@ -12,7 +15,7 @@ type Props = {
     };
     tagLifeTotals?: { total_tags?: number };
     inventorySummary?: { totalTagged: number; remaining: number };
-    plotTotals?: { totalSystem: number; totalTagged?: number; totalRemaining?: number; loading?: boolean };
+    plotTotals?: { totalSystem: number; totalTagged?: number; totalRemaining?: number; tagPct?: number; loading?: boolean };
     zoneInvSummary?: { trees_in_plot_now?: number };
     isMapOpen?: boolean;
     setIsMapOpen?: (open: boolean) => void;
@@ -37,14 +40,6 @@ const formatDate = (value?: string | null) => {
     });
 };
 
-const toGoogleEmbedUrl = (url?: string | null, lat?: number | null, lng?: number | null) => {
-    if (lat && lng) {
-        return `https://www.google.com/maps?q=${lat},${lng}&z=16&output=embed`;
-    }
-    if (!url) return "";
-    return url.includes("output=embed") ? url : `https://www.google.com/maps?q=${encodeURIComponent(url)}&output=embed`;
-};
-
 export function ZoneOverviewTab({
     zoneId,
     zone,
@@ -58,14 +53,6 @@ export function ZoneOverviewTab({
     onReload,
     avgTreeSize,
 }: Props) {
-    const [localMapOpen, setLocalMapOpen] = React.useState(false);
-    const mapOpen = isMapOpen ?? localMapOpen;
-    const toggleMap = setIsMapOpen ?? setLocalMapOpen;
-
-    // Fallback location values: prefer new zone_* fields, fallback to legacy fields
-    const mapUrl = zone?.zone_map_url ?? zone?.map_url ?? null;
-    const lat = zone?.zone_lat ?? zone?.lat ?? null;
-    const lng = zone?.zone_lng ?? zone?.lng ?? null;
 
     return (
         <div className="mt-4 space-y-4">
@@ -130,7 +117,7 @@ export function ZoneOverviewTab({
                                     สร้าง Tag แล้ว
                                 </div>
                                 <div className="text-base font-semibold leading-none text-emerald-900">
-                                    {toThaiNumber(inventorySummary.totalTagged)} ต้น
+                                    {toThaiNumber(plotTotals?.totalTagged ?? inventorySummary.totalTagged)} ต้น
                                 </div>
                             </div>
 
@@ -140,10 +127,19 @@ export function ZoneOverviewTab({
                                     ยังไม่สร้าง Tag
                                 </div>
                                 <div className="text-base font-semibold leading-none text-slate-900">
-                                    {toThaiNumber(inventorySummary.remaining)} ต้น
+                                    {toThaiNumber(plotTotals?.totalRemaining ?? inventorySummary.remaining)} ต้น
                                 </div>
                             </div>
                         </div>
+
+                        {/* KPI Cards: Remaining/Rai + Tag Progress */}
+                        <ZoneTagKpiCards
+                            areaRai={zone?.area_rai != null ? Number(zone.area_rai) : null}
+                            totalSystem={plotTotals?.totalSystem ?? null}
+                            totalTagged={plotTotals?.totalTagged ?? null}
+                            totalRemaining={plotTotals?.totalRemaining ?? null}
+                            tagPct={plotTotals?.tagPct ?? null}
+                        />
                     </section>
 
                     {/* 2) ภาพรวมการไหลของต้นไม้ในแปลง */}
@@ -220,74 +216,12 @@ export function ZoneOverviewTab({
                     </section>
 
                     {/* 3) พิกัดแปลง + Map Preview */}
-                    <section className="rounded-2xl border bg-white p-4">
-                        <div className="flex items-start justify-between gap-4">
-                            <div>
-                                <h3 className="text-base font-semibold text-slate-900">พิกัดแปลง (Zone Location)</h3>
-                                <p className="text-xs text-slate-500 mt-1">แสดงแผนที่แบบ Preview และสามารถขยายได้</p>
-                            </div>
-
-                            <button
-                                onClick={() => toggleMap(true)}
-                                className="rounded-xl border px-3 py-2 text-sm hover:bg-slate-50"
-                            >
-                                ขยายแผนที่
-                            </button>
-                        </div>
-
-                        {/* MAP PREVIEW */}
-                        <div className="mt-3 overflow-hidden rounded-2xl border bg-slate-50">
-                            <div className="h-[200px] w-full lg:h-[216px]">
-                                <iframe
-                                    title="Zone Map Preview"
-                                    src={toGoogleEmbedUrl(mapUrl, lat, lng)}
-                                    className="h-full w-full"
-                                    loading="lazy"
-                                    referrerPolicy="no-referrer-when-downgrade"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Lat/Lng + Open Button */}
-                        <div className="mt-2 flex items-center justify-between text-xs text-slate-600">
-                            <span>
-                                Lat: {lat ?? "-"} · Lng: {lng ?? "-"}
-                            </span>
-                            <a
-                                className="text-sky-600 hover:underline"
-                                href={mapUrl ?? "#"}
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                เปิดใน Google Maps
-                            </a>
-                        </div>
-                    </section>
+                    <ZoneLocationSection
+                        zone={zone}
+                        onReload={onReload}
+                    />
                 </div>
             </div>
-
-            {/* MAP MODAL (ขยายแผนที่) */}
-            {mapOpen && (
-                <div className="fixed inset-0 z-50 bg-black/40 p-4 flex items-center justify-center">
-                    <div className="w-full max-w-5xl rounded-2xl bg-white shadow-xl overflow-hidden">
-                        <div className="flex items-center justify-between p-4 border-b">
-                            <div className="font-semibold text-slate-900">แผนที่แปลง (Expanded View)</div>
-                            <button onClick={() => toggleMap(false)} className="rounded-xl border px-3 py-2 text-sm hover:bg-slate-50">
-                                ปิด
-                            </button>
-                        </div>
-                        <div className="h-[70vh] bg-slate-50">
-                            <iframe
-                                title="Zone Map Expanded"
-                                src={toGoogleEmbedUrl(mapUrl, lat, lng)}
-                                className="h-full w-full"
-                                loading="lazy"
-                                referrerPolicy="no-referrer-when-downgrade"
-                            />
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

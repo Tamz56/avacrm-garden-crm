@@ -1,8 +1,10 @@
 import React from "react";
 import { supabase } from "../../supabaseClient";
-import { QrCode, Printer, Copy, Loader2, Plus, X, Trash2 } from "lucide-react";
+import { QrCode, Printer, Copy, Loader2, Plus, X, Trash2, Archive, Edit3, FileText, CheckSquare, Package } from "lucide-react";
 import { useZoneTreeTags } from "../../hooks/useZoneTreeTags";
 import { PrintTagsModal } from "./PrintTagsModal";
+import { MoveToStockModal } from "./MoveToStockModal";
+import { EditTagDialog } from "../tags/EditTagDialog";
 import QRCode from "qrcode";
 
 type ZoneTreeTagsTableProps = {
@@ -79,6 +81,8 @@ const TAG_PRINT_LAYOUTS: Record<
 
 const APP_BASE_URL = process.env.NEXT_PUBLIC_APP_BASE_URL ?? "https://app.avacrm.com";
 
+type PlotOption = { id: string; note: string | null };
+
 type CreateTagModalProps = {
     zoneId: string;
     form: any;
@@ -88,6 +92,8 @@ type CreateTagModalProps = {
     saving: boolean;
     setSaving: (val: boolean) => void;
     speciesOptions: any[];
+    plots: PlotOption[];
+    plotsLoading: boolean;
 };
 
 const CreateTagModal: React.FC<CreateTagModalProps> = ({
@@ -99,6 +105,8 @@ const CreateTagModal: React.FC<CreateTagModalProps> = ({
     saving,
     setSaving,
     speciesOptions,
+    plots,
+    plotsLoading,
 }) => {
     const [isBatch, setIsBatch] = React.useState(false);
 
@@ -162,7 +170,11 @@ const CreateTagModal: React.FC<CreateTagModalProps> = ({
     const tagsCount = Number(form.tagsCount || 10);
     const requestedTrees = isBatch ? (qtyPerTag * tagsCount) : qtyPerTag;
     const remainingQty = inv ? Math.max(inv.planted_qty - taggedQty, 0) : 0;
-    const canSave = !!inv && requestedTrees > 0 && requestedTrees <= remainingQty && !loadingInv && !!form.speciesId && !!form.sizeLabel;
+    // UUID validation helper
+    const isUuid = (s?: string) =>
+        !!s && /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(s);
+
+    const canSave = !!inv && requestedTrees > 0 && requestedTrees <= remainingQty && !loadingInv && !!form.speciesId && !!form.sizeLabel && isUuid(form.plotId) && plots.length > 0;
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
@@ -194,9 +206,37 @@ const CreateTagModal: React.FC<CreateTagModalProps> = ({
 
         let error;
 
+        // Validate plotId before calling RPC
+        if (!form.plotId) {
+            alert("กรุณาเลือกแปลง (Plot) ก่อนบันทึก Tag");
+            setSaving(false);
+            return;
+        }
+
+        // Validate UUID format
+        const isValidUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(form.plotId);
+        if (!isValidUuid) {
+            alert("plotId ไม่ถูกต้อง (UUID): " + form.plotId);
+            setSaving(false);
+            return;
+        }
+
         if (isBatch) {
-            const { error: batchError } = await supabase.rpc("create_tree_tags_batch", {
-                p_zone_id: zoneId,
+            // Debug log for batch
+            console.log("create_tree_tags_batch_v2 payload", {
+                p_plot_id: form.plotId,
+                p_species_id: form.speciesId,
+                p_size_label: form.sizeLabel || null,
+                p_qty: form.qty || 1,
+                p_planting_row: form.row ? Number(form.row) : null,
+                p_planting_position: form.position ? Number(form.position) : null,
+                p_notes: form.notes || null,
+                p_tags_count: form.tagsCount || 10,
+            });
+
+            // ใช้ create_tree_tags_batch_v2 ที่รับ p_plot_id แทน p_zone_id
+            const { error: batchError } = await supabase.rpc("create_tree_tags_batch_v2", {
+                p_plot_id: form.plotId,
                 p_species_id: form.speciesId,
                 p_size_label: form.sizeLabel || null,
                 p_qty: form.qty || 1,
@@ -207,8 +247,21 @@ const CreateTagModal: React.FC<CreateTagModalProps> = ({
             });
             error = batchError;
         } else {
-            const { error: singleError } = await supabase.rpc("create_tree_tag", {
-                p_zone_id: zoneId,
+            // Debug log for single
+            console.log("create_tree_tag_v2 payload", {
+                p_plot_id: form.plotId,
+                p_species_id: form.speciesId,
+                p_size_label: form.sizeLabel || null,
+                p_qty: form.qty || 1,
+                p_planting_row: form.row ? Number(form.row) : null,
+                p_planting_position: form.position ? Number(form.position) : null,
+                p_status: "in_zone",
+                p_notes: form.notes || null,
+            });
+
+            // ใช้ create_tree_tag_v2 ที่รับ p_plot_id แทน p_zone_id
+            const { error: singleError } = await supabase.rpc("create_tree_tag_v2", {
+                p_plot_id: form.plotId,
                 p_species_id: form.speciesId,
                 p_size_label: form.sizeLabel || null,
                 p_qty: form.qty || 1,
@@ -291,6 +344,37 @@ const CreateTagModal: React.FC<CreateTagModalProps> = ({
                                 </option>
                             ))}
                         </select>
+                    </div>
+
+                    {/* Plot Selector */}
+                    <div>
+                        <label className="mb-1 block text-slate-600">เลือกแปลง (Plot)</label>
+                        <select
+                            name="plotId"
+                            value={form.plotId ?? ""}
+                            onChange={handleChange}
+                            disabled={plotsLoading || plots.length === 0}
+                            className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs disabled:bg-slate-50"
+                        >
+                            <option value="" disabled>
+                                {plotsLoading ? "กำลังโหลด..." : plots.length === 0 ? "ไม่มีแปลง" : "-- เลือกแปลง --"}
+                            </option>
+                            {plots.map((p) => (
+                                <option key={p.id} value={p.id}>
+                                    {(p.note ?? "Plot")} — {String(p.id).slice(0, 8)}
+                                </option>
+                            ))}
+                        </select>
+                        {!plotsLoading && plots.length === 0 && (
+                            <p className="mt-1 text-[10px] text-amber-600">
+                                ⚠️ โซนนี้ยังไม่มีแปลงย่อย (Plot) กรุณาสร้างแปลงก่อนจึงจะสร้าง Tag ได้
+                            </p>
+                        )}
+                        {plots.length === 1 && (
+                            <p className="mt-1 text-[10px] text-emerald-600">
+                                ✅ เลือกแปลงอัตโนมัติ (มีแปลงเดียว)
+                            </p>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-2">
@@ -455,7 +539,147 @@ export const ZoneTreeTagsTable: React.FC<ZoneTreeTagsTableProps> = ({ zoneId, on
         row: "",
         position: "",
         notes: "",
+        plotId: "",  // NEW: plot selector
     });
+
+    const [showMoveToStock, setShowMoveToStock] = React.useState(false);
+
+    // Edit Tag State
+    const [editingTag, setEditingTag] = React.useState<any | null>(null);
+
+    const handleEditTag = (tag: any) => {
+        setEditingTag(tag);
+    };
+
+    const handleEditSaved = () => {
+        setEditingTag(null);
+        reload();
+        if (onTagsChanged) onTagsChanged();
+    };
+
+    // Toast State
+    const [showStockToast, setShowStockToast] = React.useState(false);
+    const [isCorrectionMode, setIsCorrectionMode] = React.useState(false);
+    const [isBulkUpdating, setIsBulkUpdating] = React.useState(false);
+
+    // Bulk Status Logic
+    const handleBulkStatus = async (status: string, label: string) => {
+        if (selectedTagIds.length === 0) return;
+        if (isBulkUpdating) return; // Guard double submit
+
+        // 1) Hard Guard: Ensure all selected IDs exist in current visible rows
+        // Prevents stale IDs from pagination/filtering from being processed
+        const currentIds = new Set(rows.map(r => r.id));
+        const staleIds = selectedTagIds.filter(id => !currentIds.has(id));
+
+        if (staleIds.length > 0) {
+            alert(`ข้อมูลไม่ซิงค์: มี ${staleIds.length} รายการที่ไม่อยู่ในหน้านี้ (รายการที่เลือกค้างอยู่)\n\nระบบจะล้างการเลือก กรุณาเลือกรายการใหม่`);
+            setSelectedTagIds([]);
+            return;
+        }
+
+        // Debug Selection
+        const selectedRowsDebug = rows.filter(r => selectedTagIds.includes(r.id));
+        console.log("[DEBUG] Bulk Action:", label);
+        console.log("selectedIds:", selectedTagIds);
+
+        // Determine valid previous statuses for strict mode
+        let validPreStatuses: string[] = [];
+        if (status === 'dig_ordered') validPreStatuses = ['in_zone', 'available', 'selected_for_dig'];
+        else if (status === 'dug') validPreStatuses = ['dig_ordered'];
+        else if (status === 'ready_for_sale') validPreStatuses = ['dug'];
+
+        let notes: string | null = null;
+        let finalIds = selectedTagIds;
+
+        if (isCorrectionMode) {
+            const input = prompt(`[Correction Mode] กรุณาระบุหมายเหตุสำหรับการแก้ไขข้ามขั้นตอนไปเป็น "${label}" (${selectedTagIds.length} รายการ):`);
+            if (input === null) return;
+            if (!input.trim()) {
+                alert("⚠️ จำเป็นต้องระบุหมายเหตุเมื่อใช้งาน Correction Mode");
+                return;
+            }
+            notes = input;
+        } else {
+            // Strict Mode Validation
+            if (validPreStatuses.length > 0) {
+                const invalidRows = selectedRowsDebug.filter(r => !validPreStatuses.includes(r.status));
+                if (invalidRows.length > 0) {
+                    const examples = invalidRows.slice(0, 3).map(r => `- ${r.tag_code} (${r.status})`).join('\n');
+                    const moreCount = invalidRows.length - 3;
+                    const moreText = moreCount > 0 ? `\n...และอีก ${moreCount} รายการ` : "";
+                    const expectedText = validPreStatuses.join(" หรือ ");
+
+                    alert(`ไม่สามารถดำเนินการได้: มี ${invalidRows.length} รายการที่สถานะไม่ถูกต้อง\n\nตัวอย่างรายการที่ผิด:\n${examples}${moreText}\n\nสถานะที่ถูกต้องคือ: ${expectedText}\n\n(กรุณาเลือกเฉพาะรายการที่ถูกต้อง หรือเปิด Correction Mode)`);
+                    return;
+                }
+            }
+
+            const ok = window.confirm(`ยืนยันเปลี่ยนสถานะเป็น "${label}" สำหรับ ${selectedTagIds.length} รายการ?`);
+            if (!ok) return;
+        }
+
+        setIsBulkUpdating(true);
+
+        try {
+            console.log("Starting batch update for", finalIds.length, "items...");
+
+            // Use Promise.allSettled to allow partial success
+            const results = await Promise.allSettled(
+                finalIds.map(async (tagId) => {
+                    const { error } = await supabase.rpc('set_tag_status_v2', {
+                        p_tag_id: tagId,
+                        p_to_status: status,
+                        p_notes: notes,
+                        p_source: 'bulk_zone',
+                        p_changed_by: null // backend handles auth.uid()
+                    });
+                    if (error) throw error;
+                    return tagId;
+                })
+            );
+
+            // Tally results
+            const successCount = results.filter(r => r.status === 'fulfilled').length;
+            const failures = results.filter(r => r.status === 'rejected') as PromiseRejectedResult[];
+            const failCount = failures.length;
+
+            console.log(`Bulk Result: Success=${successCount}, Failed=${failCount}`);
+
+            // Alert Summary
+            if (failCount === 0) {
+                // Perfect Success
+                // Optional: Toast instead for perfect success to be less intrusive? 
+                // User requested "success message", alert is safe.
+                alert(`✅ เปลี่ยนสถานะสำเร็จครบ ${successCount} รายการ`);
+
+                if (status === 'ready_for_sale') {
+                    setShowStockToast(true);
+                    setTimeout(() => setShowStockToast(false), 5000);
+                }
+            } else {
+                // Partial or Total Failure
+                const sampleErrors = failures.slice(0, 3)
+                    .map(f => `- ${f.reason?.message || "Unknown error"}`)
+                    .join('\n');
+
+                alert(`⚠️ ดำเนินการเสร็จสิ้น:\n- สำเร็จ: ${successCount} รายการ\n- ล้มเหลว: ${failCount} รายการ\n\nตัวอย่างข้อผิดพลาด:\n${sampleErrors}`);
+            }
+
+            // Always clear selection and reload if at least one succeeded to reflect changes
+            if (successCount > 0) {
+                setSelectedTagIds([]);
+                reload();
+                if (onTagsChanged) onTagsChanged();
+            }
+
+        } catch (err: any) {
+            console.error("Bulk process error", err);
+            alert("เกิดข้อผิดพลาดในระบบ: " + err.message);
+        } finally {
+            setIsBulkUpdating(false);
+        }
+    };
 
     // Print Selection State
     const [selectedTagIds, setSelectedTagIds] = React.useState<string[]>([]);
@@ -477,6 +701,11 @@ export const ZoneTreeTagsTable: React.FC<ZoneTreeTagsTableProps> = ({ zoneId, on
     React.useEffect(() => {
         setCurrentPage(1);
     }, [pageSize, rows.length]);
+
+    // Clear selection on zone change
+    React.useEffect(() => {
+        setSelectedTagIds([]);
+    }, [zoneId]);
 
     const toggleSelect = (id: string) => {
         setSelectedTagIds((prev) =>
@@ -670,8 +899,40 @@ export const ZoneTreeTagsTable: React.FC<ZoneTreeTagsTableProps> = ({ zoneId, on
         return () => { cancelled = true; };
     }, []);
 
+    // Load plots for this zone (for plot selector in CreateTagModal)
+    const [plots, setPlots] = React.useState<PlotOption[]>([]);
+    const [plotsLoading, setPlotsLoading] = React.useState(false);
+    const [plotsError, setPlotsError] = React.useState<string | null>(null);
+
+    React.useEffect(() => {
+        if (!zoneId) return;
+        let cancelled = false;
+
+        (async () => {
+            setPlotsLoading(true);
+            setPlotsError(null);
+
+            const { data, error } = await supabase
+                .from("planting_plots")
+                .select("id, note")
+                .eq("zone_id", zoneId)
+                .order("created_at", { ascending: false, nullsFirst: false });
+
+            if (cancelled) return;
+
+            if (error) setPlotsError(error.message);
+            setPlots((data ?? []) as PlotOption[]);
+            setPlotsLoading(false);
+        })();
+
+        return () => { cancelled = true; };
+    }, [zoneId]);
+
+
     const handleOpenCreate = () => {
-        setForm((prev) => ({ ...prev, qty: 1 }));
+        // Auto-select plot if only one exists
+        const defaultPlotId = plots.length === 1 ? plots[0].id : "";
+        setForm((prev) => ({ ...prev, qty: 1, plotId: defaultPlotId }));
         setShowCreate(true);
     };
 
@@ -811,6 +1072,14 @@ export const ZoneTreeTagsTable: React.FC<ZoneTreeTagsTableProps> = ({ zoneId, on
         }
     };
 
+    // Validation for Bulk Actions
+    const selectedRows = rows.filter(r => selectedTagIds.includes(r.id));
+    // Correction Mode: Bypass strict status checks
+    // STRICTER: only 'in_zone' allowed for dig order (unless correction mode) as per user request to reduce confusion
+    const canDigOrder = selectedRows.length > 0 && (isCorrectionMode || selectedRows.every(r => r.status === 'in_zone'));
+    const canConfirmDug = selectedRows.length > 0 && (isCorrectionMode || selectedRows.every(r => r.status === 'dig_ordered'));
+    const canMoveToStock = selectedRows.length > 0 && (isCorrectionMode || selectedRows.every(r => r.status === 'dug'));
+
     return (
         <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center justify-between gap-2">
@@ -823,11 +1092,20 @@ export const ZoneTreeTagsTable: React.FC<ZoneTreeTagsTableProps> = ({ zoneId, on
                     </p>
                 </div>
                 <div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2 justify-end items-center">
+                        {/* Correction Toggle */}
+                        <label className="flex items-center gap-2 cursor-pointer select-none mr-2 border-r border-slate-200 pr-2">
+                            <input type="checkbox" className="sr-only" checked={isCorrectionMode} onChange={e => setIsCorrectionMode(e.target.checked)} />
+                            <div className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${isCorrectionMode ? 'bg-amber-500' : 'bg-slate-200'}`}>
+                                <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${isCorrectionMode ? 'translate-x-[18px]' : 'translate-x-1'}`} />
+                            </div>
+                            <span className={`text-xs font-medium ${isCorrectionMode ? "text-amber-700" : "text-slate-500"}`}>Correction</span>
+                        </label>
+
                         <select
                             value={layoutKey}
                             onChange={(e) => setLayoutKey(e.target.value as TagLayoutKey)}
-                            className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm"
+                            className="rounded-lg border border-slate-200 px-2 py-1.5 text-xs h-8"
                         >
                             {Object.entries(TAG_PRINT_LAYOUTS).map(([key, cfg]) => (
                                 <option key={key} value={key}>
@@ -835,20 +1113,75 @@ export const ZoneTreeTagsTable: React.FC<ZoneTreeTagsTableProps> = ({ zoneId, on
                                 </option>
                             ))}
                         </select>
+
                         <button
-                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                            type="button"
+                            className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                             disabled={selectedTagIds.length === 0}
                             onClick={handlePrintSelectedTags}
                         >
                             <Printer className="h-4 w-4" />
                             พิมพ์ ({selectedTagIds.length})
                         </button>
+
+                        <div className="h-8 w-px bg-slate-200 mx-1"></div>
+
+                        {/* Bulk Actions */}
                         <button
-                            className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white shadow-sm hover:bg-emerald-700"
+                            type="button"
+                            className="inline-flex items-center gap-1 rounded-lg border border-orange-200 bg-orange-50 px-2 py-1.5 text-xs font-medium text-orange-700 hover:bg-orange-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                            disabled={!canDigOrder || isBulkUpdating}
+                            onClick={() => {
+                                console.log("[CLICK] Dig Order button");
+                                handleBulkStatus('dig_ordered', 'สั่งขุด');
+                            }}
+                            title={!canDigOrder ? "ใช้ได้เมื่อเลือก Tag สถานะ In Zone ทั้งหมด" : ""}
+                        >
+                            {isBulkUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileText className="h-3.5 w-3.5" />}
+                            สั่งขุด
+                        </button>
+
+                        <button
+                            type="button"
+                            className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-2 py-1.5 text-xs font-medium text-blue-700 hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                            disabled={!canConfirmDug || isBulkUpdating}
+                            onClick={() => {
+                                console.log("[CLICK] Confirm Dug button");
+                                handleBulkStatus('dug', 'แจ้งขุดแล้ว');
+                            }}
+                            title={!canConfirmDug ? "ใช้ได้เมื่อเลือก Tag สถานะ Dig Ordered ทั้งหมด" : ""}
+                        >
+                            {isBulkUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckSquare className="h-3.5 w-3.5" />}
+                            ขุดแล้ว
+                        </button>
+
+                        <button
+                            type="button"
+                            className="inline-flex items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                            disabled={!canMoveToStock || isBulkUpdating}
+                            onClick={() => {
+                                console.log("[CLICK] Move to Stock button");
+                                handleBulkStatus('ready_for_sale', 'เข้าสต็อก (พร้อมขาย)');
+                            }}
+                            title={!canMoveToStock ? "ใช้ได้เมื่อเลือก Tag สถานะ Dug ทั้งหมด" : ""}
+                        >
+                            {isBulkUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Package className="h-3.5 w-3.5" />}
+                            เข้าสต็อก
+                        </button>
+
+                        {/* Old MoveToStock hidden/removed since 'ready_for_sale' covers it? 
+                            Or maybe we keep it for specific 'Stock' logic if different? 
+                            User request: "Stock (Ready)" -> calling set_tag_status_v1 works.
+                        */}
+
+                        <div className="h-8 w-px bg-slate-200 mx-1"></div>
+
+                        <button
+                            className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white shadow-sm hover:bg-emerald-700"
                             onClick={handleOpenCreate}
                         >
                             <Plus className="h-4 w-4" />
-                            สร้าง Tag ใหม่
+                            สร้าง Tag
                         </button>
                     </div>
                 </div>
@@ -946,6 +1279,13 @@ export const ZoneTreeTagsTable: React.FC<ZoneTreeTagsTableProps> = ({ zoneId, on
                                     <td className="px-3 py-2 text-right">
                                         <div className="flex items-center justify-end gap-1">
                                             <button
+                                                onClick={() => handleEditTag(row)}
+                                                className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                                                title="แก้ไข"
+                                            >
+                                                <Edit3 className="h-4 w-4" />
+                                            </button>
+                                            <button
                                                 onClick={() => handleCopyCode(row.tag_code)}
                                                 className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
                                                 title="คัดลอกรหัส"
@@ -1032,6 +1372,49 @@ export const ZoneTreeTagsTable: React.FC<ZoneTreeTagsTableProps> = ({ zoneId, on
                     saving={saving}
                     setSaving={setSaving}
                     speciesOptions={speciesOptions}
+                    plots={plots}
+                    plotsLoading={plotsLoading}
+                />
+            )}
+
+            {showMoveToStock && (
+                <MoveToStockModal
+                    selectedTagIds={selectedTagIds}
+                    onClose={() => setShowMoveToStock(false)}
+                    onSuccess={() => {
+                        setSelectedTagIds([]);
+                        reload();
+                        onTagsChanged?.();
+                    }}
+                />
+            )}
+
+            {showStockToast && (
+                <div className="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-lg bg-emerald-800 px-4 py-3 text-white shadow-2xl animate-in slide-in-from-bottom-5 fade-in duration-300">
+                    <Package className="h-5 w-5 text-emerald-400" />
+                    <div>
+                        <p className="font-semibold text-sm">ย้ายเข้า Stock เรียบร้อยแล้ว</p>
+                        <p className="text-xs opacity-90">สถานะเป็น Ready for Sale</p>
+                    </div>
+                    <a
+                        href="/stock?status=ready_for_sale"
+                        className="ml-2 rounded-md bg-white/20 px-3 py-1.5 text-xs font-medium text-white hover:bg-white/30"
+                    >
+                        ไปหน้า Stock
+                    </a>
+                    <button onClick={() => setShowStockToast(false)} className="text-white/60 hover:text-white">
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+            )}
+
+            {editingTag && (
+                <EditTagDialog
+                    open={!!editingTag}
+                    tag={editingTag}
+                    tagId={editingTag?.id}
+                    onClose={() => setEditingTag(null)}
+                    onSaved={handleEditSaved}
                 />
             )}
 

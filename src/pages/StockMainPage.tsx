@@ -71,79 +71,99 @@ const StockMainPage: React.FC<Props> = ({ onNavigateToZones, initialTagFilters, 
 
     return (
         <div className={`h-full flex flex-col ${containerBg}`}>
-            {/* Tabs */}
-            <div className={`px-6 pt-4 flex gap-2 border-b ${tabBarBg} overflow-x-auto`}>
-                {/* 1. ภาพรวมสต็อก (Lifecycle) */}
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("lifecycle")}
-                    className={`px-4 py-2 rounded-t-lg text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === "lifecycle"
-                        ? (isDarkMode ? "border-emerald-400 text-emerald-400 bg-slate-700/50" : "border-emerald-500 text-emerald-700 bg-emerald-50")
-                        : (isDarkMode ? "border-transparent text-slate-400 hover:text-white hover:bg-slate-700/30" : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50")
-                        }`}
-                >
-                    ภาพรวมสต็อก (Lifecycle)
-                </button>
+            {/* Tabs & Shortcuts */}
+            <div className={`px-6 pt-4 flex items-center justify-between border-b ${tabBarBg}`}>
+                <div className="flex gap-2 overflow-x-auto">
+                    {/* Shortcuts (Quick Filters) */}
+                    <div className="flex items-center gap-2 pr-4 border-r border-slate-200 dark:border-slate-700 mr-2">
+                        <button
+                            onClick={() => handleGoToTag({ status: 'ready_for_sale' })}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100/50 hover:bg-emerald-100 text-emerald-700 rounded-md text-sm font-medium transition-colors"
+                        >
+                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            พร้อมขาย
+                        </button>
+                        <button
+                            onClick={() => handleGoToTag({ status: 'reserved' })}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-100/50 hover:bg-amber-100 text-amber-700 rounded-md text-sm font-medium transition-colors"
+                        >
+                            <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+                            จองแล้ว
+                        </button>
+                    </div>
 
-                {/* 2. รายงานประจำเดือน */}
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("monthly_report")}
-                    className={`px-4 py-2 rounded-t-lg text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === "monthly_report"
-                        ? (isDarkMode ? "border-cyan-400 text-cyan-400 bg-slate-700/50" : "border-sky-500 text-sky-700 bg-sky-50")
-                        : (isDarkMode ? "border-transparent text-slate-400 hover:text-white hover:bg-slate-700/30" : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50")
-                        }`}
-                >
-                    รายงานประจำเดือน
-                </button>
+                    {/* 1. ภาพรวมสต็อก (Lifecycle) */}
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab("lifecycle")}
+                        className={`px-4 py-2 rounded-t-lg text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === "lifecycle"
+                            ? (isDarkMode ? "border-emerald-400 text-emerald-400 bg-slate-700/50" : "border-emerald-500 text-emerald-700 bg-emerald-50")
+                            : (isDarkMode ? "border-transparent text-slate-400 hover:text-white hover:bg-slate-700/30" : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50")
+                            }`}
+                    >
+                        ภาพรวมสต็อก (Lifecycle)
+                    </button>
 
-                {/* 3. ภาพรวมสต็อก (พันธุ์/ขนาด) */}
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("species_overview")}
-                    className={`px-4 py-2 rounded-t-lg text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === "species_overview"
-                        ? (isDarkMode ? "border-emerald-400 text-emerald-400 bg-slate-700/50" : "border-emerald-500 text-emerald-700 bg-emerald-50")
-                        : (isDarkMode ? "border-transparent text-slate-400 hover:text-white hover:bg-slate-700/30" : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50")
-                        }`}
-                >
-                    ภาพรวมสต็อก (พันธุ์/ขนาด)
-                </button>
+                    {/* 2. รายงานประจำเดือน */}
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab("monthly_report")}
+                        className={`px-4 py-2 rounded-t-lg text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === "monthly_report"
+                            ? (isDarkMode ? "border-cyan-400 text-cyan-400 bg-slate-700/50" : "border-sky-500 text-sky-700 bg-sky-50")
+                            : (isDarkMode ? "border-transparent text-slate-400 hover:text-white hover:bg-slate-700/30" : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50")
+                            }`}
+                    >
+                        รายงานประจำเดือน
+                    </button>
 
-                {/* 4. ค้นหา Tag (รายต้น) */}
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("tags")}
-                    className={`px-4 py-2 rounded-t-lg text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === "tags"
-                        ? (isDarkMode ? "border-violet-400 text-violet-400 bg-slate-700/50" : "border-violet-500 text-violet-700 bg-violet-50")
-                        : (isDarkMode ? "border-transparent text-slate-400 hover:text-white hover:bg-slate-700/30" : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50")
-                        }`}
-                >
-                    ค้นหา Tag (รายต้น)
-                </button>
+                    {/* 3. ภาพรวมสต็อก (พันธุ์/ขนาด) */}
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab("species_overview")}
+                        className={`px-4 py-2 rounded-t-lg text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === "species_overview"
+                            ? (isDarkMode ? "border-emerald-400 text-emerald-400 bg-slate-700/50" : "border-emerald-500 text-emerald-700 bg-emerald-50")
+                            : (isDarkMode ? "border-transparent text-slate-400 hover:text-white hover:bg-slate-700/30" : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50")
+                            }`}
+                    >
+                        ภาพรวมสต็อก (พันธุ์/ขนาด)
+                    </button>
 
-                {/* 5. ต้นพิเศษ */}
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("special_trees")}
-                    className={`px-4 py-2 rounded-t-lg text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === "special_trees"
-                        ? (isDarkMode ? "border-amber-400 text-amber-400 bg-slate-700/50" : "border-amber-500 text-amber-700 bg-amber-50")
-                        : (isDarkMode ? "border-transparent text-slate-400 hover:text-white hover:bg-slate-700/30" : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50")
-                        }`}
-                >
-                    ต้นพิเศษ
-                </button>
+                    {/* 4. ค้นหา Tag (รายต้น) */}
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab("tags")}
+                        className={`px-4 py-2 rounded-t-lg text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === "tags"
+                            ? (isDarkMode ? "border-violet-400 text-violet-400 bg-slate-700/50" : "border-violet-500 text-violet-700 bg-violet-50")
+                            : (isDarkMode ? "border-transparent text-slate-400 hover:text-white hover:bg-slate-700/30" : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50")
+                            }`}
+                    >
+                        ค้นหา Tag (รายต้น)
+                    </button>
 
-                {/* 6. ฐานข้อมูลต้นไม้ */}
-                <button
-                    type="button"
-                    onClick={() => setActiveTab("species_db")}
-                    className={`px-4 py-2 rounded-t-lg text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === "species_db"
-                        ? (isDarkMode ? "border-emerald-400 text-emerald-400 bg-slate-700/50" : "border-emerald-500 text-emerald-700 bg-emerald-50")
-                        : (isDarkMode ? "border-transparent text-slate-400 hover:text-white hover:bg-slate-700/30" : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50")
-                        }`}
-                >
-                    ฐานข้อมูลต้นไม้
-                </button>
+                    {/* 5. ต้นพิเศษ */}
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab("special_trees")}
+                        className={`px-4 py-2 rounded-t-lg text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === "special_trees"
+                            ? (isDarkMode ? "border-amber-400 text-amber-400 bg-slate-700/50" : "border-amber-500 text-amber-700 bg-amber-50")
+                            : (isDarkMode ? "border-transparent text-slate-400 hover:text-white hover:bg-slate-700/30" : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50")
+                            }`}
+                    >
+                        ต้นพิเศษ
+                    </button>
+
+                    {/* 6. ฐานข้อมูลต้นไม้ */}
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab("species_db")}
+                        className={`px-4 py-2 rounded-t-lg text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === "species_db"
+                            ? (isDarkMode ? "border-emerald-400 text-emerald-400 bg-slate-700/50" : "border-emerald-500 text-emerald-700 bg-emerald-50")
+                            : (isDarkMode ? "border-transparent text-slate-400 hover:text-white hover:bg-slate-700/30" : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50")
+                            }`}
+                    >
+                        ฐานข้อมูลต้นไม้
+                    </button>
+                </div>
             </div>
 
             {/* Content */}

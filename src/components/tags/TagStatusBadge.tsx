@@ -2,7 +2,7 @@ import React from 'react';
 
 export type TagStatus =
     | "in_zone"
-    | "available"
+    | "ready_for_sale"
     | "reserved"
     | "dig_ordered"
     | "dug"
@@ -13,7 +13,7 @@ export type TagStatus =
 
 export const STATUS_BADGE_LABEL: Record<string, string> = {
     in_zone: "In zone",
-    available: "พร้อมขาย",
+    ready_for_sale: "พร้อมขาย",
     reserved: "จองแล้ว",
     dig_ordered: "Dig ordered",
     dug: "ขุดแล้ว",
@@ -25,7 +25,7 @@ export const STATUS_BADGE_LABEL: Record<string, string> = {
 
 export const STATUS_BADGE_COLOR: Record<string, string> = {
     in_zone: "bg-slate-100 text-slate-700",
-    available: "bg-emerald-50 text-emerald-700",
+    ready_for_sale: "bg-emerald-50 text-emerald-700",
     reserved: "bg-amber-50 text-amber-700",
     dig_ordered: "bg-orange-50 text-orange-700",
     dug: "bg-sky-50 text-sky-700",

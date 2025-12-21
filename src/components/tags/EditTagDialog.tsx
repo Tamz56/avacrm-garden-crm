@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import { TagSearchRow } from "../../hooks/useTagSearch";
 import { trunkSizeOptions } from "../../constants/treeOptions";
+import { History, User, AlertCircle, Info, ArrowRight, FileText } from "lucide-react";
+import { TagTimeline } from "./TagTimeline";
 
 type EditTagDialogProps = {
     open: boolean;
@@ -10,6 +12,10 @@ type EditTagDialogProps = {
     onClose: () => void;
     onSaved?: () => void; // ให้ TagList reload หลังเซฟได้
 };
+
+// Valid Statuses for UI Dictionary (Guard)
+// Valid Statuses for UI Dictionary (Guard) - REMOVED per user request
+// Status validation is now handled exclusively by the RPC response.
 
 export const EditTagDialog: React.FC<EditTagDialogProps> = ({
     open,
@@ -21,10 +27,14 @@ export const EditTagDialog: React.FC<EditTagDialogProps> = ({
     const [tag, setTag] = useState<TagSearchRow | null>(initialTag || null);
     const [loadingTag, setLoadingTag] = useState(false);
 
+    // Timeline State
+    const [activeTab, setActiveTab] = useState<'general' | 'timeline'>('general');
+
     const [sizeLabel, setSizeLabel] = useState("");
     const [grade, setGrade] = useState<string | "">("")
     const [status, setStatus] = useState<string>("");  // New: Tag status
     const [note, setNote] = useState("");
+    const [correctionMode, setCorrectionMode] = useState(false); // New: Correction Mode
 
     // Special Tree Fields
     const [treeCategory, setTreeCategory] = useState("normal");
@@ -65,15 +75,6 @@ export const EditTagDialog: React.FC<EditTagDialogProps> = ({
             setGrade(tag.grade ?? "");
             setStatus(tag.status ?? "in_zone");  // New: Load current status
             setNote(tag.note ?? "");
-            // Wait, previous code used tag.note. Let's stick to what was there or check.
-            // In previous turns, I saw `note` in `view_special_trees` but `notes` in `tree_tags`.
-            // `TagSearchRow` usually matches the view.
-            // Let's assume `note` or `notes`. The previous code used `tag.note`.
-            // However, the update uses `notes: note`.
-            // Let's try `tag.note ?? tag.notes ?? ""` to be safe if we are unsure, but `TagSearchRow` likely has one.
-            // Looking at `useTagSearch.ts` from previous context... it had `note: string | null`.
-            // So `tag.note` is likely correct for the read.
-            setNote(tag.note ?? "");
 
             setTreeCategory(tag.tree_category ?? "normal");
             setDisplayName(tag.display_name ?? "");
@@ -85,35 +86,86 @@ export const EditTagDialog: React.FC<EditTagDialogProps> = ({
     if (!open) return null;
     if (!tag && !loadingTag) return null;
 
+    // Validation Helper
+    const isStrictFlow = (curr: string, next: string) => {
+        if (!curr || curr === next) return true;
+        // In Zone -> Dig Ordered
+        if (curr === 'in_zone' || curr === 'available') return next === 'dig_ordered' || next === 'selected_for_dig';
+        // Dig Ordered -> Dug
+        if (curr === 'dig_ordered') return next === 'dug';
+        // Dug -> Ready (Stock)
+        if (curr === 'dug') return next === 'ready_for_sale';
+        // Ready -> Reserved
+        if (curr === 'ready_for_sale') return next === 'reserved';
+        // Reserved -> Sold/Shipped
+        if (curr === 'reserved') return ['shipped', 'planted', 'sold'].includes(next);
+
+        return false;
+    };
+
+    const isCorrectionNeeded = tag && status && tag.status !== status && !isStrictFlow(tag.status, status);
+
     async function handleSave(e: React.FormEvent) {
         e.preventDefault();
         if (!tag) return;
+
+        // Validation: Correction requires notes
+        if (isCorrectionNeeded && !note.trim()) {
+            alert("⚠️ การเปลี่ยนสถานะข้ามขั้นตอน (Correction) จำเป็นต้องระบุหมายเหตุ");
+            return;
+        }
+
+        // Validate Status Dictionary - REMOVED per user request to rely on backend/RPC error
+        // if (status && !ALLOWED_TAG_STATUSES.includes(status)) { ... }
+
         setSaving(true);
         setError(null);
 
-        const { error } = await supabase
-            .from("tree_tags")
-            .update({
-                size_label: sizeLabel || null,
-                grade: grade || null,
-                status: status || null,  // New: Update status
-                notes: note || null,
-                tree_category: treeCategory === "normal" ? null : treeCategory,
-                display_name: displayName || null,
-                feature_notes: featureNotes || null,
-                primary_image_url: primaryImageUrl || null,
-            })
-            .eq("id", tag.id);
+        try {
+            // 1. Handle Status Change via NEW RPC (v2)
+            if (status !== tag.status) {
+                const { error: rpcError } = await supabase.rpc('set_tag_status_v2', {
+                    p_tag_id: tag.id,
+                    p_to_status: status,
+                    p_notes: note || null,
+                    p_source: 'edit_dialog',
+                    p_changed_by: null // Let backend use auth.uid()
+                });
 
-        if (error) {
-            console.error("update tag error", error);
-            setError(error.message);
-        } else {
+                if (rpcError) {
+                    throw new Error(`ไม่สามารถเปลี่ยนสถานะได้: ${rpcError.message}`);
+                }
+
+                // Update local state to prevent "double submit" or history duplication if not closed immediately
+                setTag(prev => prev ? { ...prev, status: status } : null);
+            }
+
+            // 2. Update other fields directly
+            // Exclude status from this update as it is handled by RPC
+            const { error: updateError } = await supabase
+                .from("tree_tags")
+                .update({
+                    size_label: sizeLabel || null,
+                    grade: grade || null,
+                    notes: note || null, // Shared with status history, but also kept in main record for quick access
+                    tree_category: treeCategory === "normal" ? null : treeCategory,
+                    display_name: displayName || null,
+                    feature_notes: featureNotes || null,
+                    primary_image_url: primaryImageUrl || null,
+                })
+                .eq("id", tag.id);
+
+            if (updateError) throw updateError;
+
             if (onSaved) onSaved();
             onClose();
-        }
 
-        setSaving(false);
+        } catch (err: any) {
+            console.error("update tag error", err);
+            setError(err.message);
+        } finally {
+            setSaving(false);
+        }
     }
 
     async function handleUploadImage(e: React.ChangeEvent<HTMLInputElement>) {
@@ -147,13 +199,19 @@ export const EditTagDialog: React.FC<EditTagDialogProps> = ({
     return (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/20">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto">
-                <h2 className="text-lg font-semibold mb-4">
-                    {loadingTag ? "กำลังโหลด..." : `แก้ไข Tag ${tag?.tag_code || ''}`}
-                </h2>
+                <div className="flex items-center justify-between mb-4">
+                    <h2 className="text-lg font-semibold">
+                        {loadingTag ? "กำลังโหลด..." : `แก้ไข Tag ${tag?.tag_code || ''}`}
+                    </h2>
+                    <div className="flex bg-slate-100 p-1 rounded-lg">
+                        <button onClick={() => setActiveTab('general')} className={`px-3 py-1 rounded-md text-xs font-medium transition-colors ${activeTab === 'general' ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}>ทั่วไป</button>
+                        <button onClick={() => setActiveTab('timeline')} className={`px-3 py-1 rounded-md text-xs font-medium transition-colors flex items-center gap-1 ${activeTab === 'timeline' ? 'bg-white shadow text-slate-900' : 'text-slate-500 hover:text-slate-700'}`}><History className="w-3 h-3" /> ประวัติ</button>
+                    </div>
+                </div>
 
                 {loadingTag ? (
                     <div className="text-center py-8 text-slate-500">กำลังโหลดข้อมูล...</div>
-                ) : (
+                ) : activeTab === 'general' ? (
                     <form onSubmit={handleSave} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
@@ -208,7 +266,7 @@ export const EditTagDialog: React.FC<EditTagDialogProps> = ({
                                     <option value="root_prune_4">✂️ ตัดราก 4 (root_prune_4)</option>
                                 </optgroup>
                                 <optgroup label="พร้อมยก">
-                                    <option value="ready_to_lift">✅ พร้อมยก/พร้อมขาย (ready_to_lift)</option>
+                                    <option value="ready_for_sale">✅ เข้าสต็อก/พร้อมขาย (ready_for_sale)</option>
                                 </optgroup>
                                 <optgroup label="ขาย/จัดส่ง">
                                     <option value="reserved">🔒 จองแล้ว (reserved)</option>
@@ -226,6 +284,18 @@ export const EditTagDialog: React.FC<EditTagDialogProps> = ({
                             <p className="mt-1 text-[11px] text-slate-500">
                                 เปลี่ยนสถานะเพื่อบันทึก lifecycle ของต้นไม้
                             </p>
+                            <div className="mt-2 flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="correctionMode"
+                                    checked={correctionMode}
+                                    onChange={(e) => setCorrectionMode(e.target.checked)}
+                                    className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                                />
+                                <label htmlFor="correctionMode" className="text-xs text-slate-600 select-none">
+                                    Correction Mode (อนุญาตข้าม Step / แก้ไขย้อนหลัง)
+                                </label>
+                            </div>
                         </div>
 
                         <div>
@@ -347,6 +417,18 @@ export const EditTagDialog: React.FC<EditTagDialogProps> = ({
                             </button>
                         </div>
                     </form>
+                ) : (
+                    // New TagTimeline Component
+                    <div>
+                        {tag?.id ? (
+                            <TagTimeline tagId={tag.id} />
+                        ) : (
+                            <div className="text-center py-12 text-slate-400 opacity-60">
+                                <History className="w-8 h-8 mb-2 mx-auto" />
+                                <span className="text-sm">ไม่พบ Tag ID</span>
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
         </div>
