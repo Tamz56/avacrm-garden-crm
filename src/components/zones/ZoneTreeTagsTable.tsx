@@ -627,14 +627,27 @@ export const ZoneTreeTagsTable: React.FC<ZoneTreeTagsTableProps> = ({ zoneId, on
             // Use Promise.allSettled to allow partial success
             const results = await Promise.allSettled(
                 finalIds.map(async (tagId) => {
-                    const { error } = await supabase.rpc('set_tag_status_v2', {
-                        p_tag_id: tagId,
-                        p_to_status: status,
-                        p_notes: notes,
-                        p_source: 'bulk_zone',
-                        p_changed_by: null // backend handles auth.uid()
-                    });
-                    if (error) throw error;
+                    // Choose RPC based on correction mode
+                    if (isCorrectionMode) {
+                        // Use FORCE wrapper (admin-only, notes required)
+                        const { error } = await supabase.rpc('force_set_tree_tag_status_v1', {
+                            p_tag_id: tagId,
+                            p_to_status: status,
+                            p_source: 'bulk_zone',
+                            p_notes: notes // Already validated non-empty for correction mode
+                        });
+                        if (error) throw error;
+                    } else {
+                        // Normal flow
+                        const { error } = await supabase.rpc('set_tag_status_v2', {
+                            p_tag_id: tagId,
+                            p_to_status: status,
+                            p_notes: notes,
+                            p_source: 'bulk_zone',
+                            p_changed_by: null // backend handles auth.uid()
+                        });
+                        if (error) throw error;
+                    }
                     return tagId;
                 })
             );

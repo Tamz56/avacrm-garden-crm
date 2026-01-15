@@ -122,21 +122,38 @@ export const EditTagDialog: React.FC<EditTagDialogProps> = ({
         setError(null);
 
         try {
-            // 1. Handle Status Change via NEW RPC (v2)
+            // 1. Handle Status Change via RPC
             if (status !== tag.status) {
-                const { error: rpcError } = await supabase.rpc('set_tag_status_v2', {
-                    p_tag_id: tag.id,
-                    p_to_status: status,
-                    p_notes: note || null,
-                    p_source: 'edit_dialog',
-                    p_changed_by: null // Let backend use auth.uid()
-                });
-
-                if (rpcError) {
-                    throw new Error(`ไม่สามารถเปลี่ยนสถานะได้: ${rpcError.message}`);
+                // Correction mode requires notes and uses FORCE wrapper
+                if (correctionMode) {
+                    if (!note.trim()) {
+                        throw new Error("⚠️ Correction Mode ต้องระบุหมายเหตุ");
+                    }
+                    // Use FORCE wrapper RPC (admin-only, notes required)
+                    const { error: forceError } = await supabase.rpc('force_set_tree_tag_status_v1', {
+                        p_tag_id: tag.id,
+                        p_to_status: status,
+                        p_source: 'edit_dialog',
+                        p_notes: note
+                    });
+                    if (forceError) {
+                        throw new Error(`FORCE ไม่สำเร็จ: ${forceError.message}`);
+                    }
+                } else {
+                    // Normal flow - use set_tag_status_v2
+                    const { error: rpcError } = await supabase.rpc('set_tag_status_v2', {
+                        p_tag_id: tag.id,
+                        p_to_status: status,
+                        p_notes: note || null,
+                        p_source: 'edit_dialog',
+                        p_changed_by: null // Let backend use auth.uid()
+                    });
+                    if (rpcError) {
+                        throw new Error(`ไม่สามารถเปลี่ยนสถานะได้: ${rpcError.message}`);
+                    }
                 }
 
-                // Update local state to prevent "double submit" or history duplication if not closed immediately
+                // Update local state to prevent "double submit"
                 setTag(prev => prev ? { ...prev, status: status } : null);
             }
 

@@ -2,6 +2,10 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Documentation
+
+- [Tree Tag Status Runbook](./docs/runbook-tree-tag-status.md) - Normal vs FORCE status updates
+
 ## Available Scripts
 
 In the project directory, you can run:
