@@ -7,20 +7,18 @@ import {
 } from "../../hooks/useDealStockPickerOptions";
 
 export type StockItemOption = {
-    id: string; // composite key: zone_id-species_id-size_label-grade_id
+    id: string; // composite key: stock_group_id or zone_key-species-size
     label: string;
-    speciesId: string;
     speciesName: string;
     speciesCode: string | null;
     sizeLabel: string | null;
     heightLabel: string | null;
-    gradeId: string | null;
     gradeName: string | null;
-    zoneId: string;
-    zoneName: string;
-    farmName: string;
+    zoneKey: string | null;
+    zoneName: string | null;
     quantityAvailable: number;
     basePrice: number | null;
+    stockGroupId?: string;
 };
 
 interface StockItemSelectProps {
@@ -30,25 +28,25 @@ interface StockItemSelectProps {
 }
 
 function makeCompositeKey(o: DealStockPickerOption): string {
-    return `${o.zone_id}-${o.species_id}-${o.size_label ?? ""}-${o.grade_id ?? ""}`;
+    // ใช้ stock_group_id ถ้ามี หรือสร้าง composite key จาก zone + species + size
+    if (o.stock_group_id) return o.stock_group_id;
+    return `${o.zone_key ?? ""}-${o.species_name_th ?? ""}-${o.size_label ?? ""}`;
 }
 
 function mapToStockItemOption(o: DealStockPickerOption): StockItemOption {
     return {
         id: makeCompositeKey(o),
         label: makeDealStockOptionLabel(o),
-        speciesId: o.species_id,
         speciesName: o.species_name_th ?? o.species_name_en ?? o.species_code ?? "ไม่ทราบพันธุ์",
-        speciesCode: o.species_code,
+        speciesCode: o.species_code ?? null,
         sizeLabel: o.size_label,
-        heightLabel: o.height_label,
-        gradeId: o.grade_id,
-        gradeName: o.grade_name,
-        zoneId: o.zone_id,
+        heightLabel: o.height_label ?? null,
+        gradeName: o.grade_name ?? null,
+        zoneKey: o.zone_key ?? null,
         zoneName: o.zone_name,
-        farmName: o.farm_name,
         quantityAvailable: o.available_qty ?? 0,
         basePrice: o.unit_price ?? null,
+        stockGroupId: o.stock_group_id,
     };
 }
 
@@ -99,4 +97,3 @@ const StockItemSelect: React.FC<StockItemSelectProps> = ({
 };
 
 export default StockItemSelect;
-

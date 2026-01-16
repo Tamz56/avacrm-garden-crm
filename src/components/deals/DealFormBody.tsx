@@ -3,7 +3,8 @@ import StockItemSelect, { StockItemOption } from "./StockItemSelect";
 
 export interface DealItem {
     id?: string;
-    stock_item_id?: string;
+    stock_item_id?: string; // deprecated - ใช้ stock_group_id แทน
+    stock_group_id?: string; // FK to stock_groups
     description?: string;
     tree_name?: string;
     size_label?: string;
@@ -98,13 +99,23 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
         const next = [...items];
         const item = next[index];
 
-        item.stock_item_id = opt?.id;
+        // ใช้ stock_group_id (ถ้ามี) แทน stock_item_id
+        item.stock_group_id = opt?.stockGroupId || undefined;
+        item.stock_item_id = undefined; // ไม่ใช้แล้ว
 
         if (opt) {
             const desc = `${opt.speciesName} (${opt.speciesCode}) · ${opt.sizeLabel}${opt.zoneName ? ` · ${opt.zoneName}` : ""}`;
             item.description = desc;
             item.tree_name = opt.speciesName;
             item.size_label = opt.sizeLabel;
+
+            // Auto-set trunk_size_inch จาก sizeLabel (parse "6" จาก "6 นิ้ว" หรือ "6")
+            if (opt.sizeLabel) {
+                const sizeMatch = opt.sizeLabel.match(/(\d+)/);
+                if (sizeMatch) {
+                    item.trunk_size_inch = parseInt(sizeMatch[1], 10);
+                }
+            }
 
             // Auto-fill height if available (parse "2.5m" -> 2.5)
             if (opt.heightLabel) {
@@ -117,6 +128,9 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
             if (opt.basePrice) {
                 item.price_per_tree = opt.basePrice;
             }
+        } else {
+            // Clear when deselected
+            item.trunk_size_inch = undefined;
         }
 
         setItems(next);
@@ -335,10 +349,15 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
                                 <div>
                                     <label className="block text-xs text-slate-500 mb-1">
                                         ขนาดลำต้น (นิ้ว)
+                                        {item.stock_group_id && (
+                                            <span className="text-emerald-600 ml-1">(ล็อกจากสต็อก)</span>
+                                        )}
                                     </label>
                                     <select
-                                        className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                                        className={`w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 ${item.stock_group_id ? "bg-slate-100 cursor-not-allowed" : ""
+                                            }`}
                                         value={item.trunk_size_inch || ""}
+                                        disabled={!!item.stock_group_id}
                                         onChange={(e) =>
                                             handleItemChange(
                                                 index,

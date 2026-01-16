@@ -106,7 +106,8 @@ export const EditDealModal: React.FC<EditDealModalProps> = ({
                 if (dealItems) {
                     const mappedItems: DealItem[] = dealItems.map((item: any) => ({
                         id: item.id,
-                        stock_item_id: item.stock_item_id,
+                        stock_group_id: item.stock_group_id, // ใช้ stock_group_id
+                        stock_item_id: item.stock_item_id, // deprecated
                         description: item.description,
                         tree_name: item.description, // Fallback
                         size_label: "",
@@ -176,7 +177,8 @@ export const EditDealModal: React.FC<EditDealModalProps> = ({
             if (items.length > 0) {
                 const itemsToInsert = items.map(item => ({
                     deal_id: deal.id,
-                    stock_item_id: item.stock_item_id || null,
+                    stock_group_id: item.stock_group_id || null, // ใช้ stock_group_id แทน
+                    stock_item_id: null, // deprecated - ไม่ใช้แล้ว
                     description: item.description || item.tree_name || "ไม่ระบุ",
                     quantity: item.quantity,
                     unit_price: item.price_per_tree,

@@ -2,30 +2,15 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Loader2,
-  AlertCircle,
   RefreshCcw,
-  ChevronRight,
-  MapPin,
-  Info,
   Plus,
-  DollarSign,
-  Calendar,
-  TreePine,
-  CheckCircle,
 } from "lucide-react";
 import { supabase } from "../../supabaseClient";
 import DealCommissionPanel from "./DealCommissionPanel";
-import StockItemSelect, {
-  StockItemOption,
-} from "./StockItemSelect";
-import DealStockSummaryCard, { DealStockAllocation } from "../DealStockSummaryCard";
-import DealReservedTagsPanel from "../customers/deals/DealReservedTagsPanel";
-import DealDigOrdersCard from "../customers/deals/DealDigOrdersCard";
-import DealShipmentsCard, { DealShipment } from "./DealShipmentsCard";
-import { PaymentStatusBadge } from "./PaymentStatusBadge";
+import { DealStockAllocation } from "../DealStockSummaryCard";
+import { DealShipment } from "./DealShipmentsCard";
 import { DealPaymentModal, PaymentFormValues } from "./DealPaymentModal";
 import { EditDealModal } from "./EditDealModal";
-import { Pencil } from "lucide-react";
 import DealFormBody, { DealItem, TeamShare } from "./DealFormBody";
 import NewShipmentModal from "./NewShipmentModal";
 import type { DealShippingSummary } from "../../types/dealShipping";
@@ -58,20 +43,7 @@ type DealWithShipping = Deal & {
   shippingSummary?: DealShippingSummary;
 };
 
-type DealStockSummaryRow = {
-  deal_id: string;
-  deal_code: string | null;
-  deal_title: string | null;
-  deal_item_id: string;
-  deal_quantity: number | null;
-  stock_item_id: string;
-  size_label: string | null;
-  zone_name: string | null;
-  stock_quantity_available: number | null;
-  total_moved_for_deal: number | null;
-};
-
-const toThaiBaht = (val: number | null | undefined) =>
+const _toThaiBaht = (val: number | null | undefined) =>
   val == null
     ? "-"
     : `฿${val.toLocaleString(undefined, {
@@ -185,7 +157,8 @@ const NewDealModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: 
       if (deal?.id && items.length > 0) {
         const itemsToInsert = items.map(item => ({
           deal_id: deal.id,
-          stock_item_id: item.stock_item_id || null,
+          stock_group_id: item.stock_group_id || null, // ใช้ stock_group_id แทน
+          stock_item_id: null, // deprecated - ไม่ใช้แล้ว
           description: item.description || item.tree_name || "ไม่ระบุ",
           quantity: item.quantity,
           unit_price: item.price_per_tree,
@@ -292,20 +265,20 @@ interface DealsMainProps {
 const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
   const [deals, setDeals] = useState<DealWithShipping[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm] = useState("");
   const [showNewDealModal, setShowNewDealModal] = useState(false);
 
   // State for DealStockSummaryCard & DealShipmentsCard
-  const [allocations, setAllocations] = useState<DealStockAllocation[]>([]);
+  const [, setAllocations] = useState<DealStockAllocation[]>([]);
   const [shipments, setShipments] = useState<DealShipment[]>([]);
   const [dealItems, setDealItems] = useState<DealItem[]>([]);
 
   // Use the hook for payment summary
   const { data: paymentSummary, refetch: refetchPaymentSummary } = useDealPaymentSummary(selectedDealId);
   const { payments, refetch: refetchPayments } = useDealPayments(selectedDealId || undefined);
-  const [loadingStockData, setLoadingStockData] = useState(false);
+  const [, setLoadingStockData] = useState(false);
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [editingPayment, setEditingPayment] = useState<any | null>(null); // TODO: Use DealPayment type
@@ -472,7 +445,7 @@ const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
     }
 
     setLoadingStockData(false);
-  }, [selectedDealId, deals]); // Depend on deals instead of selectedDeal
+  }, [selectedDealId]); // Only depend on selectedDealId
 
   useEffect(() => {
     loadStockData();
@@ -503,7 +476,7 @@ const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
     null;
 
   const [showCommissionPanel, setShowCommissionPanel] = useState(false);
-  const [closingDeal, setClosingDeal] = useState(false);
+  const [, setClosingDeal] = useState(false);
 
   const handleNewDealCreated = (newDeal: any) => {
     loadDeals();
@@ -575,11 +548,11 @@ const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
   const handleSubmitPayment = async (values: PaymentFormValues) => {
     if (!selectedDealId) return;
     try {
-      let data, error;
+      let error;
 
       if (editingPayment) {
         // UPDATE existing payment
-        ({ data, error } = await supabase.rpc("update_deal_payment", {
+        ({ error } = await supabase.rpc("update_deal_payment", {
           p_payment_id: editingPayment.id,
           p_amount: values.amount,
           p_payment_type: values.payment_type,
@@ -589,7 +562,7 @@ const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
         }));
       } else {
         // CREATE new payment
-        ({ data, error } = await supabase.rpc("record_deal_payment", {
+        ({ error } = await supabase.rpc("record_deal_payment", {
           p_deal_id: selectedDealId,
           p_amount: values.amount,
           p_payment_type: values.payment_type,

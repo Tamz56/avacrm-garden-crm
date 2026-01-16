@@ -43,14 +43,16 @@ const toThaiBaht = (val?: number) =>
 
 interface DealDetailPageProps {
   dealId?: string | null;
+  onDeleted?: () => void; // callback หลังลบดีลสำเร็จ
 }
 
 // ---------- COMPONENT หลัก ----------
-const DealDetailPage: React.FC<DealDetailPageProps> = ({ dealId }) => {
+const DealDetailPage: React.FC<DealDetailPageProps> = ({ dealId, onDeleted }) => {
   const [dealFromDb, setDealFromDb] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showCommissionPanel, setShowCommissionPanel] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // Payment summary from view_deal_payment_summary_v1
   const { data: paymentSummary } = useDealPaymentSummary(dealId ?? undefined);
@@ -136,6 +138,32 @@ const DealDetailPage: React.FC<DealDetailPageProps> = ({ dealId }) => {
 
   const isDbDeal = !!dealFromDb;
 
+  // Handler ลบดีล
+  const handleDeleteDeal = async () => {
+    if (!isDbDeal || !dealId) return;
+
+    const ok = window.confirm(
+      "ยืนยันลบดีลนี้?\n\nระบบจะลบรายการสินค้า/การชำระเงิน/เอกสาร/การจองสต๊อก และข้อมูลที่เกี่ยวข้องทั้งหมด"
+    );
+    if (!ok) return;
+
+    setDeleting(true);
+    try {
+      const { error } = await supabase.rpc("delete_deal_cascade_v1", {
+        p_deal_id: dealId,
+      });
+      if (error) throw error;
+
+      alert("ลบดีลสำเร็จ");
+      onDeleted?.();
+    } catch (e: any) {
+      console.error(e);
+      alert(`ลบดีลไม่สำเร็จ: ${e?.message ?? "unknown error"}`);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const amount = deal.total_amount;
   const transport = deal.transport_cost;
   const net = deal.net_amount;
@@ -194,6 +222,18 @@ const DealDetailPage: React.FC<DealDetailPageProps> = ({ dealId }) => {
             >
               ดูค่าคอมฯ ดีลนี้
             </button>
+
+            {/* ปุ่มลบดีล (เฉพาะดีลจาก DB) */}
+            {isDbDeal && (
+              <button
+                onClick={handleDeleteDeal}
+                disabled={deleting}
+                className="inline-flex items-center gap-1 rounded-md border border-red-200 px-3 py-1.5 text-xs text-red-700 hover:bg-red-50 disabled:opacity-50"
+                title="ลบดีล"
+              >
+                {deleting ? "กำลังลบ..." : "ลบดีล"}
+              </button>
+            )}
             <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-100">
               Stage: {deal.stage}
             </span>
