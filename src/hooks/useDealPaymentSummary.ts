@@ -4,13 +4,14 @@ import { supabase } from "../supabaseClient";
 
 export type DealPaymentSummary = {
     deal_id: string;
-    deal_amount: number;
+    // From view_deal_payment_summary_v1
+    net_total: number;
+    paid_total: number;
+    outstanding: number;  // >= 0, never negative
+    credit: number;       // overpayment amount if any
     deposit_required_amount: number | null;
-    total_paid: number;
     deposit_paid: number;
-    non_deposit_paid: number;
     deposit_status: "not_required" | "pending" | "partial" | "completed";
-    remaining_amount: number;
 };
 
 export function useDealPaymentSummary(dealId?: string) {
@@ -23,7 +24,7 @@ export function useDealPaymentSummary(dealId?: string) {
         setLoading(true);
         setError(null);
         const { data, error } = await supabase
-            .from("view_deal_payment_summary")
+            .from("view_deal_payment_summary_v1")
             .select("*")
             .eq("deal_id", dealId)
             .maybeSingle();
@@ -31,13 +32,26 @@ export function useDealPaymentSummary(dealId?: string) {
         if (error) {
             console.error("Error loading payment summary:", error);
             setError(error);
-        } else {
-            const summary = data as any;
-            if (summary) {
-                // Calculate remaining amount if not provided
-                summary.remaining_amount = summary.deal_amount - summary.total_paid;
-            }
+        } else if (data) {
+            const raw = data as any;
+            // Ensure outstanding is never negative, credit captures overpayment
+            const netTotal = raw.net_total ?? 0;
+            const paidTotal = raw.paid_total ?? 0;
+            const diff = netTotal - paidTotal;
+
+            const summary: DealPaymentSummary = {
+                deal_id: raw.deal_id,
+                net_total: netTotal,
+                paid_total: paidTotal,
+                outstanding: Math.max(diff, 0),
+                credit: diff < 0 ? Math.abs(diff) : 0,
+                deposit_required_amount: raw.deposit_required_amount,
+                deposit_paid: raw.deposit_paid ?? 0,
+                deposit_status: raw.deposit_status ?? "not_required",
+            };
             setData(summary);
+        } else {
+            setData(null);
         }
         setLoading(false);
     };

@@ -5,6 +5,7 @@ import StockMonthlyReportPage from "./StockMonthlyReportPage";
 import { SpecialTreesPage } from "./SpecialTreesPage";
 import { SpeciesDatabasePage } from "../components/stock/SpeciesDatabasePage";
 import { SpeciesStockOverviewPage } from "../components/stock/SpeciesStockOverviewPage";
+import StockGroupsPage from "../components/stock/StockGroupsPage";
 
 type TagFilters = {
     status?: string;
@@ -27,7 +28,8 @@ type StockTabKey =
     | "species_overview"
     | "tags"
     | "special_trees"
-    | "species_db";
+    | "species_db"
+    | "stock_groups";
 
 const StockMainPage: React.FC<Props> = ({ onNavigateToZones, initialTagFilters, isDarkMode = false }) => {
     const [activeTab, setActiveTab] = useState<StockTabKey>("lifecycle");
@@ -152,7 +154,19 @@ const StockMainPage: React.FC<Props> = ({ onNavigateToZones, initialTagFilters, 
                         ต้นพิเศษ
                     </button>
 
-                    {/* 6. ฐานข้อมูลต้นไม้ */}
+                    {/* 6. กลุ่มสต๊อก (Stock Groups) */}
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab("stock_groups")}
+                        className={`px-4 py-2 rounded-t-lg text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === "stock_groups"
+                            ? (isDarkMode ? "border-blue-400 text-blue-400 bg-slate-700/50" : "border-blue-500 text-blue-700 bg-blue-50")
+                            : (isDarkMode ? "border-transparent text-slate-400 hover:text-white hover:bg-slate-700/30" : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50")
+                            }`}
+                    >
+                        กลุ่มสต๊อก
+                    </button>
+
+                    {/* 7. ฐานข้อมูลต้นไม้ */}
                     <button
                         type="button"
                         onClick={() => setActiveTab("species_db")}
@@ -185,6 +199,8 @@ const StockMainPage: React.FC<Props> = ({ onNavigateToZones, initialTagFilters, 
                 {activeTab === "tags" && <TagListPage initialFilters={tagInitialFilters} isDarkMode={isDarkMode} />}
 
                 {activeTab === "special_trees" && <SpecialTreesPage isDarkMode={isDarkMode} />}
+
+                {activeTab === "stock_groups" && <StockGroupsPage />}
 
                 {activeTab === "species_db" && <SpeciesDatabasePage isDarkMode={isDarkMode} />}
             </div>
