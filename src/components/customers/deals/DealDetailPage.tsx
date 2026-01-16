@@ -16,7 +16,6 @@ import { supabase } from "../../../supabaseClient";
 import DealCommissionPanel from "../../deals/DealCommissionPanel";
 import { DealItemsTable } from "./DealItemsTable";
 import DealReservedTagsPanel from "./DealReservedTagsPanel";
-import DealStockReservationsPanel from "./DealStockReservationsPanel";
 import DealDocumentsPanel from "./DealDocumentsPanel";
 import { DealFinanceSummary } from "../../deals/DealFinanceSummary";
 import { useDealPaymentSummary } from "../../../hooks/useDealPaymentSummary";
@@ -225,9 +224,6 @@ const DealDetailPage: React.FC<DealDetailPageProps> = ({ dealId }) => {
           <DealReservedTagsPanel dealId={dealId!} />
         </div>
       </div>
-
-      {/* Stock Reservations */}
-      <DealStockReservationsPanel dealId={dealId!} />
 
       {/* สรุปยอดการเงิน (จาก view_deal_payment_summary_v1) */}
       <DealFinanceSummary

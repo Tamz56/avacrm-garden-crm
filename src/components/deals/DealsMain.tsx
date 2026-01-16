@@ -35,7 +35,6 @@ import { QuotePrintView } from "./QuotePrintView";
 import { TagSelectionModal } from "./TagSelectionModal";
 import { useDealPaymentSummary } from "../../hooks/useDealPaymentSummary";
 import { useDealPayments } from "../../hooks/useDealPayments";
-import DealStockReservationsPanel from "../customers/deals/DealStockReservationsPanel";
 import DealDocumentsPanel from "../customers/deals/DealDocumentsPanel";
 
 // รูปแบบข้อมูลดีลแบบง่าย ๆ (ใช้แค่ฟิลด์ที่เอามาแสดง)
@@ -789,7 +788,6 @@ const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
             onDeletePayment={handleDeletePayment}
             renderAdditionalPanels={() => (
               <>
-                <DealStockReservationsPanel dealId={selectedDealId!} />
                 <DealDocumentsPanel
                   dealId={selectedDealId!}
                   dealInfo={{
