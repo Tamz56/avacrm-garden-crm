@@ -35,6 +35,8 @@ import { QuotePrintView } from "./QuotePrintView";
 import { TagSelectionModal } from "./TagSelectionModal";
 import { useDealPaymentSummary } from "../../hooks/useDealPaymentSummary";
 import { useDealPayments } from "../../hooks/useDealPayments";
+import DealStockReservationsPanel from "../customers/deals/DealStockReservationsPanel";
+import DealDocumentsPanel from "../customers/deals/DealDocumentsPanel";
 
 // รูปแบบข้อมูลดีลแบบง่าย ๆ (ใช้แค่ฟิลด์ที่เอามาแสดง)
 type Deal = {
@@ -726,9 +728,9 @@ const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
               quantity: dealItems.reduce((sum, i) => sum + (i.quantity || 0), 0)
             }}
             summary={{
-              totalAmount: paymentSummary?.deal_amount ?? (selectedDeal.total_amount || 0),
-              paidAmount: paymentSummary?.total_paid ?? 0,
-              outstandingAmount: paymentSummary?.remaining_amount ?? (selectedDeal.total_amount || 0),
+              totalAmount: paymentSummary?.net_total ?? (selectedDeal.total_amount || 0),
+              paidAmount: paymentSummary?.paid_total ?? 0,
+              outstandingAmount: paymentSummary?.outstanding ?? (selectedDeal.total_amount || 0),
             }}
             depositInfo={{
               required: paymentSummary?.deposit_required_amount ?? selectedDeal.deposit_amount ?? 0,
@@ -785,6 +787,18 @@ const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
             payments={payments}
             onEditPayment={handleEditPayment}
             onDeletePayment={handleDeletePayment}
+            renderAdditionalPanels={() => (
+              <>
+                <DealStockReservationsPanel dealId={selectedDealId!} />
+                <DealDocumentsPanel
+                  dealId={selectedDealId!}
+                  dealInfo={{
+                    title: selectedDeal.title ?? undefined,
+                    customer_name: selectedDeal.customer_name ?? undefined,
+                  }}
+                />
+              </>
+            )}
           />
         )}
       </div>

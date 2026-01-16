@@ -57,6 +57,8 @@ export type DealDetailLayoutProps = {
     payments?: DealPayment[];
     onEditPayment?: (payment: DealPayment) => void;
     onDeletePayment?: (payment: DealPayment) => void;
+    // Sprint A: Additional panels to render inside scrollable area
+    renderAdditionalPanels?: () => React.ReactNode;
 };
 
 const getStageStatusText = (stage: string) => {
@@ -95,6 +97,7 @@ const DealDetailLayout: React.FC<DealDetailLayoutProps> = ({
     payments = [],
     onEditPayment,
     onDeletePayment,
+    renderAdditionalPanels,
 }) => {
     const stageLabel = deal.stage === "won" ? "Won" : deal.stage;
     const stageColor =
@@ -627,6 +630,13 @@ const DealDetailLayout: React.FC<DealDetailLayoutProps> = ({
                             </div>
                         </div>
                     </div>
+
+                    {/* Sprint A: Additional Panels (Stock Reservations, Documents) */}
+                    {renderAdditionalPanels && (
+                        <div className="col-span-12 mt-6 space-y-4">
+                            {renderAdditionalPanels()}
+                        </div>
+                    )}
                 </div>
             </div>
             {/* Activity Modal */}

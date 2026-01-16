@@ -16,6 +16,10 @@ import { supabase } from "../../../supabaseClient";
 import DealCommissionPanel from "../../deals/DealCommissionPanel";
 import { DealItemsTable } from "./DealItemsTable";
 import DealReservedTagsPanel from "./DealReservedTagsPanel";
+import DealStockReservationsPanel from "./DealStockReservationsPanel";
+import DealDocumentsPanel from "./DealDocumentsPanel";
+import { DealFinanceSummary } from "../../deals/DealFinanceSummary";
+import { useDealPaymentSummary } from "../../../hooks/useDealPaymentSummary";
 
 // ---------- MOCK กันตาย ----------
 const mockDeal = {
@@ -48,6 +52,9 @@ const DealDetailPage: React.FC<DealDetailPageProps> = ({ dealId }) => {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showCommissionPanel, setShowCommissionPanel] = useState(false);
+
+  // Payment summary from view_deal_payment_summary_v1
+  const { data: paymentSummary } = useDealPaymentSummary(dealId ?? undefined);
 
   // โหลดดีลจาก Supabase ตาม dealId
   useEffect(() => {
@@ -219,41 +226,29 @@ const DealDetailPage: React.FC<DealDetailPageProps> = ({ dealId }) => {
         </div>
       </div>
 
-      {/* การ์ดตัวเลขหลัก ๆ */}
-      <section className="grid gap-4 md:grid-cols-3">
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-500">มูลค่าดีล (ประมาณ)</span>
-            <DollarSign className="w-4 h-4 text-emerald-500" />
-          </div>
-          <div className="text-lg font-semibold text-slate-900">
-            {toThaiBaht(amount)}
-          </div>
-        </div>
+      {/* Stock Reservations */}
+      <DealStockReservationsPanel dealId={dealId!} />
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-500">ค่าขนส่ง (ประมาณ)</span>
-            <Truck className="w-4 h-4 text-slate-500" />
-          </div>
-          <div className="text-lg font-semibold text-slate-900">
-            {toThaiBaht(transport)}
-          </div>
-        </div>
+      {/* สรุปยอดการเงิน (จาก view_deal_payment_summary_v1) */}
+      <DealFinanceSummary
+        netTotal={paymentSummary?.net_total ?? deal.net_amount ?? 0}
+        paidTotal={paymentSummary?.paid_total ?? 0}
+        outstanding={paymentSummary?.outstanding ?? deal.net_amount ?? 0}
+        credit={paymentSummary?.credit ?? 0}
+        depositRequired={paymentSummary?.deposit_required_amount ?? 0}
+        depositPaid={paymentSummary?.deposit_paid ?? 0}
+        depositStatus={paymentSummary?.deposit_status ?? "not_required"}
+      />
 
-        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs text-slate-500">ยอดรวมโดยประมาณ</span>
-            <FileText className="w-4 h-4 text-slate-500" />
-          </div>
-          <div className="text-lg font-semibold text-slate-900">
-            {toThaiBaht(net)}
-          </div>
-          <div className="text-[11px] text-slate-500 mt-1">
-            อัปเดตล่าสุด: {deal.updated_at}
-          </div>
-        </div>
-      </section>
+      {/* เอกสารดีล (DEP/RCPT/INV/GR) */}
+      <DealDocumentsPanel
+        dealId={dealId!}
+        dealInfo={{
+          title: deal.title,
+          customer_name: deal.customer_name,
+          site_address: deal.site_address,
+        }}
+      />
 
       {/* ข้อมูลสถานที่ / หมายเหตุ */}
       <section className="grid gap-4 md:grid-cols-2">
