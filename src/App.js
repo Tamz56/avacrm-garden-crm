@@ -47,10 +47,7 @@ function App() {
     setActivePage("zones");
   };
 
-  const _handleNavigateToTags = (preset) => {
-    setTagPreset(preset);
-    setActivePage("stock");
-  };
+
 
   const handleOpenZone = (zoneId) => {
     setZonesPreset({ initialZoneId: zoneId });

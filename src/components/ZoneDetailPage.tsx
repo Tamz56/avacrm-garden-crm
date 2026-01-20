@@ -178,7 +178,7 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
 
     // Form States
 
-    const [digupModalOpen, setDigupModalOpen] = React.useState(false);
+
     // const [selectedInventoryItem, setSelectedInventoryItem] = React.useState<ZoneTreeInventoryRow | null>(null);
     const [showPlotDigupForm, setShowPlotDigupForm] = React.useState(false);
     const [selectedPlotTreeId, setSelectedPlotTreeId] = React.useState<string | null>(null);
@@ -186,12 +186,9 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
 
     // New Plant Form State
     const [speciesOptions, setSpeciesOptions] = React.useState<any[]>([]);
-    const [newSpeciesId, setNewSpeciesId] = React.useState<string>("");
-    const [newSizeLabel, setNewSizeLabel] = React.useState<string>("");
-    const [newHeightLabel, setNewHeightLabel] = React.useState<string>("");
-    const [newPlantedCount, setNewPlantedCount] = React.useState<string>("");
-    const [newPlantedDate, setNewPlantedDate] = React.useState<string>(new Date().toISOString().split("T")[0]);
-    const [newNote, setNewNote] = React.useState<string>("");
+
+
+
     const [showSpeciesDialog, setShowSpeciesDialog] = React.useState(false);
 
     // --- Plot Inventory Hook ---
@@ -1205,7 +1202,7 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
                 onClose={() => setShowSpeciesDialog(false)}
                 onSuccess={async (newId) => {
                     await loadSpecies();
-                    setNewSpeciesId(newId);
+
                     setShowSpeciesDialog(false);
                 }}
             />

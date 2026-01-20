@@ -21,10 +21,7 @@ type SpeciesZoneRow = {
     total_items: number;
 };
 
-type SpeciesStatusRow = {
-    status: string;
-    total_items: number;
-};
+
 
 type SpeciesSizeRow = {
     size_label: string | null;
