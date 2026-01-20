@@ -18,11 +18,11 @@ export async function logout() {
         // Always clear local state even if server signOut fails
         clearAccessToken();
 
-        // Specific removal of the Supabase storage key to ensure no residue
+        // Specific removal of multiple potential Supabase storage keys
         localStorage.removeItem("avafarm888-auth");
+        localStorage.removeItem("supabase.auth.token");
 
-        // Redirect to home/login. Since we are in a simple state-based router, 
-        // a page reload is the safest way to reset all React states.
-        window.location.href = "/";
+        // Redirect to home/login and hard reset state
+        window.location.assign("/");
     }
 }

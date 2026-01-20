@@ -29,20 +29,52 @@ function App() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   useEffect(() => {
-    // 1. Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setIsAuthLoading(false);
-    });
+    let alive = true;
 
-    // 2. Listen for auth state changes
+    // 1. Listen for auth state changes immediately
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-
+      if (!alive) return;
       setSession(session);
     });
 
-    return () => subscription.unsubscribe();
+    // 2. Bootstrap: Get session and VALIDATE it with a real call
+    (async () => {
+      try {
+        setIsAuthLoading(true);
+
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+
+        if (!alive) return;
+
+        if (!initialSession) {
+          setSession(null);
+          return;
+        }
+
+        // Validate token really works (prevents "dashboard mount then bounce back")
+        const { data, error } = await supabase.auth.getUser();
+
+        if (!alive) return;
+
+        if (error || !data?.user) {
+          // Token is invalid or expired
+          setSession(null);
+        } else {
+          setSession(initialSession);
+        }
+      } catch (err) {
+        console.error("Auth bootstrap error:", err);
+      } finally {
+        if (alive) setIsAuthLoading(false);
+      }
+    })();
+
+    return () => {
+      alive = false;
+      subscription.unsubscribe();
+    };
   }, []);
+
 
   const [activePage, setActivePage] = useState("dashboard");
 
