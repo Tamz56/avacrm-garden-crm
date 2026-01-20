@@ -117,7 +117,7 @@ export default function Dashboard({
         : "bg-white border-slate-100 shadow-sm";
     const textMain = isDarkMode ? "text-slate-50" : "text-slate-900";
     const textMuted = isDarkMode ? "text-slate-400" : "text-slate-500";
-    const borderClass = isDarkMode ? "border-slate-800" : "border-slate-100";
+
 
     return (
         <div className={`w-full min-h-screen ${bgClass} px-6 py-6 lg:px-8 transition-colors duration-200`}>
@@ -770,9 +770,7 @@ const DigAndStockAlertsCard: React.FC<DigAndStockAlertsCardProps> = ({
     const { summary, alerts, loading, error } = useDashboardDigAndAlerts();
 
     const monthDigQty = summary?.month_dig_qty ?? 0;
-    const monthDigOrders = summary?.month_dig_orders ?? 0;
     const upcomingQty = summary?.upcoming_7d_qty ?? 0;
-    const upcomingOrders = summary?.upcoming_7d_orders ?? 0;
 
     const cardTextMain = isDarkMode ? "text-slate-50" : "text-slate-900";
     const cardTextMuted = isDarkMode ? "text-slate-400" : "text-slate-600";

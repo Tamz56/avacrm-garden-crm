@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Leaf, Search, Loader2, AlertCircle, X, Info, Trash2, Sprout, Database, Map as MapIcon, Trees, ChevronRight } from "lucide-react";
+import { Search, Loader2, Sprout, Map as MapIcon, Trees } from "lucide-react";
 import { supabase } from "../supabaseClient";
 
 // --- Types ---
@@ -38,7 +38,7 @@ interface TreeDatabaseMainProps {
 const TreeDatabaseMain: React.FC<TreeDatabaseMainProps> = ({ isDarkMode }) => {
     const [rows, setRows] = useState<SpeciesOverviewRow[]>([]);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+
 
     const [search, setSearch] = useState("");
     const [selected, setSelected] = useState<SpeciesOverviewRow | null>(null);
@@ -46,8 +46,7 @@ const TreeDatabaseMain: React.FC<TreeDatabaseMainProps> = ({ isDarkMode }) => {
     // Detail data
     const [zoneRows, setZoneRows] = useState<SpeciesZoneRow[]>([]);
     const [loadingZones, setLoadingZones] = useState(false);
-    const [statusRows, setStatusRows] = useState<SpeciesStatusRow[]>([]);
-    const [loadingStatus, setLoadingStatus] = useState(false);
+
     const [sizeRows, setSizeRows] = useState<SpeciesSizeRow[]>([]);
     const [loadingSizes, setLoadingSizes] = useState(false);
 
@@ -62,14 +61,7 @@ const TreeDatabaseMain: React.FC<TreeDatabaseMainProps> = ({ isDarkMode }) => {
         setLoadingZones(false);
     }
 
-    async function loadStatusBreakdown(speciesId: string) {
-        setLoadingStatus(true);
-        setStatusRows([]);
-        const { data, error } = await supabase.rpc("get_species_status_breakdown", { p_species_id: speciesId });
-        if (error) console.error("load status breakdown error:", error);
-        else setStatusRows((data as SpeciesStatusRow[]) || []);
-        setLoadingStatus(false);
-    }
+
 
     async function loadSizeBreakdown(speciesId: string) {
         setLoadingSizes(true);
@@ -82,30 +74,17 @@ const TreeDatabaseMain: React.FC<TreeDatabaseMainProps> = ({ isDarkMode }) => {
 
     const loadData = async () => {
         setLoading(true);
-        setError(null);
+
         const { data, error } = await supabase.from("view_species_overview").select("*");
         if (error) {
             console.error("load species overview error:", error);
-            setError(error.message || "โหลดข้อมูลไม่สำเร็จ");
         } else {
             setRows((data as SpeciesOverviewRow[]) || []);
         }
         setLoading(false);
     };
 
-    const handleDelete = async (e: React.MouseEvent, speciesId: string, name: string) => {
-        e.stopPropagation();
-        if (!window.confirm(`คุณต้องการลบพันธุ์ไม้ "${name}" ใช่หรือไม่?\n\nหากพันธุ์ไม้นี้ถูกใช้งานอยู่ จะไม่สามารถลบได้`)) return;
 
-        const { error } = await supabase.from('stock_species').delete().eq('id', speciesId);
-        if (error) {
-            console.error('Error deleting species:', error);
-            alert(`ไม่สามารถลบได้: ${error.message}\n(อาจมีการใช้งานพันธุ์ไม้นี้ในสต็อกหรือดีล)`);
-        } else {
-            loadData();
-            if (selected?.species_id === speciesId) setSelected(null);
-        }
-    };
 
     useEffect(() => {
         loadData();
@@ -231,7 +210,7 @@ const TreeDatabaseMain: React.FC<TreeDatabaseMainProps> = ({ isDarkMode }) => {
                                                     setSelected(row);
                                                     if (row.species_id) {
                                                         loadZoneBreakdown(row.species_id);
-                                                        loadStatusBreakdown(row.species_id);
+                                                        // loadStatusBreakdown(row.species_id);
                                                         loadSizeBreakdown(row.species_id);
                                                     }
                                                 }}
@@ -420,29 +399,4 @@ const BreakdownSection = ({ title, children, loading, empty, isDarkMode }: any) 
     </div>
 );
 
-function mapStatusLabel(status: string): string {
-    const map: Record<string, string> = {
-        "in_zone": "อยู่ในแปลง",
-        "available": "อยู่ในแปลง", // legacy alias
-        "selected_for_dig": "เลือกไว้จะขุด",
-        "root_prune_1": "ตัดราก 1",
-        "root_prune_2": "ตัดราก 2",
-        "root_prune_3": "ตัดราก 3",
-        "root_prune_4": "ตัดราก 4",
-        "ready_to_lift": "พร้อมยก/พร้อมขาย",
-        "low": "ควรตรวจสอบ (Low)",
-        "in_nursery": "Nursery",
-        "in_field": "แปลงปลูก",
-        "reserved": "จองแล้ว",
-        "dig_ordered": "อยู่ในใบสั่งขุด",
-        "digging": "กำลังขุด",
-        "dug": "ขุดแล้ว",
-        "ready_to_ship": "พร้อมส่ง",
-        "shipped": "ส่งแล้ว",
-        "planted": "ปลูกให้ลูกค้าแล้ว",
-        "rehab": "พักฟื้น",
-        "dead": "ตาย",
-        "cancelled": "ยกเลิก"
-    };
-    return map[status] || status;
-}
+

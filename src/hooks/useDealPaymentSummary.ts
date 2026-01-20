@@ -1,5 +1,5 @@
 // src/hooks/useDealPaymentSummary.ts
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../supabaseClient";
 
 export type DealPaymentSummary = {
@@ -19,7 +19,7 @@ export function useDealPaymentSummary(dealId?: string) {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<any>(null);
 
-    const load = async () => {
+    const load = useCallback(async () => {
         if (!dealId) return;
         setLoading(true);
         setError(null);
@@ -54,11 +54,11 @@ export function useDealPaymentSummary(dealId?: string) {
             setData(null);
         }
         setLoading(false);
-    };
+    }, [dealId]);
 
     useEffect(() => {
         load();
-    }, [dealId]);
+    }, [load]);
 
     return { data, loading, error, refetch: load };
 }

@@ -5,7 +5,7 @@ import { useTagSearch, TagSearchFilter, TagSearchRow } from '../../hooks/useTagS
 import { useStockZoneLifecycle } from '../../hooks/useStockZoneLifecycle';
 import { EditTagDialog } from './EditTagDialog';
 
-import { TagStatus, STATUS_BADGE_LABEL, STATUS_BADGE_COLOR, TagStatusBadge } from './TagStatusBadge';
+import { TagStatus, TagStatusBadge } from './TagStatusBadge';
 
 type TagStatusFilter = "all" | TagStatus;
 
@@ -44,7 +44,6 @@ const TagListPage: React.FC<Props> = ({ initialFilters, isDarkMode = false }) =>
     const [selectedZoneId, setSelectedZoneId] = useState(initialFilters?.zone_id || searchParams.get('zone_id') || 'all');
     const [selectedStatus, setSelectedStatus] = useState<TagStatusFilter>((initialFilters?.status as TagStatusFilter) || (searchParams.get('status') as TagStatusFilter) || 'all');
     const [selectedDigPurpose, setSelectedDigPurpose] = useState(initialFilters?.dig_purpose || searchParams.get('dig_purpose') || 'all');
-    const [selectedGrade, setSelectedGrade] = useState('all');
     const [selectedSize, setSelectedSize] = useState(initialFilters?.size_label || searchParams.get('size_label') || 'all');
 
     React.useEffect(() => {
@@ -66,9 +65,9 @@ const TagListPage: React.FC<Props> = ({ initialFilters, isDarkMode = false }) =>
         zoneId: selectedZoneId !== 'all' ? selectedZoneId : undefined,
         status: selectedStatus !== 'all' ? selectedStatus : undefined,
         digPurpose: selectedDigPurpose !== 'all' ? selectedDigPurpose : undefined,
-        grade: selectedGrade !== 'all' ? selectedGrade : undefined,
+
         sizeLabel: selectedSize !== 'all' ? selectedSize : undefined,
-    }), [tagCode, selectedSpeciesId, selectedZoneId, selectedStatus, selectedDigPurpose, selectedGrade, selectedSize]);
+    }), [tagCode, selectedSpeciesId, selectedZoneId, selectedStatus, selectedDigPurpose, selectedSize]);
 
     const { rows, loading, error, totalCount, reload } = useTagSearch(filter, page, pageSize);
 
@@ -179,7 +178,6 @@ const TagListPage: React.FC<Props> = ({ initialFilters, isDarkMode = false }) =>
         return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
     }, [allStockRows]);
 
-    const gradeOptions = ['A', 'B', 'C', 'Reject'];
     const totalPages = Math.ceil(totalCount / pageSize);
 
     // Theme-aware styles

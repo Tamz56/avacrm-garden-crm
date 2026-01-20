@@ -11,7 +11,8 @@ import {
     Settings,
     Sliders,
     MoreVertical,
-    BarChart
+    BarChart,
+    Shovel
 } from "lucide-react";
 
 // --- Types ---
@@ -70,6 +71,11 @@ const navGroups: NavGroup[] = [
                 id: "zones",
                 label: "จัดการแปลง",
                 icon: <Map size={18} />,
+            },
+            {
+                id: "dig_plans",
+                label: "แผนขุดต้นไม้",
+                icon: <Shovel size={18} />,
             },
             {
                 id: "shipments",

@@ -1,4 +1,4 @@
-﻿import React, { useMemo } from "react";
+import React, { useMemo } from "react";
 import {
     ArrowLeft,
     Loader2,
@@ -7,42 +7,38 @@ import {
     AlertTriangle,
     CheckCircle2,
     Calendar,
-    Edit3,
     Trash2,
-    ArrowRightLeft,
-    History,
     Sprout,
 } from "lucide-react";
 import { supabase } from "../supabaseClient";
 
 import { usePlantingPlotDetail } from "../hooks/usePlantingPlotDetail";
-import { useZoneTreeInventoryFlow, ZoneTreeInventoryRow } from "../hooks/useZoneTreeInventoryFlow";
+import { useZoneTreeInventoryFlow } from "../hooks/useZoneTreeInventoryFlow";
 import { useZoneDigupOrders } from "../hooks/useZoneDigupOrders";
-import ZoneDigupOrderModal from "./zones/ZoneDigupOrderModal";
 import CreateDigupBatchForm from "./digup/CreateDigupBatchForm";
 import { DigupOrderForm } from "./zones/DigupOrderForm";
-import { useZoneTreeInspections, ZoneTreeInspectionRow } from "../hooks/useZoneTreeInspections";
+import { useZoneTreeInspections } from "../hooks/useZoneTreeInspections";
 import { useZoneTreeInspectionSummary } from "../hooks/useZoneTreeInspectionSummary";
 import { useZoneTreeStockVsInspection } from "../hooks/useZoneTreeStockVsInspection";
-import { ZoneTreeInspectionForm } from "./zones/ZoneTreeInspectionForm";
+// import { ZoneTreeInspectionForm } from "./zones/ZoneTreeInspectionForm";
 import { useZoneMismatchOverview } from "../hooks/useZoneMismatchOverview";
-import { ZoneMismatchDetailTable } from "./zones/ZoneMismatchDetailTable";
-import { ZoneInspectionHistory } from "./zones/ZoneInspectionHistory";
+// import { ZoneMismatchDetailTable } from "./zones/ZoneMismatchDetailTable";
+// import { ZoneInspectionHistory } from "./zones/ZoneInspectionHistory";
 import { ZoneTreeTagsTable } from "./zones/ZoneTreeTagsTable";
-import { usePlotInventory, PlotInventoryRow } from "../hooks/usePlotInventory";
-import { normalizeHeightLabel, formatHeightLabel } from "../utils/heightLabel";
-import { CreateTagDialog } from "./zones/CreateTagDialog";
+import { usePlotInventory } from "../hooks/usePlotInventory";
+
+
 import { trunkSizeOptions } from "../constants/treeOptions";
 import { SpeciesFormDialog } from "./stock/SpeciesFormDialog";
-import { ZoneReadyStockFromPlotSection } from "./zones/ZoneReadyStockFromPlotSection";
+// import { ZoneReadyStockFromPlotSection } from "./zones/ZoneReadyStockFromPlotSection";
 import { useStockZoneLifecycle, StockZoneLifecycleRow } from "../hooks/useStockZoneLifecycle";
-import TagLifecycleSummaryCard from "./tags/TagLifecycleSummaryCard";
+// import TagLifecycleSummaryCard from "./tags/TagLifecycleSummaryCard";
 import { useTagLifecycleTotals } from "../hooks/useTagLifecycleTotals";
 import { useZoneInventorySummary } from "../hooks/useZoneInventorySummary";
 import { usePlotSizeTransitionHistory } from "../hooks/usePlotSizeTransitionHistory";
-import { ZoneLocationSection } from "./zones/ZoneLocationSection";
+// import { ZoneLocationSection } from "./zones/ZoneLocationSection";
 import ZoneOverviewTab from "./zones/tabs/ZoneOverviewTab";
-import ZoneTagsTab from "./zones/tabs/ZoneTagsTab";
+// import ZoneTagsTab from "./zones/tabs/ZoneTagsTab";
 import ZonePlotManagementTab from "./zones/tabs/ZonePlotManagementTab";
 import { ZoneLegacySurveyAndLogs } from "./zones/tabs/ZoneLegacySurveyAndLogs";
 import { ZoneInspectionTabNew } from "./zones/tabs/ZoneInspectionTabNew";
@@ -88,10 +84,7 @@ const formatDate = (value?: string | null) => {
 const toThaiNumber = (value?: number | null) =>
     (value ?? 0).toLocaleString("th-TH", { maximumFractionDigits: 0 });
 
-interface ZoneDetailPageProps {
-    zoneId: string;
-    onBack: () => void;
-}
+
 
 type TabId = "overview" | "plot" | "audit" | "dig_plan" | "operations" | "tags" | "movements" | "files";
 
@@ -143,8 +136,6 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
     const [savingPlotType, setSavingPlotType] = React.useState(false);
     const [saveMessage, setSaveMessage] = React.useState<string | null>(null);
     const [plotTypes, setPlotTypes] = React.useState<any[]>([]);
-    const [plotTypesLoading, setPlotTypesLoading] = React.useState(false);
-    const [plotTypesError, setPlotTypesError] = React.useState<string | null>(null);
 
     // Hooks (use only what we need to avoid unused var errors)
     const { refetch: refetchRows } = usePlantingPlotDetail(zoneId);
@@ -152,7 +143,7 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
     const {
         rows: inventoryRows,
         loading: inventoryLoading,
-        error: inventoryError,
+        // error: inventoryError,
         reload: reloadInventory,
     } = useZoneTreeInventoryFlow(zoneId);
 
@@ -175,56 +166,49 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
         useZoneTreeInspectionSummary(zoneId);
 
     const {
-        rows: stockDiffRows,
-        loading: stockDiffLoading,
-        error: stockDiffError,
+        // rows: stockDiffRows,
+        // loading: stockDiffLoading,
+        // error: stockDiffError,
         reload: reloadStockDiff,
     } = useZoneTreeStockVsInspection(zoneId);
 
     // Mismatch Hook
-    const { byZoneId, loading: _mismatchLoading, error: mismatchError } = useZoneMismatchOverview();
+    const { byZoneId } = useZoneMismatchOverview();
     const mismatch = zoneId && byZoneId ? byZoneId[String(zoneId)] ?? null : null;
 
     // Form States
 
     const [digupModalOpen, setDigupModalOpen] = React.useState(false);
-    const [selectedInventoryItem, setSelectedInventoryItem] = React.useState<ZoneTreeInventoryRow | null>(null);
+    // const [selectedInventoryItem, setSelectedInventoryItem] = React.useState<ZoneTreeInventoryRow | null>(null);
     const [showPlotDigupForm, setShowPlotDigupForm] = React.useState(false);
     const [selectedPlotTreeId, setSelectedPlotTreeId] = React.useState<string | null>(null);
     const [showDigupModal, setShowDigupModal] = React.useState(false);
 
     // New Plant Form State
     const [speciesOptions, setSpeciesOptions] = React.useState<any[]>([]);
-    const [speciesLoading, setSpeciesLoading] = React.useState(false);
-    const [speciesError, setSpeciesError] = React.useState<string | null>(null);
     const [newSpeciesId, setNewSpeciesId] = React.useState<string>("");
     const [newSizeLabel, setNewSizeLabel] = React.useState<string>("");
     const [newHeightLabel, setNewHeightLabel] = React.useState<string>("");
     const [newPlantedCount, setNewPlantedCount] = React.useState<string>("");
     const [newPlantedDate, setNewPlantedDate] = React.useState<string>(new Date().toISOString().split("T")[0]);
     const [newNote, setNewNote] = React.useState<string>("");
-    const [savingNewPlant, setSavingNewPlant] = React.useState(false);
-    const [newPlantMessage, setNewPlantMessage] = React.useState<string | null>(null);
     const [showSpeciesDialog, setShowSpeciesDialog] = React.useState(false);
 
     // --- Plot Inventory Hook ---
     const {
         rows: inventoryItems,
-        loading: plotInventoryLoading,
-        error: plotInventoryError,
+        // loading: plotInventoryLoading,
+        // error: plotInventoryError,
         reload: reloadPlotInventory,
-        addInventoryItem,
-        createTagsFromInventory,
-        updateInventoryItem,
-        deleteInventoryItem,
-        applySizeTransition,
+
+        // createTagsFromInventory,
     } = usePlotInventory(zoneId);
 
     // --- Stock Lifecycle (Tag ตามสถานะ) ---
     const {
         rows: lifecycleRows,
-        loading: lifecycleLoading,
-        error: lifecycleError,
+        // loading: lifecycleLoading,
+        // error: lifecycleError,
         reload: reloadLifecycle,
     } = useStockZoneLifecycle({ zoneId: zoneId as string });
 
@@ -232,7 +216,7 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
     const {
         summary: zoneInvSummary,
         loading: zoneInvLoading,
-        error: zoneInvError,
+        // error: zoneInvError,
         reload: reloadZoneInvSummary,
     } = useZoneInventorySummary(zoneId);
 
@@ -266,20 +250,6 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
         return { available, reserved, digOrdered, dug, shipped };
     }, [lifecycleRows]);
 
-    const [createTagDialogOpen, setCreateTagDialogOpen] = React.useState(false);
-    const [selectedInventoryForTag, setSelectedInventoryForTag] = React.useState<PlotInventoryRow | null>(null);
-
-    // Editing Inventory State
-    const [editingInventoryId, setEditingInventoryId] = React.useState<string | null>(null);
-    const [editFormData, setEditFormData] = React.useState<{
-        speciesId: string;
-        sizeLabel: string;
-        heightLabel: string;
-        plantedQty: number;
-        plantedDate: string;
-        note: string;
-    } | null>(null);
-
     // --- Planting Plot Tree Counts (ระบบ) ---
     type PlantCountDraft = {
         id: string;
@@ -290,29 +260,13 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
         _error?: string | null;
     };
 
-    const makeLocalId = () => `draft_${Math.random().toString(36).slice(2)}_${Date.now()}`;
+    const makeLocalId = () => `draft_${Math.random().toString(36).slice(2)}_${Date.now()} `;
 
     const [plantCountDrafts, setPlantCountDrafts] = React.useState<PlantCountDraft[]>([]);
     const [savingPlantCounts, setSavingPlantCounts] = React.useState(false);
     const [plantCountsMsg, setPlantCountsMsg] = React.useState<string | null>(null);
 
-    // --- Size Transition Modal State ---
-    const [sizeTransitionOpen, setSizeTransitionOpen] = React.useState(false);
-    const [sizeTransitionData, setSizeTransitionData] = React.useState<{
-        speciesId: string;
-        speciesName: string;
-        fromSizeLabel: string;
-        maxQty: number;
-    } | null>(null);
-    const [toSizeLabel, setToSizeLabel] = React.useState("");
-    const [transitionQty, setTransitionQty] = React.useState<number | "">("");
-    const [transitionDate, setTransitionDate] = React.useState(new Date().toISOString().split("T")[0]);
-    const [transitionReason, setTransitionReason] = React.useState<
-        "growth" | "sale" | "loss" | "correction" | "transfer"
-    >("growth");
-    const [transitionNote, setTransitionNote] = React.useState("");
-    const [savingTransition, setSavingTransition] = React.useState(false);
-    const [transitionMsg, setTransitionMsg] = React.useState<string | null>(null);
+
 
     // --- Size Transition History ---
     const { rows: sizeMoveRows, loading: sizeMoveLoading, error: sizeMoveError, reload: reloadSizeMoves } =
@@ -464,17 +418,14 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
         let cancelled = false;
 
         async function loadPlotTypes() {
-            setPlotTypesLoading(true);
-            setPlotTypesError(null);
             const { data, error } = await supabase
                 .from("planting_plot_detail_lookup")
                 .select("*")
                 .eq("is_active", true)
                 .order("sort_order");
             if (!cancelled) {
-                if (error) setPlotTypesError(error.message);
+                if (error) console.error("loadPlotTypes error", error);
                 else setPlotTypes(data ?? []);
-                setPlotTypesLoading(false);
             }
         }
 
@@ -486,15 +437,12 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
 
     // Load Species
     const loadSpecies = async () => {
-        setSpeciesLoading(true);
-        setSpeciesError(null);
         const { data, error } = await supabase
             .from("stock_species")
             .select("id, name, name_th, measure_by_height")
             .order("name_th");
-        if (error) setSpeciesError(error.message);
+        if (error) console.error("loadSpecies error", error);
         else setSpeciesOptions(data ?? []);
-        setSpeciesLoading(false);
     };
 
     React.useEffect(() => {
@@ -527,135 +475,11 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
         setTimeout(() => setSaveMessage(null), 3000);
     };
 
-    const selectedSpecies = speciesOptions.find((s) => s.id === newSpeciesId);
-    const isHeightSpecies = selectedSpecies?.measure_by_height === true;
 
-    const canCreatePlanting =
-        !!zoneId &&
-        !!newSpeciesId &&
-        !!newPlantedCount &&
-        !!newPlantedDate &&
-        (isHeightSpecies ? !!newHeightLabel : !!newSizeLabel);
 
-    const handleCreatePlanting = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!canCreatePlanting) return;
 
-        setSavingNewPlant(true);
-        setNewPlantMessage(null);
 
-        let finalHeightLabel: string | null = null;
 
-        if (isHeightSpecies) {
-            finalHeightLabel = normalizeHeightLabel(newHeightLabel);
-            if (!finalHeightLabel) {
-                setNewPlantMessage("กรุณาระบุความสูงเป็นตัวเลข (หน่วยเมตร)");
-                setSavingNewPlant(false);
-                return;
-            }
-        } else {
-            if (!newSizeLabel) {
-                setNewPlantMessage("กรุณาระบุขนาด (นิ้ว)");
-                setSavingNewPlant(false);
-                return;
-            }
-            if (newHeightLabel) {
-                finalHeightLabel = normalizeHeightLabel(newHeightLabel);
-            }
-        }
-
-        const success = await addInventoryItem(
-            zoneId,
-            newSpeciesId,
-            newSizeLabel,
-            finalHeightLabel || "",
-            Number(newPlantedCount) || 0,
-            newPlantedDate,
-            newNote
-        );
-
-        if (!success) {
-            setNewPlantMessage("บันทึกต้นไม้ในแปลงไม่สำเร็จ");
-        } else {
-            setNewPlantMessage("บันทึกต้นไม้ในแปลงเรียบร้อยแล้ว ✅");
-            setNewSpeciesId("");
-            setNewSizeLabel("");
-            setNewHeightLabel("");
-            setNewPlantedCount("");
-            setNewPlantedDate(new Date().toISOString().split("T")[0]);
-            setNewNote("");
-            reloadPlotInventory();
-        }
-
-        setSavingNewPlant(false);
-        setTimeout(() => setNewPlantMessage(null), 3000);
-    };
-
-    const handleEditInventory = (row: PlotInventoryRow) => {
-        setEditingInventoryId(row.id);
-        setEditFormData({
-            speciesId: row.species_id,
-            sizeLabel: row.size_label,
-            heightLabel: row.height_label || "",
-            plantedQty: row.planted_qty,
-            plantedDate: row.planted_date ? row.planted_date.split("T")[0] : "",
-            note: row.note || "",
-        });
-    };
-
-    const handleCancelEditInventory = () => {
-        setEditingInventoryId(null);
-        setEditFormData(null);
-    };
-
-    const handleSaveEditInventory = async () => {
-        if (!editingInventoryId || !editFormData) return;
-
-        const editingSpecies = speciesOptions.find((s) => s.id === editFormData.speciesId);
-        const isEditingHeightSpecies = editingSpecies?.measure_by_height === true;
-
-        let finalHeightLabel: string | null = null;
-
-        if (isEditingHeightSpecies) {
-            finalHeightLabel = normalizeHeightLabel(editFormData.heightLabel);
-            if (!finalHeightLabel) {
-                alert("กรุณาระบุความสูงเป็นตัวเลข (หน่วยเมตร)");
-                return;
-            }
-        } else {
-            if (!editFormData.sizeLabel) {
-                alert("กรุณาระบุขนาด (นิ้ว)");
-                return;
-            }
-            if (editFormData.heightLabel) {
-                finalHeightLabel = normalizeHeightLabel(editFormData.heightLabel);
-            }
-        }
-
-        const success = await updateInventoryItem(editingInventoryId, {
-            species_id: editFormData.speciesId,
-            size_label: editFormData.sizeLabel,
-            height_label: finalHeightLabel || null,
-            planted_qty: Number(editFormData.plantedQty),
-            planted_date: editFormData.plantedDate || null,
-            note: editFormData.note || null,
-        });
-
-        if (success) {
-            setEditingInventoryId(null);
-            setEditFormData(null);
-            reloadPlotInventory();
-        } else {
-            alert("บันทึกการแก้ไขไม่สำเร็จ");
-        }
-    };
-
-    const handleDeleteInventory = async (id: string) => {
-        if (!window.confirm("ต้องการลบรายการนี้ใช่หรือไม่?")) return;
-        const success = await deleteInventoryItem(id);
-        if (success) reloadPlotInventory();
-        else alert("ลบรายการไม่สำเร็จ");
-    };
 
 
 
@@ -717,12 +541,12 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
 
         const keyMap = new Map<string, number>();
         normalized.forEach((d) => {
-            const k = `${d.species_id}__${d.size_label}`;
+            const k = `${d.species_id}__${d.size_label} `;
             keyMap.set(k, (keyMap.get(k) || 0) + 1);
         });
 
         const withDupCheck = normalized.map((d) => {
-            const k = `${d.species_id}__${d.size_label}`;
+            const k = `${d.species_id}__${d.size_label} `;
             if (d.species_id && d.size_label && (keyMap.get(k) || 0) > 1) {
                 hasError = true;
                 return { ...d, _error: "มีรายการซ้ำ (ชนิด+ขนาด) กรุณารวมเป็นแถวเดียว" };
@@ -773,9 +597,9 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
     };
 
     // --- Derived Values ---
-    const plannedTotal = mismatch?.system_qty ?? 0;
+    // const plannedTotal = mismatch?.system_qty ?? 0;
     const inspectedTotal = mismatch?.inspected_qty ?? 0;
-    const diffTotal = mismatch?.diff_qty ?? 0;
+    // const diffTotal = mismatch?.diff_qty ?? 0;
 
     const mismatchStatusRaw = mismatch?.mismatch_status;
     const mismatchKey = mapThaiStatusToKey(mismatchStatusRaw);
@@ -942,9 +766,9 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
                     </div>
                     <div className="mt-1 text-[11px] text-sky-600">
                         {zoneInvSummary?.latest_inspection_date
-                            ? `ตรวจเมื่อ ${formatDate(zoneInvSummary.latest_inspection_date)}`
+                            ? `ตรวจเมื่อ ${formatDate(zoneInvSummary.latest_inspection_date)} `
                             : mismatch?.last_inspection_date
-                                ? `ตรวจเมื่อ ${formatDate(mismatch.last_inspection_date)}`
+                                ? `ตรวจเมื่อ ${formatDate(mismatch.last_inspection_date)} `
                                 : "ยังไม่เคยมีการสำรวจ"}
                     </div>
                 </div>
@@ -1087,7 +911,6 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
                                         </tr>
                                     )}
                                     {plantCountDrafts.map((d) => {
-                                        const sp = speciesOptions.find((x) => x.id === d.species_id);
                                         const rowStatus = d._error ? (
                                             <span className="text-xs text-rose-600">{d._error}</span>
                                         ) : d._dirty ? (
@@ -1228,10 +1051,10 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
                                         <tr
                                             key={o.id}
                                             ref={(el) => { rowRefs.current[o.id] = el; }}
-                                            className={`border-b border-slate-50 transition-colors relative ${focusDigupOrderId === o.id
+                                            className={`border - b border - slate - 50 transition - colors relative ${focusDigupOrderId === o.id
                                                 ? "bg-amber-50 ring-1 ring-amber-200 before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-amber-400"
                                                 : "hover:bg-slate-50"
-                                                }`}
+                                                } `}
                                         >
                                             <td className="px-3 py-2 text-slate-700">{o.digup_date ? new Date(o.digup_date).toLocaleDateString("th-TH") : "-"}</td>
                                             <td className="px-3 py-2 text-slate-800 font-medium">{o.species_name_th || "-"}</td>
@@ -1336,157 +1159,9 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
 
             {/* ===================== MODALS / DIALOGS (GLOBAL) ===================== */}
 
-            {/* MODAL: ย้ายขนาด/โตขึ้น */}
-            {sizeTransitionOpen && sizeTransitionData && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6 space-y-4">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-slate-900">โตขึ้น / ย้ายขนาด</h3>
-                            <button type="button" onClick={() => setSizeTransitionOpen(false)} className="text-slate-400 hover:text-slate-600">
-                                ✕
-                            </button>
-                        </div>
 
-                        <div className="text-sm text-slate-600">
-                            <strong>{sizeTransitionData.speciesName}</strong> ขนาด <strong>{sizeTransitionData.fromSizeLabel} นิ้ว</strong>
-                            <span className="ml-2 text-slate-500">(คงเหลือ {sizeTransitionData.maxQty.toLocaleString("th-TH")} ต้น)</span>
-                        </div>
 
-                        <div className="space-y-3">
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">ย้ายไปขนาด</label>
-                                <select value={toSizeLabel} onChange={(e) => setToSizeLabel(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                                    <option value="">เลือกขนาดใหม่...</option>
-                                    {(() => {
-                                        const fromIdx = trunkSizeOptions.findIndex((opt) => opt.value === sizeTransitionData.fromSizeLabel);
-                                        const toOptions = trunkSizeOptions
-                                            .filter((opt) => opt.value !== sizeTransitionData.fromSizeLabel)
-                                            .filter((opt) => {
-                                                if (transitionReason !== "growth") return true;
-                                                const toIdx = trunkSizeOptions.findIndex((x) => x.value === opt.value);
-                                                if (fromIdx < 0 || toIdx < 0) return true;
-                                                return toIdx > fromIdx;
-                                            });
-                                        return toOptions.map((opt) => (
-                                            <option key={opt.value} value={opt.value}>
-                                                {opt.label}
-                                            </option>
-                                        ));
-                                    })()}
-                                </select>
-                                {transitionReason === "growth" && <p className="mt-1 text-[11px] text-slate-500">เมื่อเลือก "โตขึ้น" จะแสดงเฉพาะขนาดที่ใหญ่ขึ้นเท่านั้น</p>}
-                            </div>
 
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">จำนวนที่ย้าย</label>
-                                <input
-                                    type="number"
-                                    min={1}
-                                    max={sizeTransitionData.maxQty}
-                                    value={transitionQty}
-                                    onChange={(e) => setTransitionQty(e.target.value === "" ? "" : Number(e.target.value))}
-                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                                    placeholder={`สูงสุด ${sizeTransitionData.maxQty}`}
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">วันที่มีผล</label>
-                                <input type="date" value={transitionDate} onChange={(e) => setTransitionDate(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">เหตุผล</label>
-                                <select value={transitionReason} onChange={(e) => setTransitionReason(e.target.value as any)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
-                                    <option value="growth">โตขึ้น (Growth)</option>
-                                    <option value="sale">ขายออก (Sale)</option>
-                                    <option value="correction">แก้ไขข้อมูล (Correction)</option>
-                                    <option value="transfer">ย้ายแปลง (Transfer)</option>
-                                    <option value="loss">สูญหาย/ตาย (Loss)</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label className="block text-xs font-medium text-slate-600 mb-1">หมายเหตุ (ถ้ามี)</label>
-                                <input type="text" value={transitionNote} onChange={(e) => setTransitionNote(e.target.value)} className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="เช่น ตรวจพบว่าขนาดใหญ่ขึ้น" />
-                            </div>
-                        </div>
-
-                        {transitionMsg && <div className={`text-sm ${transitionMsg.includes("สำเร็จ") ? "text-emerald-600" : "text-rose-600"}`}>{transitionMsg}</div>}
-
-                        <div className="flex items-center justify-end gap-2 pt-2">
-                            <button type="button" onClick={() => setSizeTransitionOpen(false)} className="px-4 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">
-                                ยกเลิก
-                            </button>
-
-                            <button
-                                type="button"
-                                onClick={async () => {
-                                    if (!toSizeLabel) {
-                                        setTransitionMsg("กรุณาเลือกขนาดใหม่");
-                                        return;
-                                    }
-                                    if (toSizeLabel === sizeTransitionData.fromSizeLabel) {
-                                        setTransitionMsg("ไม่สามารถย้ายไปขนาดเดิมได้");
-                                        return;
-                                    }
-                                    const qty = Number(transitionQty);
-                                    if (!qty || qty <= 0) {
-                                        setTransitionMsg("กรุณาระบุจำนวนที่ต้องการย้าย");
-                                        return;
-                                    }
-                                    if (qty > sizeTransitionData.maxQty) {
-                                        setTransitionMsg(`จำนวนเกินกว่าที่มี (${sizeTransitionData.maxQty})`);
-                                        return;
-                                    }
-
-                                    setSavingTransition(true);
-                                    setTransitionMsg(null);
-
-                                    const result = await applySizeTransition({
-                                        plotId: zoneId,
-                                        speciesId: sizeTransitionData.speciesId,
-                                        fromSizeLabel: sizeTransitionData.fromSizeLabel,
-                                        toSizeLabel,
-                                        qty,
-                                        effectiveDate: transitionDate || undefined,
-                                        reason: transitionReason,
-                                        note: transitionNote || undefined,
-                                    });
-
-                                    setSavingTransition(false);
-
-                                    if (result.success) {
-                                        setTransitionMsg("ย้ายขนาดสำเร็จ ✅");
-                                        await Promise.all([reloadInventory?.(), reloadZoneInvSummary?.(), reloadPlotInventory?.(), reloadSizeMoves?.()]);
-                                        setTimeout(() => setSizeTransitionOpen(false), 1000);
-                                    } else {
-                                        setTransitionMsg("ย้ายไม่สำเร็จ: " + (result.error || "Unknown error"));
-                                    }
-                                }}
-                                disabled={savingTransition}
-                                className="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm font-medium hover:bg-sky-700 disabled:opacity-50 flex items-center gap-2"
-                            >
-                                {savingTransition && <Loader2 className="h-4 w-4 animate-spin" />}
-                                ยืนยันย้ายขนาด
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Digup Modal (legacy) */}
-            {digupModalOpen && selectedInventoryItem && (
-                <ZoneDigupOrderModal
-                    zoneId={zoneId}
-                    speciesId={selectedInventoryItem.species_id}
-                    speciesName={selectedInventoryItem.species_name_th || ""}
-                    sizeLabel={selectedInventoryItem.size_label}
-                    availableToOrder={selectedInventoryItem.available_to_order}
-                    onClose={() => setDigupModalOpen(false)}
-                    onCreated={handleDigupSaved}
-                />
-            )}
 
             {/* Plot Digup Form */}
             {showPlotDigupForm && selectedPlotTreeId && (
@@ -1508,17 +1183,6 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
                         />
                     </div>
                 </div>
-            )}
-
-            {/* Create Tag Dialog */}
-
-            {createTagDialogOpen && selectedInventoryForTag && (
-                <CreateTagDialog
-                    open={createTagDialogOpen}
-                    inventoryItem={selectedInventoryForTag}
-                    onClose={() => setCreateTagDialogOpen(false)}
-                    onSuccess={onTagMutated}
-                />
             )}
 
             {/* Digup Planning Modal */}

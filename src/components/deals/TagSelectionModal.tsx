@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Search, Loader2, Check, Filter } from 'lucide-react';
+import { X, Search, Loader2, Check } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 
 type Tag = {
@@ -31,15 +31,7 @@ export const TagSelectionModal: React.FC<TagSelectionModalProps> = ({
     const [selectedTagIds, setSelectedTagIds] = useState<Set<string>>(new Set());
     const [submitting, setSubmitting] = useState(false);
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchTags();
-            setSelectedTagIds(new Set());
-            setSearch('');
-        }
-    }, [isOpen]);
-
-    const fetchTags = async () => {
+    const fetchTags = React.useCallback(async () => {
         setLoading(true);
         try {
             let query = supabase
@@ -62,14 +54,42 @@ export const TagSelectionModal: React.FC<TagSelectionModalProps> = ({
         } finally {
             setLoading(false);
         }
-    };
+    }, [search]);
+
+
+
+
+
+    const fetchDealTags = React.useCallback(async () => {
+        if (!dealId) return;
+        setLoading(true); // This loading state might conflict with fetchTags, consider separate loading states if needed
+        const { data, error } = await supabase
+            .from('deal_items')
+            .select('*')
+            .eq('deal_id', dealId);
+
+        if (error) console.error(error);
+        if (data) {
+            const ids = data.map(d => d.tag_id).filter(Boolean);
+            setSelectedTagIds(new Set(ids)); // Use setSelectedTagIds here
+        }
+        setLoading(false);
+    }, [dealId]);
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchTags();
+            fetchDealTags(); // Call the new fetchDealTags here
+            setSearch('');
+        }
+    }, [isOpen, fetchTags, fetchDealTags]); // Add fetchDealTags to dependencies
 
     useEffect(() => {
         const timer = setTimeout(() => {
             if (isOpen) fetchTags();
         }, 500);
         return () => clearTimeout(timer);
-    }, [search]);
+    }, [search, isOpen, fetchTags]);
 
     const toggleTag = (tagId: string) => {
         const newSelected = new Set(selectedTagIds);

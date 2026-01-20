@@ -2,18 +2,13 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
     Loader2,
-    AlertCircle,
     RefreshCcw,
-    ChevronRight,
     MapPin,
-    Info,
     Plus,
     Phone,
-    MessageCircle,
     Search,
     User,
     Calendar,
-    Filter,
 } from "lucide-react";
 import { supabase } from "../../supabaseClient";
 import { CustomerActivityModal, CustomerActivityRow } from "./CustomerActivityModal";
@@ -55,14 +50,7 @@ type NewCustomerForm = {
     note: string;
 };
 
-type DealTimelineItem = {
-    id: string;
-    title: string | null;
-    status: string | null;
-    stage: string | null;
-    total_amount: number | null;
-    updated_at: string | null;
-};
+
 
 // --- VIP Tier Helper ---
 function getTier(total: number) {

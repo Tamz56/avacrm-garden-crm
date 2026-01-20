@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../supabaseClient";
 
 export interface PlotTreeRow {
@@ -23,7 +23,7 @@ export function usePlantingPlotDetail(plotId: string) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         if (!plotId) return;
         setLoading(true);
         setError(null);
@@ -41,11 +41,11 @@ export function usePlantingPlotDetail(plotId: string) {
         }
 
         setLoading(false);
-    };
+    }, [plotId]);
 
     useEffect(() => {
         fetchData();
-    }, [plotId]);
+    }, [fetchData]);
 
     const totals = rows.reduce(
         (acc, r) => {

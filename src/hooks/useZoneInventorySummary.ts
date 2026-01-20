@@ -1,5 +1,5 @@
 // src/hooks/useZoneInventorySummary.ts
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../supabaseClient";
 
 export type ZoneInventorySummary = {
@@ -26,7 +26,7 @@ export function useZoneInventorySummary(zoneId?: string | null): HookState {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const load = async () => {
+    const load = useCallback(async () => {
         if (!zoneId) {
             setSummary(null);
             return;
@@ -48,11 +48,11 @@ export function useZoneInventorySummary(zoneId?: string | null): HookState {
             setSummary(data ?? null);
         }
         setLoading(false);
-    };
+    }, [zoneId]);
 
     useEffect(() => {
         load();
-    }, [zoneId]);
+    }, [load]);
 
     return { summary, loading, error, reload: load };
 }

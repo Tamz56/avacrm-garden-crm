@@ -1,6 +1,6 @@
 // src/components/zones/CreateTagModal.tsx
 import React from "react";
-import { X, Loader2 } from "lucide-react";
+import { X } from "lucide-react";
 import { supabase } from "../../supabaseClient";
 
 export type PlotOption = { id: string; note: string | null };

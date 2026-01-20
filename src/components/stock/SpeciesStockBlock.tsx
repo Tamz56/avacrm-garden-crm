@@ -94,7 +94,6 @@ const PriceInfo: React.FC<{ row: SpeciesStockBlockType; isDarkMode: boolean }> =
 
 const StockCard: React.FC<CardProps> = ({ item, speciesName, speciesCode, onGoToZone, onGoToTag, isDarkMode = false }) => {
     const isLowStock = item.available_qty > 0 && item.available_qty < 50;
-    const isUntagged = item.untagged_qty > 0;
 
     const handleViewZones = () => { if (onGoToZone) { onGoToZone({ speciesId: item.species_id, sizeLabel: item.size_label, heightLabel: item.height_label, gradeId: item.grade_id, zoneIds: item.zone_ids }); } };
     const handleGoToTag = () => { if (onGoToTag) { onGoToTag({ species_id: item.species_id, size_label: item.size_label }); } };

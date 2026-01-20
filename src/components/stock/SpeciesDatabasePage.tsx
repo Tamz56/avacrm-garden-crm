@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
-import { Search, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Search, Plus, Trash2 } from 'lucide-react';
 import { SpeciesFormDialog } from './SpeciesFormDialog';
 
 type SpeciesRow = {

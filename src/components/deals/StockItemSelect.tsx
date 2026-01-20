@@ -25,6 +25,7 @@ interface StockItemSelectProps {
     value: string | null;
     onChange: (option: StockItemOption | null) => void;
     disabled?: boolean;
+    sizeLabel?: string | null; // ขนาดที่เลือกแล้ว (บังคับเลือกก่อน)
 }
 
 function makeCompositeKey(o: DealStockPickerOption): string {
@@ -54,8 +55,10 @@ const StockItemSelect: React.FC<StockItemSelectProps> = ({
     value,
     onChange,
     disabled = false,
+    sizeLabel,
 }) => {
-    const { options: rawOptions, loading, error } = useDealStockPickerOptions();
+    // ส่ง sizeLabel ไปยัง hook เพื่อกรองตามขนาด
+    const { options: rawOptions, loading, error } = useDealStockPickerOptions(sizeLabel);
 
     // Map to StockItemOption format for backward compatibility
     const options: StockItemOption[] = rawOptions.map(mapToStockItemOption);
@@ -66,6 +69,13 @@ const StockItemSelect: React.FC<StockItemSelectProps> = ({
         onChange(opt);
     };
 
+    // ถ้ายังไม่เลือกขนาด ให้แสดงข้อความบอก
+    const placeholderText = !sizeLabel
+        ? "— กรุณาเลือกขนาดก่อน —"
+        : loading
+            ? "กำลังโหลดข้อมูลสต็อก..."
+            : "— เลือกต้นไม้ / โซน —";
+
     return (
         <div className="space-y-1 text-sm">
             <label className="flex items-center gap-2 text-slate-700">
@@ -75,12 +85,11 @@ const StockItemSelect: React.FC<StockItemSelectProps> = ({
             <select
                 value={value ?? ""}
                 onChange={handleChange}
-                disabled={disabled || loading}
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500 disabled:bg-slate-50 disabled:text-slate-400"
+                disabled={disabled || loading || !sizeLabel}
+                className={`w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500 disabled:bg-slate-50 disabled:text-slate-400 ${!sizeLabel ? "cursor-not-allowed" : ""
+                    }`}
             >
-                <option value="">
-                    {loading ? "กำลังโหลดข้อมูลสต็อก..." : "— เลือกต้นไม้ / ขนาด / โซน —"}
-                </option>
+                <option value="">{placeholderText}</option>
                 {options.map((opt) => (
                     <option key={opt.id} value={opt.id}>
                         {opt.label}

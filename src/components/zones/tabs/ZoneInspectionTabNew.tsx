@@ -2,7 +2,7 @@
 import React from "react";
 import { Loader2, RefreshCw, ClipboardCheck, AlertTriangle } from "lucide-react";
 import { supabase } from "../../../supabaseClient";
-import { usePlotPlanTaggedInspectedSummary, PlotPTISRow } from "../../../hooks/usePlotPlanTaggedInspectedSummary";
+import { usePlotPlanTaggedInspectedSummary } from "../../../hooks/usePlotPlanTaggedInspectedSummary";
 import { useLatestPlotInspection } from "../../../hooks/useLatestPlotInspection";
 import { useMyRole } from "../../../hooks/useMyRole";
 import { formatSizeLabel } from "../../../utils/formatSizeLabel";
@@ -56,6 +56,7 @@ export function ZoneInspectionTabNew({
         })();
 
         return () => { cancelled = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [zoneId]);
 
     // ========== SPECIES MAP ==========
@@ -74,7 +75,7 @@ export function ZoneInspectionTabNew({
     }, []);
 
     // ========== HOOKS ==========
-    const { role, canEditPlan, loading: roleLoading } = useMyRole();
+    const { canEditPlan, loading: roleLoading } = useMyRole();
     const { rows: summaryRows, loading: summaryLoading, error: summaryError, refresh: refreshSummary } = usePlotPlanTaggedInspectedSummary(selectedPlotId || null);
     const { data: latestInspection, loading: inspectionLoading, error: inspectionError, refresh: refreshInspection } = useLatestPlotInspection(selectedPlotId || null);
 

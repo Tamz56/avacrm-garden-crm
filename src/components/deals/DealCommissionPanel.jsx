@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { X, DollarSign, Users, Activity, AlertCircle } from "lucide-react";
+import { X, DollarSign, Activity, AlertCircle } from "lucide-react";
 import { supabase } from "../../supabaseClient.ts";
 import { useCommissionConfig } from "../../hooks/useCommissionConfig";
 
@@ -16,7 +16,7 @@ const ROLE_LABELS = {
 };
 
 const DealCommissionPanel = ({ dealId, dealAmount, onClose }) => {
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
     const [errorMsg, setErrorMsg] = useState(null);
     const [rows, setRows] = useState([]);
 

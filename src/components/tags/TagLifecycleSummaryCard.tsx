@@ -1,6 +1,6 @@
 // src/components/tags/TagLifecycleSummaryCard.tsx
 import React from "react";
-import { Loader2, Sprout, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export type TagLifecycleTotals = {
     zone_id: string;

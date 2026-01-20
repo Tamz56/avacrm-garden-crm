@@ -1,6 +1,6 @@
 // src/components/customers/deals/DealDocumentsPanel.tsx
 import React, { useState } from "react";
-import { FileText, Plus, Loader2, Trash2, Download, Eye, AlertCircle } from "lucide-react";
+import { FileText, Plus, Loader2, Trash2, Eye, AlertCircle } from "lucide-react";
 import { useDealDocuments, DOC_TYPES, DealDocument } from "../../../hooks/useDealDocuments";
 import { useDealPaymentSummary } from "../../../hooks/useDealPaymentSummary";
 
@@ -154,9 +154,9 @@ const DealDocumentsPanel: React.FC<DealDocumentsPanelProps> = ({
                             >
                                 <div className="flex items-center gap-3">
                                     <div className={`h-8 w-8 rounded-lg flex items-center justify-center text-xs font-bold ${doc.doc_type === "DEP" ? "bg-amber-100 text-amber-700" :
-                                            doc.doc_type === "RCPT" ? "bg-emerald-100 text-emerald-700" :
-                                                doc.doc_type === "INV" ? "bg-blue-100 text-blue-700" :
-                                                    "bg-purple-100 text-purple-700"
+                                        doc.doc_type === "RCPT" ? "bg-emerald-100 text-emerald-700" :
+                                            doc.doc_type === "INV" ? "bg-blue-100 text-blue-700" :
+                                                "bg-purple-100 text-purple-700"
                                         }`}>
                                         {doc.doc_type}
                                     </div>

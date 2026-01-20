@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
 import { TagSearchRow } from "../../hooks/useTagSearch";
 import { trunkSizeOptions } from "../../constants/treeOptions";
-import { History, User, AlertCircle, Info, ArrowRight, FileText } from "lucide-react";
+import { History } from "lucide-react";
 import { TagTimeline } from "./TagTimeline";
 
 type EditTagDialogProps = {

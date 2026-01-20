@@ -1,7 +1,7 @@
 // src/components/zones/tabs/ZoneTagsTab.tsx
 import React from "react";
 import TagLifecycleSummaryCard from "../../tags/TagLifecycleSummaryCard";
-import { ZoneTreeTagsTable } from "../ZoneTreeTagsTable";
+import { ZoneTreeTagsTable } from "../../zones/ZoneTreeTagsTable";
 
 type Props = {
     zoneId: string;

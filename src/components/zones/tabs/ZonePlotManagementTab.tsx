@@ -99,6 +99,7 @@ export function ZonePlotManagementTab({
         })();
 
         return () => { cancelled = true; };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [zoneId]);
 
     // Species map for display names

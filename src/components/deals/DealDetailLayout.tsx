@@ -57,6 +57,8 @@ export type DealDetailLayoutProps = {
     payments?: DealPayment[];
     onEditPayment?: (payment: DealPayment) => void;
     onDeletePayment?: (payment: DealPayment) => void;
+    // Stock Picker: callback when user clicks "เลือกสต็อก" button
+    onSelectStock?: (dealItemId: string) => void;
     // Sprint A: Additional panels to render inside scrollable area
     renderAdditionalPanels?: () => React.ReactNode;
 };
@@ -97,6 +99,7 @@ const DealDetailLayout: React.FC<DealDetailLayoutProps> = ({
     payments = [],
     onEditPayment,
     onDeletePayment,
+    onSelectStock,
     renderAdditionalPanels,
 }) => {
     const stageLabel = deal.stage === "won" ? "Won" : deal.stage;
@@ -371,6 +374,7 @@ const DealDetailLayout: React.FC<DealDetailLayoutProps> = ({
                                         <th className="px-6 py-3 font-medium text-center">จำนวน</th>
                                         <th className="px-6 py-3 font-medium text-right">ราคา/หน่วย</th>
                                         <th className="px-6 py-3 font-medium text-right">รวม</th>
+                                        <th className="px-6 py-3 font-medium text-center">สต็อก</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
@@ -398,17 +402,51 @@ const DealDetailLayout: React.FC<DealDetailLayoutProps> = ({
                                                                 )}
                                                             </div>
                                                         ) : (
-                                                            <div className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-slate-800 flex items-center justify-center text-lg overflow-hidden shrink-0">
-                                                                🌳
+                                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg overflow-hidden shrink-0 ${(item as any).source_type === 'preorder_from_zone'
+                                                                    ? 'bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20'
+                                                                    : 'bg-gray-100 dark:bg-slate-800'
+                                                                }`}>
+                                                                {(item as any).source_type === 'preorder_from_zone' ? '🌱' : '🌳'}
                                                             </div>
                                                         )}
                                                         <div>
-                                                            <div className="font-medium text-gray-800 dark:text-gray-200 text-sm">
-                                                                {item.description}
+                                                            <div className="flex items-center gap-2">
+                                                                <span className="font-medium text-gray-800 dark:text-gray-200 text-sm">
+                                                                    {item.description}
+                                                                </span>
+                                                                {(item as any).source_type === 'preorder_from_zone' && (
+                                                                    <span className="px-1.5 py-0.5 text-[9px] font-bold uppercase bg-amber-100 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400 rounded">
+                                                                        PREORDER 30 วัน
+                                                                    </span>
+                                                                )}
+                                                                {(item as any).source_type !== 'preorder_from_zone' && item.stockStatus !== 'pending' && (
+                                                                    <span className="px-1.5 py-0.5 text-[9px] font-medium bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 rounded">
+                                                                        IN STOCK
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                             {item.subText && (
                                                                 <div className="text-[11px] text-gray-400 dark:text-slate-500 mt-1 font-light">
                                                                     {item.subText}
+                                                                </div>
+                                                            )}
+                                                            {/* Preorder info */}
+                                                            {(item as any).source_type === 'preorder_from_zone' && (
+                                                                <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[10px]">
+                                                                    {(item as any).expected_ready_date && (
+                                                                        <span className="text-amber-600 dark:text-amber-400">
+                                                                            📅 พร้อมส่ง: {new Date((item as any).expected_ready_date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' })}
+                                                                        </span>
+                                                                    )}
+                                                                    {(item as any).dig_plan_id && (
+                                                                        <a
+                                                                            href={`/dig-plans/${(item as any).dig_plan_id}`}
+                                                                            className="text-blue-600 hover:underline dark:text-blue-400"
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                        >
+                                                                            🔗 ดูแผนขุด
+                                                                        </a>
+                                                                    )}
                                                                 </div>
                                                             )}
                                                         </div>
@@ -435,6 +473,19 @@ const DealDetailLayout: React.FC<DealDetailLayoutProps> = ({
                                                     <span className="text-sm font-semibold text-gray-900 dark:text-white font-mono">
                                                         {total.toLocaleString()}
                                                     </span>
+                                                </td>
+
+                                                {/* Stock Picker Button */}
+                                                <td className="px-6 py-5 text-center align-middle">
+                                                    {onSelectStock && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => onSelectStock(item.id)}
+                                                            className="text-xs px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-500/10 dark:text-blue-400 dark:hover:bg-blue-500/20 transition-colors font-medium"
+                                                        >
+                                                            เลือกสต็อก
+                                                        </button>
+                                                    )}
                                                 </td>
                                             </tr>
                                         );

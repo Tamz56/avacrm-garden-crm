@@ -88,7 +88,7 @@ export const ZoneMovementsTab: React.FC<Props> = ({ zoneId }) => {
 
         setMoving(true);
         try {
-            const { data, error } = await supabase.rpc("move_tags_to_stock", {
+            const { error } = await supabase.rpc("move_tags_to_stock", {
                 p_tag_ids: selectedIds,
                 p_notes: note?.trim() ? note.trim() : null,
             });

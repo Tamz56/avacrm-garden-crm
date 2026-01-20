@@ -44,10 +44,10 @@ const StockOverviewPage: React.FC<Props> = ({ onOpenTagSearch, isDarkMode = fals
     }, [selectedSpeciesId, selectedZoneId, selectedPlotType]);
 
     // เรียก hook ใหม่
-    const { rows, kpi, loading, error } = useStockZoneLifecycle(filter);
+    const { error } = useStockZoneLifecycle(filter);
     const { priceMap, reload: reloadPrices } = useActiveStockPriceMap();
 
-    const { rows: allRows, kpi: allKpi, loading: allLoading } = useStockZoneLifecycle({});
+    const { rows: allRows, loading: allLoading } = useStockZoneLifecycle({});
 
     const speciesOptions = useMemo(() => {
         const map = new Map<string, string>();

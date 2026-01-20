@@ -1,9 +1,6 @@
 import React, { useState, useMemo } from "react";
 import {
-    MapPin,
     Plus,
-    Search,
-    Filter,
     Edit3,
     Trash2,
     Sprout,
@@ -12,8 +9,7 @@ import {
     Info,
     Loader2,
     CheckCircle2,
-    FlaskConical,
-    Baby
+    FlaskConical
 } from "lucide-react";
 import { supabase } from "../../supabaseClient";
 import { useZonesData } from "../../hooks/useZonesData";
@@ -38,22 +34,7 @@ const createEmptyTreeItem = () => ({
     note: "",
 });
 
-const PLOT_TYPE_FILTERS = [
-    { value: "ALL", label: "ทุกประเภทแปลง" },
-    { value: "PRODUCTION", label: "แปลงผลิตจริง (PRODUCTION)" },
-    { value: "TEST", label: "แปลงทดลอง (TEST)" },
-    { value: "NURSERY", label: "แปลง nursery (NURSERY)" },
-];
 
-const MISMATCH_STATUS_OPTIONS = [
-    { value: "all", label: "ทั้งหมด" },
-    { value: "ยังไม่สำรวจ", label: "ยังไม่สำรวจ" },
-    { value: "ยังไม่ปลูก/บันทึก", label: "ยังไม่ปลูก/บันทึก" },
-    { value: "ตรงตามระบบ", label: "ตรงตามระบบ" },
-    { value: "คลาดเคลื่อนเล็กน้อย", label: "คลาดเคลื่อนเล็กน้อย" },
-    { value: "คลาดเคลื่อนปานกลาง", label: "คลาดเคลื่อนปานกลาง" },
-    { value: "คลาดเคลื่อนมาก", label: "คลาดเคลื่อนมาก" },
-];
 
 const getPlotTypeBadgeClass = (code) => {
     switch (code) {
@@ -68,29 +49,7 @@ const getPlotTypeBadgeClass = (code) => {
     }
 };
 
-const getZonePlannedCount = (zone) => {
-    return zone.total_planted_qty || 0;
-};
 
-const getZonePlantDate = (zone) => {
-    return null;
-};
-
-const getAgeFromDate = (dateStr) => {
-    if (!dateStr) return "";
-    const start = new Date(dateStr);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - start.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    const years = Math.floor(diffDays / 365);
-    const months = Math.floor((diffDays % 365) / 30);
-    if (years > 0) return `${years} ปี ${months} เดือน`;
-    return `${months} เดือน`;
-};
-
-const getTreeSummary = (zone) => {
-    return "-";
-};
 
 // Main Component
 
@@ -107,16 +66,15 @@ type Props = {
 export const ZonesOverviewTab: React.FC<Props> = ({ initialFilters, isDarkMode = false }) => {
     // Data Hooks
     const { zones, loading: loadingZones, reload: refetch, summary, error: loadError } = useZonesData();
-    const { createZone, updateZone, deleteZone, saveZoneTrees, loading: mutating } = useZoneMutations();
+    const { createZone, updateZone, deleteZone, loading: mutating } = useZoneMutations();
 
     const {
         byZoneId: mismatchByZoneId,
         loading: mismatchLoading,
-        error: mismatchError,
     } = useZoneMismatchOverview();
 
     // Stock Lifecycle (for ready stock column)
-    const { rows: lifecycleRows, loading: lifecycleLoading } = useStockZoneLifecycle({});
+    const { rows: lifecycleRows } = useStockZoneLifecycle({});
 
     const lifecycleByZone = useMemo(() => {
         const map = new Map<string, { available: number; reserved: number; digOrdered: number; dug: number; shipped: number }>();
@@ -663,8 +621,7 @@ export const ZonesOverviewTab: React.FC<Props> = ({ initialFilters, isDarkMode =
                                 </tr>
                             ) : (
                                 filteredZones.map((zone) => {
-                                    const plantDate = getZonePlantDate(zone);
-                                    const ageText = getAgeFromDate(plantDate);
+
 
                                     const mismatch = mismatchByZoneId[zone.id];
 

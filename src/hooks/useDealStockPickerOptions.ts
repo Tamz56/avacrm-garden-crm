@@ -34,7 +34,11 @@ export type DealStockPickerOption = {
     qty_reserved?: number;
 };
 
-export function useDealStockPickerOptions() {
+/**
+ * Hook สำหรับดึงสต็อก โดยกรองตามขนาด (sizeLabel)
+ * ถ้าไม่ส่ง sizeLabel จะคืน empty array (บังคับเลือกขนาดก่อน)
+ */
+export function useDealStockPickerOptions(sizeLabel?: string | null) {
     const [options, setOptions] = useState<DealStockPickerOption[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -43,21 +47,26 @@ export function useDealStockPickerOptions() {
         let cancelled = false;
 
         async function load() {
+            // ถ้าไม่มี sizeLabel ให้คืน empty (บังคับเลือกขนาดก่อน)
+            if (!sizeLabel) {
+                setOptions([]);
+                setLoading(false);
+                return;
+            }
+
             setLoading(true);
             setError(null);
 
-            // ใช้ select('*') เพื่อกันปัญหา column ไม่ตรงกับ view
-            const { data, error } = await supabase
-                .from("view_deal_stock_picker")
-                .select("*")
-                .order("species_name_th", { ascending: true })
-                .order("size_label", { ascending: true })
-                .order("zone_name", { ascending: true });
+            // เรียก RPC ที่กรองตาม size แล้ว
+            const { data, error } = await supabase.rpc(
+                "get_deal_stock_picker_by_size_v1",
+                { p_size_label: sizeLabel }
+            );
 
             if (cancelled) return;
 
             if (error) {
-                console.error("view_deal_stock_picker error:", error);
+                console.error("get_deal_stock_picker_by_size_v1 error:", error);
                 setError(error.message);
                 setOptions([]);
             } else {
@@ -82,29 +91,36 @@ export function useDealStockPickerOptions() {
         return () => {
             cancelled = true;
         };
-    }, []);
+    }, [sizeLabel]);
 
     return { options, loading, error };
 }
 
 /**
- * Helper function สำหรับสร้าง label ใน dropdown
+ * Helper function สำหรับสร้าง label ใน dropdown (แบบใหม่: ใช้ centralized formatter)
+ * SINGLE SOURCE OF TRUTH: ใช้ buildStockDisplayLabel เพื่อกัน (null) ในทุกกรณี
  */
 export function makeDealStockOptionLabel(o: DealStockPickerOption): string {
-    const species =
-        o.species_name_th ??
-        o.species_name_en ??
-        o.species_code ??
-        "ไม่ทราบพันธุ์";
+    // Import inline to avoid circular dependency (hook -> lib -> types)
+    const clean = (v: string | null | undefined): string => {
+        const s = (v ?? "").toString().trim();
+        if (!s || s.toLowerCase() === "null") return "";
+        return s;
+    };
 
-    const grade = o.grade_name ?? o.grade_code ?? "-";
+    // Build main label parts
+    const species = clean(o.species_name_th) || clean(o.species_name_en) || clean(o.species_code) || "ไม่ทราบพันธุ์";
+    const zone = clean(o.zone_name) || clean(o.zone_key);
+    const zoneText = zone ? `โซน ${zone}` : "";
 
     const available = o.available_qty ?? Number(o.qty_available ?? 0);
 
     const pricePart =
         o.unit_price != null
-            ? ` ~${o.unit_price.toLocaleString("th-TH")}฿/ต้น`
+            ? ` • ~${o.unit_price.toLocaleString("th-TH")}฿/ต้น`
             : "";
 
-    return `${species} : ขนาด ${o.size_label ?? "-"}" : เกรด ${grade} : โซน ${o.zone_name ?? o.zone_key ?? "-"} : พร้อมขาย ${available} ต้น${pricePart}`;
+    // Format: "Silver Oak • โซน Z-A • พร้อมขาย 9 • ~6,000฿/ต้น"
+    const parts = [species, zoneText, `พร้อมขาย ${available} ต้น`].filter(Boolean);
+    return parts.join(" • ") + pricePart;
 }

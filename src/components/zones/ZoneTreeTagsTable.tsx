@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React from "react";
 import { supabase } from "../../supabaseClient";
-import { QrCode, Printer, Copy, Loader2, Plus, X, Trash2, Archive, Edit3, FileText, CheckSquare, Package } from "lucide-react";
+import { QrCode, Printer, Copy, Loader2, Plus, X, Trash2, Edit3, FileText, CheckSquare, Package } from "lucide-react";
 import { useZoneTreeTags } from "../../hooks/useZoneTreeTags";
 import { PrintTagsModal } from "./PrintTagsModal";
 import { MoveToStockModal } from "./MoveToStockModal";
@@ -696,7 +697,7 @@ export const ZoneTreeTagsTable: React.FC<ZoneTreeTagsTableProps> = ({ zoneId, on
 
     // Print Selection State
     const [selectedTagIds, setSelectedTagIds] = React.useState<string[]>([]);
-    const [printRows, setPrintRows] = React.useState<any[] | null>(null);
+    const [printRows] = React.useState<any[] | null>(null);
     const [showPrintModal, setShowPrintModal] = React.useState(false);
     const [layoutKey, setLayoutKey] = React.useState<TagLayoutKey>("big_3x5");
 
@@ -915,7 +916,6 @@ export const ZoneTreeTagsTable: React.FC<ZoneTreeTagsTableProps> = ({ zoneId, on
     // Load plots for this zone (for plot selector in CreateTagModal)
     const [plots, setPlots] = React.useState<PlotOption[]>([]);
     const [plotsLoading, setPlotsLoading] = React.useState(false);
-    const [plotsError, setPlotsError] = React.useState<string | null>(null);
 
     React.useEffect(() => {
         if (!zoneId) return;
@@ -923,7 +923,7 @@ export const ZoneTreeTagsTable: React.FC<ZoneTreeTagsTableProps> = ({ zoneId, on
 
         (async () => {
             setPlotsLoading(true);
-            setPlotsError(null);
+
 
             const { data, error } = await supabase
                 .from("planting_plots")
@@ -933,7 +933,7 @@ export const ZoneTreeTagsTable: React.FC<ZoneTreeTagsTableProps> = ({ zoneId, on
 
             if (cancelled) return;
 
-            if (error) setPlotsError(error.message);
+            if (error) console.error(error);
             setPlots((data ?? []) as PlotOption[]);
             setPlotsLoading(false);
         })();

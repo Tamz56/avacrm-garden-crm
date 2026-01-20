@@ -1,13 +1,13 @@
 import { supabase } from "../supabaseClient";
 import { DealPayment } from "../types/types";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export function useDealPayments(dealId?: string) {
     const [payments, setPayments] = useState<DealPayment[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const load = async () => {
+    const load = useCallback(async () => {
         if (!dealId) return;
         setLoading(true);
         setError(null);
@@ -38,11 +38,11 @@ export function useDealPayments(dealId?: string) {
             setPayments(rows);
         }
         setLoading(false);
-    };
+    }, [dealId]);
 
     useEffect(() => {
         load();
-    }, [dealId]);
+    }, [load]);
 
     return { payments, loading, error, refetch: load };
 }

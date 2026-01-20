@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "../../supabaseClient";
-import { Loader2, FileText, Download } from "lucide-react";
+import { Loader2, FileText } from "lucide-react";
 
 type ZoneMasterRow = {
     id: string;

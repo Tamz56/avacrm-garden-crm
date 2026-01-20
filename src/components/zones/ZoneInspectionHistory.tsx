@@ -1,22 +1,10 @@
 import React from "react";
-import { Calendar, User, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Calendar, User } from "lucide-react";
 import { supabase } from "../../supabaseClient";
 
-const mismatchLabelMap: Record<string, string> = {
-    none: "ตรงตามระบบ",
-    low: "คลาดเคลื่อนเล็กน้อย",
-    medium: "คลาดเคลื่อนปานกลาง",
-    high: "คลาดเคลื่อนมาก",
-    unknown: "ไม่ระบุ",
-};
 
-const mismatchColorMap: Record<string, string> = {
-    none: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    low: "bg-yellow-50 text-yellow-700 border-yellow-200",
-    medium: "bg-orange-50 text-orange-700 border-orange-200",
-    high: "bg-red-50 text-red-700 border-red-200",
-    unknown: "bg-slate-50 text-slate-500 border-slate-200",
-};
+
+
 
 type ZoneInspectionHistoryProps = {
     zoneId: string;

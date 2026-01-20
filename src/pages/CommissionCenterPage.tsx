@@ -1,30 +1,11 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "../supabaseClient";
 import { DollarSign, FileText, Users, CreditCard } from "lucide-react";
 import CommissionDashboard from "../components/reports/CommissionDashboard.jsx";
 import CommissionLedger from "../components/reports/CommissionLedger.jsx";
 import CommissionByRoleDashboard from "../components/commissions/CommissionByRoleDashboard.jsx";
 
-const mockPayoutSummary = {
-    total: 28050,
-    paid: 28050,
-    unpaid: 0,
-    personCount: 1,
-};
 
-const mockPayoutRows = [
-    {
-        id: "profile-apirak",
-        salesName: "Apirak",
-        role: "Sales Lead",
-        dealsCount: 3,
-        totalCommission: 28050,
-        paidCommission: 28050,
-        unpaidCommission: 0,
-        lastPaidAt: "25/11/2568",
-        status: "paid", // "partial" | "unpaid"
-    },
-];
 
 const statusConfig = {
     paid: {
@@ -52,11 +33,7 @@ const CommissionPayoutTab = () => {
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        fetchData();
-    }, [month]);
-
-    const fetchData = async () => {
+    const fetchData = useCallback(async () => {
         setLoading(true);
         try {
             const { data, error } = await supabase
@@ -70,7 +47,7 @@ const CommissionPayoutTab = () => {
             // Calculate summary from rows
             const total = rowsData.reduce((sum: number, r: any) => sum + (Number(r.remaining_to_pay) || 0), 0);
             const paid = rowsData.reduce((sum: number, r: any) => sum + (Number(r.total_paid) || 0), 0);
-            const unpaid = total; // In this context "Total Commission to Pay" usually means remaining. 
+
             // But let's follow the UI labels:
             // "ค่าคอมมิชชั่นที่ต้องจ่ายเดือนนี้" -> Remaining
             // "ค่าคอมมิชชั่นที่จ่ายแล้ว" -> Paid
@@ -95,7 +72,11 @@ const CommissionPayoutTab = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [month]);
+
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     const handleMarkAsPaid = async (profileId: string) => {
         try {

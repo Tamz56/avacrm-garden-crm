@@ -18,6 +18,7 @@ import ShipmentsPage from "./components/shipments/ShipmentsPage.tsx";
 import { ZonesPage } from "./components/zones/ZonesPage.tsx";
 import TreeDatabaseMain from "./components/TreeDatabaseMain.tsx";
 import SalesActivityReport from "./components/dashboard/SalesActivityReport.tsx";
+import DigPlansPage from "./components/dig-plans/DigPlansPage.tsx";
 
 function App() {
   const [activePage, setActivePage] = useState("dashboard");
@@ -46,7 +47,7 @@ function App() {
     setActivePage("zones");
   };
 
-  const handleNavigateToTags = (preset) => {
+  const _handleNavigateToTags = (preset) => {
     setTagPreset(preset);
     setActivePage("stock");
   };
@@ -167,6 +168,7 @@ function App() {
           {activePage === "settings" && <SettingsPage isDarkMode={isDarkMode} />}
           {activePage === "commission_settings" && <CommissionConfigPage isDarkMode={isDarkMode} />}
           {activePage === "zones" && <ZonesPage initialFilters={zonesPreset} isDarkMode={isDarkMode} />}
+          {activePage === "dig_plans" && <DigPlansPage />}
           {activePage === "activity_report" && <SalesActivityReport isDarkMode={isDarkMode} />}
         </main>
       </div>

@@ -75,7 +75,7 @@ export const EditDealModal: React.FC<EditDealModalProps> = ({
 
             // Fetch full deal details + items
             const fetchDetails = async () => {
-                const { data: fullDeal, error: dealError } = await supabase
+                const { data: fullDeal } = await supabase
                     .from("deals")
                     .select("*")
                     .eq("id", deal.id)
@@ -98,7 +98,7 @@ export const EditDealModal: React.FC<EditDealModalProps> = ({
                     });
                 }
 
-                const { data: dealItems, error: itemsError } = await supabase
+                const { data: dealItems } = await supabase
                     .from("deal_items")
                     .select("*")
                     .eq("deal_id", deal.id);

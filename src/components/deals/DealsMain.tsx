@@ -21,6 +21,7 @@ import { TagSelectionModal } from "./TagSelectionModal";
 import { useDealPaymentSummary } from "../../hooks/useDealPaymentSummary";
 import { useDealPayments } from "../../hooks/useDealPayments";
 import DealDocumentsPanel from "../customers/deals/DealDocumentsPanel";
+import { DealItemStockPickerModal } from "./DealItemStockPickerModal";
 
 // รูปแบบข้อมูลดีลแบบง่าย ๆ (ใช้แค่ฟิลด์ที่เอามาแสดง)
 type Deal = {
@@ -43,13 +44,7 @@ type DealWithShipping = Deal & {
   shippingSummary?: DealShippingSummary;
 };
 
-const _toThaiBaht = (val: number | null | undefined) =>
-  val == null
-    ? "-"
-    : `฿${val.toLocaleString(undefined, {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    })}`;
+
 
 // -------------------- Modal สร้างดีลใหม่ --------------------
 
@@ -100,11 +95,20 @@ const NewDealModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: 
     setLoading(true);
 
     try {
+      // Client-side validation
       if (!dealData.customer_id) throw new Error("กรุณาเลือกลูกค้า");
-      if (!dealData.amount) throw new Error("กรุณากรอกมูลค่าดีล");
       if (items.length === 0) throw new Error("กรุณาเพิ่มรายการต้นไม้อย่างน้อย 1 รายการ");
 
-      // 1) Prepare basic values
+      // Validate preorder items
+      for (const item of items) {
+        if (item.source_type === 'preorder_from_zone') {
+          if (!item.preorder_zone_id) throw new Error("สั่งขุดจากแปลงต้องระบุโซน");
+          if (!item.species_id) throw new Error("สั่งขุดจากแปลงต้องระบุชนิดพันธุ์");
+          if (!item.size_label && !item.trunk_size_inch) throw new Error("สั่งขุดจากแปลงต้องระบุขนาด");
+          if (!item.quantity || item.quantity <= 0) throw new Error("จำนวนต้องมากกว่า 0");
+        }
+      }
+
       const total = Number(dealData.amount || 0);
       const deposit = Number(dealData.deposit_amount || 0);
       const remaining = total - deposit;
@@ -118,80 +122,66 @@ const NewDealModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: 
         teamShare.referral_id ||
         null;
 
-      // 2) Insert Deal
-      const { data: deal, error: dealError } = await supabase
-        .from("deals")
-        .insert({
-          title: dealData.name || "ดีลใหม่ (ยังไม่ตั้งชื่อ)",
-          customer_id: dealData.customer_id,
-          customer_name: customerName,
+      // Prepare deal object
+      const dealPayload = {
+        title: dealData.name || "ดีลใหม่ (ยังไม่ตั้งชื่อ)",
+        customer_id: dealData.customer_id,
+        customer_name: customerName,
+        total_amount: total,
+        deposit_amount: deposit,
+        shipping_cost: Number(dealData.shipping_cost || 0),
+        remaining_amount: remaining,
+        closing_date: dealData.expected_close_date || null,
+        note_customer: dealData.note || null,
+        referral_sales_id: teamShare.referral_id || null,
+        closing_sales_id: teamShare.sales_agent_id || null,
+        team_leader_id: teamShare.team_leader_id || null,
+        owner_id: ownerId,
+      };
 
-          total_amount: total,
-          amount: total,
-          grand_total: total,
+      // Prepare items array
+      const itemsPayload = items.map(item => ({
+        description: item.description || item.tree_name || "ไม่ระบุ",
+        qty: item.quantity,
+        unit_price: item.price_per_tree,
+        trunk_size_inch: item.trunk_size_inch || null,
+        price_type: item.price_type || 'per_tree',
+        height_m: item.height_m || null,
+        price_per_meter: item.price_per_meter || null,
+        stock_group_id: item.stock_group_id || null,
+        // Preorder fields
+        source_type: item.source_type || 'from_stock',
+        preorder_zone_id: item.preorder_zone_id || null,
+        preorder_plot_id: item.preorder_plot_id || null,
+        species_id: item.species_id || null,
+        size_label: item.size_label || (item.trunk_size_inch ? `${item.trunk_size_inch}` : null),
+        lead_time_days: item.lead_time_days || 30,
+        unit_price_estimate: item.unit_price_estimate || null,
+        preorder_notes: item.preorder_notes || null,
+      }));
 
-          deposit_amount: deposit,
-          shipping_cost: Number(dealData.shipping_cost || 0),
-          remaining_amount: remaining,
-
-          closing_date: dealData.expected_close_date || null,
-          note_customer: dealData.note || null,
-
-          referral_sales_id: teamShare.referral_id || null,
-          closing_sales_id: teamShare.sales_agent_id || null,
-          team_leader_id: teamShare.team_leader_id || null,
-          owner_id: ownerId,
-
-          stage: 'inquiry',
-          status: 'draft',
-        })
-        .select("*")
-        .single();
-
-      if (dealError) {
-        console.error("Error creating deal", dealError);
-        throw dealError;
-      }
-
-      // 3) Insert Deal Items
-      if (deal?.id && items.length > 0) {
-        const itemsToInsert = items.map(item => ({
-          deal_id: deal.id,
-          stock_group_id: item.stock_group_id || null, // ใช้ stock_group_id แทน
-          stock_item_id: null, // deprecated - ไม่ใช้แล้ว
-          description: item.description || item.tree_name || "ไม่ระบุ",
-          quantity: item.quantity,
-          unit_price: item.price_per_tree,
-          trunk_size_inch: item.trunk_size_inch || null,
-          line_total: item.quantity * item.price_per_tree,
-          unit: "ต้น",
-          // New fields for Price per Meter
-          price_type: item.price_type || 'per_tree',
-          height_m: item.height_m || null,
-          price_per_meter: item.price_per_meter || null,
-        }));
-
-        const { error: itemError } = await supabase.from("deal_items").insert(itemsToInsert);
-
-        if (itemError) {
-          console.error("Error creating deal_items", itemError);
-          // Don't throw, just log
+      // Call the new RPC
+      const { data: result, error: rpcError } = await supabase.rpc(
+        "create_deal_with_preorder_v1",
+        {
+          p_deal: dealPayload,
+          p_items: itemsPayload
         }
+      );
+
+      if (rpcError) {
+        console.error("create_deal_with_preorder_v1 error", rpcError);
+        throw new Error(rpcError.message);
       }
 
-      // 4) Recalculate Commissions
-      if (deal?.id) {
-        const { error: rpcError } = await supabase.rpc(
-          "recalc_deal_commissions",
-          { p_deal_id: deal.id }
-        );
-        if (rpcError) {
-          console.warn("recalc_deal_commissions error", rpcError);
-        }
+      if (!result?.ok) {
+        throw new Error(result?.error || "ไม่สามารถสร้างดีลได้");
       }
 
-      // 5) Notify parent
-      if (onCreated) onCreated(deal);
+      // Success - notify parent with the result
+      if (onCreated) {
+        onCreated({ id: result.deal_id, deal_code: result.deal_code });
+      }
 
       onClose();
     } catch (err: any) {
@@ -286,6 +276,10 @@ const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
   const [showNewShipmentModal, setShowNewShipmentModal] = useState(false);
   const [showTagModal, setShowTagModal] = useState(false);
   const [reservedTagsCount, setReservedTagsCount] = useState(0);
+
+  // Stock Picker Modal State
+  const [stockPickerOpen, setStockPickerOpen] = useState(false);
+  const [activeDealItemId, setActiveDealItemId] = useState<string | null>(null);
   const loadDeals = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -476,7 +470,7 @@ const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
     null;
 
   const [showCommissionPanel, setShowCommissionPanel] = useState(false);
-  const [, setClosingDeal] = useState(false);
+
 
   const handleNewDealCreated = (newDeal: any) => {
     loadDeals();
@@ -484,46 +478,9 @@ const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
     onDataChanged?.(); // Trigger dashboard reload
   };
 
-  const handleCloseDealAndUpdateStock = async (dealId: string) => {
-    if (!window.confirm("ยืนยันการปิดดีลและหักสต็อก?\n\nการกระทำนี้จะ:\n- เปลี่ยนสถานะดีลเป็น Won\n- หักจำนวนสต็อกตามรายการในดีล\n- บันทึก stock movements")) {
-      return;
-    }
 
-    try {
-      setClosingDeal(true);
 
-      // เรียก RPC ปิดดีล + หักสต็อก
-      const { data, error } = await supabase.rpc(
-        "close_deal_and_update_stock",
-        { p_deal_id: dealId }
-      );
 
-      if (error) {
-        console.error("close_deal_and_update_stock error", error);
-        alert("ปิดดีลและปรับสต็อกไม่สำเร็จ: " + error.message);
-        return;
-      }
-
-      if (data && data.ok === false) {
-        console.warn("close_deal stock validation", data);
-        const msg =
-          data.message ||
-          (data.errors && data.errors.join(" ; ")) ||
-          "มีปัญหาในการตัดสต็อก";
-        alert(msg);
-      } else {
-        alert("✅ ปิดดีลและปรับสต็อกเรียบร้อยแล้ว 🌱");
-        // Refresh list ดีล
-        await loadDeals();
-        onDataChanged?.(); // Trigger dashboard reload
-      }
-    } catch (err: any) {
-      console.error(err);
-      alert("เกิดข้อผิดพลาด: " + err.message);
-    } finally {
-      setClosingDeal(false);
-    }
-  }
 
 
   const handleConfirmTags = async (selectedTags: any[]) => {
@@ -642,8 +599,7 @@ const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
     [deals]
   );
 
-  const activeDeal =
-    listItems.find((x) => x.id === selectedDealId) || listItems[0];
+
 
   return (
     <div className="flex h-[calc(100vh-4rem)] overflow-hidden">
@@ -759,6 +715,10 @@ const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
             payments={payments}
             onEditPayment={handleEditPayment}
             onDeletePayment={handleDeletePayment}
+            onSelectStock={(itemId) => {
+              setActiveDealItemId(itemId);
+              setStockPickerOpen(true);
+            }}
             renderAdditionalPanels={() => (
               <>
                 <DealDocumentsPanel
@@ -779,6 +739,21 @@ const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
           dealId={selectedDealId}
           dealAmount={selectedDeal?.total_amount}
           onClose={() => setShowCommissionPanel(false)}
+        />
+      )}
+
+      {/* Stock Picker Modal */}
+      {stockPickerOpen && activeDealItemId && (
+        <DealItemStockPickerModal
+          open={stockPickerOpen}
+          dealItemId={activeDealItemId}
+          onClose={() => {
+            setStockPickerOpen(false);
+            setActiveDealItemId(null);
+          }}
+          onAssigned={async () => {
+            await loadStockData();
+          }}
         />
       )}
 

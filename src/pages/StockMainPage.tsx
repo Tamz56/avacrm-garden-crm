@@ -60,16 +60,7 @@ const StockMainPage: React.FC<Props> = ({ onNavigateToZones, initialTagFilters, 
     const tabBarBg = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200";
     const contentBg = isDarkMode ? "bg-slate-900" : "bg-slate-50";
 
-    const getTabClass = (isActive: boolean, activeColor: string) => {
-        if (isActive) {
-            return isDarkMode
-                ? `border-${activeColor}-400 text-${activeColor}-400 bg-slate-700/50`
-                : `border-${activeColor}-500 text-${activeColor}-700 bg-${activeColor}-50`;
-        }
-        return isDarkMode
-            ? "border-transparent text-slate-400 hover:text-white hover:bg-slate-700/30"
-            : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50";
-    };
+
 
     return (
         <div className={`h-full flex flex-col ${containerBg}`}>
