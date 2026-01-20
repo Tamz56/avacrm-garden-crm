@@ -25,3 +25,7 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+# local build logs
+build_log*.txt
+build_errors*.txt
+
