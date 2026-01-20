@@ -1,9 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { supabase } from "./supabaseClient";
 import {
   Search,
   Bell,
   Menu,
+  Loader2
 } from "lucide-react";
+import { LoginForm } from "./components/auth/LoginForm.tsx";
+
 
 // Components
 import { Sidebar } from "./components/Sidebar.tsx";
@@ -21,7 +25,27 @@ import SalesActivityReport from "./components/dashboard/SalesActivityReport.tsx"
 import DigPlansPage from "./components/dig-plans/DigPlansPage.tsx";
 
 function App() {
+  const [session, setSession] = useState(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
+
+  useEffect(() => {
+    // 1. Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setIsAuthLoading(false);
+    });
+
+    // 2. Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   const [activePage, setActivePage] = useState("dashboard");
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Initialize theme from localStorage or system preference
@@ -60,7 +84,20 @@ function App() {
     setDashboardReloadKey((k) => k + 1);
   };
 
+  if (isAuthLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-slate-950">
+        <Loader2 className="w-10 h-10 animate-spin text-emerald-500" />
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <LoginForm />;
+  }
+
   return (
+
     <div className={`flex min-h-screen font-sans transition-colors duration-200 ${isDarkMode ? "dark bg-slate-950 text-slate-50" : "bg-slate-50 text-slate-900"}`}>
       {/* Sidebar */}
       <Sidebar

@@ -1,7 +1,6 @@
 {
   "name": "garden-crm",
   "version": "1.0.0",
-  "type": "module",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",

@@ -9,6 +9,13 @@ import markerIcon2x from "leaflet/dist/images/marker-icon-2x.png";
 import markerIcon from "leaflet/dist/images/marker-icon.png";
 import markerShadow from "leaflet/dist/images/marker-shadow.png";
 import App from "./App.js";
+import { supabase } from "./supabaseClient";
+import { initAuthToken } from "./authToken";
+
+// Initialize authentication token cache
+initAuthToken(supabase);
+
+
 
 // Leaflet marker icon patch (fix 404 in bundlers)
 delete L.Icon.Default.prototype._getIconUrl;

@@ -10,10 +10,13 @@ import {
     DollarSign,
     Settings,
     Sliders,
-    MoreVertical,
     BarChart,
-    Shovel
+
+    Shovel,
+    LogOut
 } from "lucide-react";
+import { logout } from "../authUtils";
+
 
 // --- Types ---
 type NavItem = {
@@ -230,7 +233,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             {/* 3. User Profile Card */}
             <div className={`p-4 border-t ${baseBorder}`}>
-                <button className={`w-full flex items-center gap-3 p-3 rounded-2xl border border-transparent transition-colors text-left group ${isDarkMode ? "hover:bg-slate-800 hover:border-slate-700" : "hover:bg-slate-50 hover:border-slate-100"}`}>
+                <div className={`w-full flex items-center gap-3 p-3 rounded-2xl border border-transparent text-left ${isDarkMode ? "hover:bg-slate-800 hover:border-slate-700" : "hover:bg-slate-50 hover:border-slate-100"}`}>
                     <div className={`w-10 h-10 rounded-full ${isDarkMode ? "bg-emerald-500/15 text-emerald-300 ring-slate-700" : "bg-emerald-50 text-emerald-700 ring-white"} flex items-center justify-center font-bold shadow-sm ring-2`}>
                         A
                     </div>
@@ -238,10 +241,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
                         <div className={`text-sm font-bold truncate ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>Apirak</div>
                         <div className={`text-[11px] truncate ${textMuted}`}>Admin • Ava Farm 888</div>
                     </div>
-                    <div className={`${textMuted} group-hover:text-slate-500`}>
-                        <MoreVertical size={16} />
-                    </div>
-                </button>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm("ยืนยันการออกจากระบบ?")) {
+                                logout();
+                            }
+                        }}
+                        className={`p-2 rounded-xl transition-colors ${isDarkMode ? "hover:bg-rose-500/20 text-slate-400 hover:text-rose-300" : "hover:bg-rose-50 text-slate-400 hover:text-rose-600"}`}
+                        title="ออกจากระบบ"
+                    >
+                        <LogOut size={18} />
+                    </button>
+                </div>
             </div>
         </aside>
     );
