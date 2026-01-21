@@ -22,6 +22,9 @@ export async function logout() {
         localStorage.removeItem("avafarm888-auth");
         localStorage.removeItem("supabase.auth.token");
 
+        // ถ้ามี PIN อยู่ ให้ล็อกไว้ก่อนออก (กันกลับมาแล้วยัง unlocked)
+        localStorage.setItem("avafarm888-pin-locked", "1");
+
         // Redirect to home/login and hard reset state
         window.location.assign("/");
     }

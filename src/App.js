@@ -7,6 +7,9 @@ import {
   Loader2
 } from "lucide-react";
 import { LoginForm } from "./components/auth/LoginForm.tsx";
+import { PinGate } from "./components/auth/PinGate";
+import { PinSetup } from "./components/auth/PinSetup";
+import * as pinLock from "./pinLock";
 
 
 // Components
@@ -28,57 +31,159 @@ function App() {
   const [session, setSession] = useState(null);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
-  useEffect(() => {
-    let alive = true;
+  // PIN Lock states
+  const [isPinLocked, setIsPinLocked] = useState(false);
+  const [hasPin, setHasPin] = useState(() => pinLock.hasPin());
 
-    // 1. Listen for auth state changes immediately
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!alive) return;
-      setSession(session);
+  // User Profile state
+  const [profile, setProfile] = useState(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function bootstrap() {
+      try {
+        // 1) initial session
+        const { data } = await supabase.auth.getSession();
+        if (!mounted) return;
+        setSession(data.session ?? null);
+
+        // 2) validate user กับ server เพื่อตัด session เก่า
+        if (data.session) {
+          const { data: u, error } = await supabase.auth.getUser();
+          if (!mounted) return;
+          if (error || !u?.user) {
+            setSession(null);
+          }
+        }
+      } finally {
+        if (mounted) setIsAuthLoading(false);
+      }
+    }
+
+    bootstrap();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession ?? null);
     });
 
-    // 2. Bootstrap: Get session and VALIDATE it with a real call
+    return () => {
+      mounted = false;
+      subscription?.unsubscribe();
+    };
+  }, []);
+
+  // Fetch user profile - ผูกกับ uid โดยตรง
+  const uid = session?.user?.id ?? null;
+
+  useEffect(() => {
+    // Reset profile ทันทีเมื่อ uid เปลี่ยน (กันค้าง)
+    setProfile(null);
+
+    if (!uid) return;
+
+    let cancelled = false;
+
     (async () => {
-      try {
-        setIsAuthLoading(true);
+      console.log("[loadProfile] uid =", uid);
 
-        const { data: { session: initialSession } } = await supabase.auth.getSession();
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, user_id, email, full_name, role, avatar_url")
+        .or(`id.eq.${uid},user_id.eq.${uid}`)
+        .maybeSingle();
 
-        if (!alive) return;
+      console.log("[loadProfile] data =", data, "error =", error);
 
-        if (!initialSession) {
-          setSession(null);
-          return;
-        }
+      if (cancelled) return;
 
-        // Validate token really works (prevents "dashboard mount then bounce back")
-        const { data, error } = await supabase.auth.getUser();
-
-        if (!alive) return;
-
-        if (error || !data?.user) {
-          // Token is invalid or expired
-          setSession(null);
-        } else {
-          setSession(initialSession);
-        }
-      } catch (err) {
-        console.error("Auth bootstrap error:", err);
-      } finally {
-        if (alive) setIsAuthLoading(false);
+      if (error) {
+        console.warn("[loadProfile] error:", error.message);
+        setProfile(null);
+        return;
       }
+      setProfile(data ?? null);
     })();
 
     return () => {
-      alive = false;
-      subscription.unsubscribe();
+      cancelled = true;
     };
-  }, []);
+  }, [uid]);
+
+  // PIN Lock effect
+  useEffect(() => {
+    // ถ้า logout / session หาย: reset สถานะ PIN gate ให้กลับไปจุดเริ่ม
+    if (!session) {
+      setIsPinLocked(false);
+      setHasPin(pinLock.hasPin());
+      return;
+    }
+
+    // เมื่อเพิ่ง login: โหลดสถานะ PIN จากเครื่องนี้
+    setHasPin(pinLock.hasPin());
+
+    // ถ้ามี PIN แล้ว: ตรวจว่า should lock ไหม (กัน flicker)
+    if (pinLock.hasPin()) {
+      setIsPinLocked(pinLock.shouldAutoLock(pinLock.DEFAULT_IDLE_MINUTES));
+    } else {
+      setIsPinLocked(false);
+    }
+
+    const onLock = () => setIsPinLocked(true);
+    const onUnlock = () => setIsPinLocked(false);
+
+    // sync hasPin เมื่อมีการ clearPin/setPin
+    const refreshHasPin = () => setHasPin(pinLock.hasPin());
+
+    window.addEventListener("ava:pinlock", onLock);
+    window.addEventListener("ava:pinunlock", onUnlock);
+    window.addEventListener("ava:pinunlock", refreshHasPin); // ✅ สำคัญ: PinSetup -> unlock event
+
+    const activity = () => pinLock.touchActivity(false);
+    window.addEventListener("click", activity, { passive: true });
+    window.addEventListener("touchstart", activity, { passive: true });
+    window.addEventListener("keydown", activity);
+
+    // เช็คทันทีตอนกลับเข้าแอป (สำคัญสำหรับมือถือ/แท็บเล็ต)
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") {
+        if (pinLock.shouldAutoLock()) {
+          pinLock.lockNow();
+          setIsPinLocked(true);
+        } else {
+          pinLock.touchActivity(); // ถือว่าเพิ่งกลับมาใช้งาน
+        }
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    const timer = window.setInterval(() => {
+      if (pinLock.shouldAutoLock(pinLock.DEFAULT_IDLE_MINUTES)) {
+        pinLock.lockNow();
+        setIsPinLocked(true);
+      }
+    }, 15000);
+
+    return () => {
+      window.removeEventListener("ava:pinlock", onLock);
+      window.removeEventListener("ava:pinunlock", onUnlock);
+      window.removeEventListener("ava:pinunlock", refreshHasPin);
+
+      window.removeEventListener("click", activity);
+      window.removeEventListener("touchstart", activity);
+      window.removeEventListener("keydown", activity);
+      document.removeEventListener("visibilitychange", onVisibility);
+
+      window.clearInterval(timer);
+    };
+  }, [session]);
 
 
   const [activePage, setActivePage] = useState("dashboard");
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() =>
+    window.matchMedia("(min-width: 1024px)").matches
+  );
 
   // Initialize theme from localStorage or system preference
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -128,6 +233,14 @@ function App() {
     return <LoginForm />;
   }
 
+  // ✅ PIN Gate: ใช้เฉพาะกรณี session มีแล้ว (อยู่ในระบบตลอด) แต่ต้องปลดล็อกในเครื่องนี้
+  if (!hasPin) {
+    return <PinSetup onDone={() => setHasPin(true)} />;
+  }
+  if (isPinLocked) {
+    return <PinGate onUnlocked={() => setIsPinLocked(false)} />;
+  }
+
   return (
 
     <div className={`flex min-h-screen font-sans transition-colors duration-200 ${isDarkMode ? "dark bg-slate-950 text-slate-50" : "bg-slate-50 text-slate-900"}`}>
@@ -138,6 +251,8 @@ function App() {
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
         isDarkMode={isDarkMode}
+        profile={profile}
+        sessionEmail={session?.user?.email}
       />
 
       {/* Main Content */}
