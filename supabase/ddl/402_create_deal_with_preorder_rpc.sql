@@ -208,11 +208,11 @@ BEGIN
         END IF;
     END LOOP;
 
-    -- Recalc commissions (ignore error if function doesn't exist)
+    -- Recalc commissions (ignore error if function doesn't exist or fails)
     BEGIN
         PERFORM recalc_deal_commissions(v_deal_id);
-    EXCEPTION WHEN undefined_function THEN
-        -- Function doesn't exist, skip
+    EXCEPTION WHEN OTHERS THEN
+        -- Skip any errors during commission calculation to avoid rolling back the transaction
         NULL;
     END;
 
