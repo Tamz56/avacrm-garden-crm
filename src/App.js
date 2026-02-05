@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { supabase } from "./supabaseClient";
 import {
   Search,
@@ -109,6 +109,71 @@ function App() {
       cancelled = true;
     };
   }, [uid]);
+
+  // Derived display values for Header
+  const displayName = useMemo(() => {
+    if (profile?.full_name) return profile.full_name;
+    if (session?.user?.user_metadata?.full_name) return session.user.user_metadata.full_name;
+    return session?.user?.email ?? "User";
+  }, [profile, session]);
+
+  const displayEmail = useMemo(() => {
+    return profile?.email ?? session?.user?.email ?? "";
+  }, [profile, session]);
+
+  const avatarText = useMemo(() => {
+    const s = (displayName || "").trim();
+    if (!s) return "U";
+    return s[0].toUpperCase();
+  }, [displayName]);
+
+  const avatarUrl = useMemo(() => {
+    return profile?.avatar_url || null;
+  }, [profile]);
+
+  // Avatar broken state for fallback
+  const [avatarBroken, setAvatarBroken] = useState(false);
+
+  useEffect(() => {
+    // Reset when avatarUrl changes
+    setAvatarBroken(false);
+  }, [avatarUrl]);
+
+  // Profile loading state (for UI indicators)
+  const profileLoading = !profile && !!uid;
+
+  // UserMenu state
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  async function handleLogout() {
+    setIsUserMenuOpen(false);
+    const { error } = await supabase.auth.signOut();
+    if (error) console.error("Logout error:", error);
+    setProfile(null);
+    window.location.reload();
+  }
+
+  // Click-outside + ESC to close menu
+  useEffect(() => {
+    if (!isUserMenuOpen) return;
+
+    const onClick = (e) => {
+      if (!menuRef.current) return;
+      if (!menuRef.current.contains(e.target)) setIsUserMenuOpen(false);
+    };
+
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setIsUserMenuOpen(false);
+    };
+
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isUserMenuOpen]);
 
   // PIN Lock effect
   useEffect(() => {
@@ -293,12 +358,60 @@ function App() {
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
             </button>
-            <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow-sm shadow-emerald-200">
-              A
-            </div>
-            <div className="hidden md:block text-sm">
-              <div className={`font-medium ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>Apirak</div>
-              <div className={`text-xs ${isDarkMode ? "text-slate-500" : "text-slate-500"}`}>Ava Farm 888</div>
+            {/* UserMenu Dropdown */}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setIsUserMenuOpen((v) => !v)}
+                className={`flex items-center gap-3 p-1.5 rounded-xl transition-colors ${isDarkMode ? "hover:bg-slate-800" : "hover:bg-slate-100"
+                  }`}
+              >
+                {/* Avatar */}
+                <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold text-sm shadow-sm shadow-emerald-200 overflow-hidden">
+                  {profileLoading ? (
+                    "…"
+                  ) : avatarUrl && !avatarBroken ? (
+                    <img
+                      src={avatarUrl}
+                      alt={displayName}
+                      className="w-full h-full object-cover"
+                      onError={() => setAvatarBroken(true)}
+                    />
+                  ) : (
+                    avatarText
+                  )}
+                </div>
+
+                {/* Name/Subtitle */}
+                <div className="hidden md:block text-left text-sm">
+                  <div className={`font-medium ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>
+                    {profileLoading ? "Loading..." : displayName}
+                  </div>
+                  <div className={`text-xs ${isDarkMode ? "text-slate-500" : "text-slate-500"}`}>
+                    Ava Farm 888
+                  </div>
+                </div>
+              </button>
+
+              {isUserMenuOpen && (
+                <div
+                  className={`absolute right-0 mt-2 w-56 rounded-2xl border shadow-lg overflow-hidden z-50 ${isDarkMode
+                    ? "bg-slate-900 border-slate-800"
+                    : "bg-white border-slate-200"
+                    }`}
+                >
+                  <div className={`px-4 py-3 text-xs border-b ${isDarkMode ? "text-slate-400 border-slate-800" : "text-slate-500 border-slate-100"}`}>
+                    {displayEmail || ""}
+                  </div>
+
+                  <button
+                    onClick={handleLogout}
+                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${isDarkMode ? "hover:bg-slate-800 text-rose-400" : "hover:bg-slate-50 text-rose-600"
+                      }`}
+                  >
+                    🚪 Logout
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </header>

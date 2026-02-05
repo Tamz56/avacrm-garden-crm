@@ -2,21 +2,31 @@
 import { useState } from "react";
 import { supabase } from "../../supabaseClient";
 import { useDealStockPicker } from "../../hooks/useDealStockPicker";
+import { useDealTagStockPicker, type DealTagStockPickerRow } from "../../hooks/useDealTagStockPicker";
+import { useDealTagStockPickerTotalsV2 } from "../../hooks/useDealTagStockPickerTotals";
 import type { DealStockPickerRow, DealStockPickerFilters } from "../../types/stockPicker";
 import { displayValue, zoneDisplayText } from "../../lib/stockPickerFormat";
-import { Loader2, X, RefreshCw } from "lucide-react";
+import { Loader2, X, RefreshCw, ToggleLeft, ToggleRight } from "lucide-react";
+
+export type PickerMode = "rpc" | "tag";
 
 type Props = {
     open: boolean;
     onClose: () => void;
     /** If provided, calls RPC to assign stock. If not, uses onPicked. */
     dealItemId?: string;
-    /** Called when picking in draft mode (no dealItemId). */
+    /** Called when picking in draft mode (no dealItemId) - RPC mode. */
     onPicked?: (row: DealStockPickerRow) => void;
+    /** Called when picking in Tag mode. */
+    onTagPicked?: (row: DealTagStockPickerRow) => void;
     /** Called after successful assign (when dealItemId present). */
     onAssigned?: () => Promise<void> | void;
     /** Initial filter values (e.g., pre-fill from selected size). */
     initialFilters?: Partial<DealStockPickerFilters>;
+    /** Picker mode: "rpc" for stock groups, "tag" for individual trees. Default: "rpc" */
+    mode?: PickerMode;
+    /** Allow user to toggle between modes? Default: false */
+    allowModeToggle?: boolean;
 };
 
 export function DealItemStockPickerModal({
@@ -24,8 +34,11 @@ export function DealItemStockPickerModal({
     onClose,
     dealItemId,
     onPicked,
+    onTagPicked,
     onAssigned,
     initialFilters,
+    mode: initialMode = "rpc",
+    allowModeToggle = false,
 }: Props) {
     const [filters, setFilters] = useState<DealStockPickerFilters>({
         species_name_th: initialFilters?.species_name_th ?? null,
@@ -36,17 +49,40 @@ export function DealItemStockPickerModal({
         pot_size_label: initialFilters?.pot_size_label ?? null,
     });
 
-    const { rows, loading, error, refetch } = useDealStockPicker(filters, open);
+    // --- Mode state ---
+    const [pickerMode, setPickerMode] = useState<PickerMode>(initialMode);
+
+    // --- RPC mode hook (existing) ---
+    const rpcData = useDealStockPicker(filters, open && pickerMode === "rpc");
+
+    // --- TAG mode hooks (new) ---
+    const tagFilters = {
+        speciesNameTh: filters.species_name_th ?? undefined,
+        sizeLabel: filters.size_label ?? undefined,
+        zoneId: filters.zone_key ?? undefined,
+        onlyAvailable: true,
+        limit: 300,
+    };
+    const tagData = useDealTagStockPicker(open && pickerMode === "tag" ? tagFilters : {});
+    const totals = useDealTagStockPickerTotalsV2();
+
+    // --- Unified data based on mode ---
+    const rows = pickerMode === "tag" ? tagData.rows : rpcData.rows;
+    const loading = pickerMode === "tag" ? tagData.loading : rpcData.loading;
+    const error = pickerMode === "tag" ? tagData.error : rpcData.error;
+    const refetch = pickerMode === "tag" ? tagData.refresh : rpcData.refetch;
+
     const [assigningId, setAssigningId] = useState<string | null>(null);
     const [assignErr, setAssignErr] = useState<string | null>(null);
 
-    // Determine mode
+    // Determine assign mode (existing deal item)
     const isAssignMode = Boolean(dealItemId);
 
-    const canPick = (r: DealStockPickerRow) => (r.qty_available ?? 0) > 0 && r.unit_price != null;
+    const canPickRpc = (r: DealStockPickerRow) => (r.qty_available ?? 0) > 0 && r.unit_price != null;
+    const canPickTag = (r: DealTagStockPickerRow) => r.is_available !== false;
 
     async function handleSelect(row: DealStockPickerRow) {
-        if (!canPick(row)) return;
+        if (!canPickRpc(row)) return;
 
         // Assign Mode: Call RPC to update existing deal_item
         if (isAssignMode && dealItemId) {
@@ -75,6 +111,13 @@ export function DealItemStockPickerModal({
         onClose();
     }
 
+    // Handle selection for Tag mode
+    function handleTagSelect(row: DealTagStockPickerRow) {
+        if (!canPickTag(row)) return;
+        onTagPicked?.(row);
+        onClose();
+    }
+
     if (!open) return null;
 
     return (
@@ -84,15 +127,36 @@ export function DealItemStockPickerModal({
                 <div className="p-4 border-b border-gray-200 dark:border-slate-700 flex items-center justify-between shrink-0">
                     <div>
                         <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                            {isAssignMode ? "เลือกสต็อก" : "เลือกต้นไม้จากสต็อก"}
+                            {pickerMode === "tag"
+                                ? "เลือกต้นไม้ (รายต้น)"
+                                : isAssignMode
+                                    ? "เลือกสต็อก"
+                                    : "เลือกต้นไม้จากสต็อก"}
                         </h2>
                         <p className="text-sm text-gray-500 dark:text-slate-400">
-                            {isAssignMode
-                                ? "กด Assign เพื่อผูก stock_group_id ให้รายการนี้"
-                                : "เลือกแล้วราคาจะเด้งเข้าฟอร์มทันที"}
+                            {pickerMode === "tag"
+                                ? "เลือกต้นเฉพาะจาก Tag (Tag-based picker)"
+                                : isAssignMode
+                                    ? "กด Assign เพื่อผูก stock_group_id ให้รายการนี้"
+                                    : "เลือกแล้วราคาจะเด้งเข้าฟอร์มทันที"}
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
+                        {/* Mode Toggle */}
+                        {allowModeToggle && (
+                            <button
+                                type="button"
+                                onClick={() => setPickerMode(pickerMode === "rpc" ? "tag" : "rpc")}
+                                className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pickerMode === "tag"
+                                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                        : "bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300"
+                                    }`}
+                                title="สลับโหมด: สต็อก (รวม) ↔ รายต้น (Tag)"
+                            >
+                                {pickerMode === "tag" ? <ToggleRight className="w-4 h-4" /> : <ToggleLeft className="w-4 h-4" />}
+                                {pickerMode === "tag" ? "Tag" : "Stock"}
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={refetch}
@@ -166,85 +230,168 @@ export function DealItemStockPickerModal({
                     )}
 
                     <div className="overflow-auto border border-gray-200 dark:border-slate-700 rounded-xl">
-                        <table className="min-w-[1100px] w-full text-sm">
-                            <thead className="bg-gray-50 dark:bg-slate-700/50">
-                                <tr>
-                                    <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Species</th>
-                                    <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Size</th>
-                                    <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Zone</th>
-                                    <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Plot</th>
-                                    <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Height</th>
-                                    <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Pot</th>
-                                    <th className="text-right p-3 font-medium text-gray-600 dark:text-slate-300">Avail</th>
-                                    <th className="text-right p-3 font-medium text-gray-600 dark:text-slate-300">Price</th>
-                                    <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Updated</th>
-                                    <th className="text-right p-3 font-medium text-gray-600 dark:text-slate-300">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
-                                {loading ? (
+                        {/* RPC Mode Table */}
+                        {pickerMode === "rpc" && (
+                            <table className="min-w-[1100px] w-full text-sm">
+                                <thead className="bg-gray-50 dark:bg-slate-700/50">
                                     <tr>
-                                        <td className="p-4 text-center text-gray-500 dark:text-slate-400" colSpan={10}>
-                                            <div className="flex items-center justify-center gap-2">
-                                                <Loader2 className="w-4 h-4 animate-spin" />
-                                                กำลังโหลด…
-                                            </div>
-                                        </td>
+                                        <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Species</th>
+                                        <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Size</th>
+                                        <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Zone</th>
+                                        <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Plot</th>
+                                        <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Height</th>
+                                        <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Pot</th>
+                                        <th className="text-right p-3 font-medium text-gray-600 dark:text-slate-300">Avail</th>
+                                        <th className="text-right p-3 font-medium text-gray-600 dark:text-slate-300">Price</th>
+                                        <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Updated</th>
+                                        <th className="text-right p-3 font-medium text-gray-600 dark:text-slate-300">Action</th>
                                     </tr>
-                                ) : rows.length === 0 ? (
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+                                    {loading ? (
+                                        <tr>
+                                            <td className="p-4 text-center text-gray-500 dark:text-slate-400" colSpan={10}>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    กำลังโหลด…
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : rpcData.rows.length === 0 ? (
+                                        <tr>
+                                            <td className="p-4 text-center text-gray-500 dark:text-slate-400" colSpan={10}>
+                                                ไม่พบรายการ
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        rpcData.rows.map((r) => {
+                                            const disabled = !canPickRpc(r);
+                                            const busy = assigningId === r.stock_group_id;
+                                            return (
+                                                <tr key={r.stock_group_id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50">
+                                                    <td className="p-3 text-gray-900 dark:text-white">{displayValue(r.species_name_th)}</td>
+                                                    <td className="p-3 text-gray-700 dark:text-slate-300">{displayValue(r.size_label)}</td>
+                                                    <td className="p-3 text-gray-700 dark:text-slate-300">{zoneDisplayText(r)}</td>
+                                                    <td className="p-3 text-gray-700 dark:text-slate-300">{displayValue(r.plot_key)}</td>
+                                                    <td className="p-3 text-gray-700 dark:text-slate-300">{displayValue(r.height_label)}</td>
+                                                    <td className="p-3 text-gray-700 dark:text-slate-300">{displayValue(r.pot_size_label)}</td>
+                                                    <td className="p-3 text-right font-medium text-emerald-600 dark:text-emerald-400">
+                                                        {r.qty_available ?? 0}
+                                                    </td>
+                                                    <td className="p-3 text-right font-mono text-gray-700 dark:text-slate-300">
+                                                        {r.unit_price != null ? `฿${r.unit_price.toLocaleString()}` : "-"}
+                                                    </td>
+                                                    <td className="p-3 text-xs text-gray-500 dark:text-slate-400">
+                                                        {r.updated_at
+                                                            ? new Date(r.updated_at).toLocaleString("th-TH", { hour12: false })
+                                                            : "-"}
+                                                    </td>
+                                                    <td className="p-3 text-right">
+                                                        <button
+                                                            type="button"
+                                                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${disabled
+                                                                ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-slate-700 dark:text-slate-500"
+                                                                : "bg-emerald-600 text-white hover:bg-emerald-700"
+                                                                }`}
+                                                            disabled={disabled || busy}
+                                                            onClick={() => handleSelect(r)}
+                                                            title={disabled ? "ต้องมีราคาและจำนวนคงเหลือ" : isAssignMode ? "Assign สต็อกนี้" : "เลือกสต็อกนี้"}
+                                                        >
+                                                            {busy && <Loader2 className="w-3 h-3 animate-spin" />}
+                                                            {busy ? "กำลังบันทึก…" : isAssignMode ? "Assign" : "เลือก"}
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        )}
+
+                        {/* TAG Mode Table */}
+                        {pickerMode === "tag" && (
+                            <table className="min-w-[900px] w-full text-sm">
+                                <thead className="bg-gray-50 dark:bg-slate-700/50">
                                     <tr>
-                                        <td className="p-4 text-center text-gray-500 dark:text-slate-400" colSpan={10}>
-                                            ไม่พบรายการ
-                                        </td>
+                                        <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Tag Code</th>
+                                        <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Species</th>
+                                        <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Size</th>
+                                        <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Zone</th>
+                                        <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Status</th>
+                                        <th className="text-right p-3 font-medium text-gray-600 dark:text-slate-300">Price</th>
+                                        <th className="text-left p-3 font-medium text-gray-600 dark:text-slate-300">Updated</th>
+                                        <th className="text-right p-3 font-medium text-gray-600 dark:text-slate-300">Action</th>
                                     </tr>
-                                ) : (
-                                    rows.map((r) => {
-                                        const disabled = !canPick(r);
-                                        const busy = assigningId === r.stock_group_id;
-                                        return (
-                                            <tr key={r.stock_group_id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50">
-                                                <td className="p-3 text-gray-900 dark:text-white">{displayValue(r.species_name_th)}</td>
-                                                <td className="p-3 text-gray-700 dark:text-slate-300">{displayValue(r.size_label)}</td>
-                                                <td className="p-3 text-gray-700 dark:text-slate-300">{zoneDisplayText(r)}</td>
-                                                <td className="p-3 text-gray-700 dark:text-slate-300">{displayValue(r.plot_key)}</td>
-                                                <td className="p-3 text-gray-700 dark:text-slate-300">{displayValue(r.height_label)}</td>
-                                                <td className="p-3 text-gray-700 dark:text-slate-300">{displayValue(r.pot_size_label)}</td>
-                                                <td className="p-3 text-right font-medium text-emerald-600 dark:text-emerald-400">
-                                                    {r.qty_available ?? 0}
-                                                </td>
-                                                <td className="p-3 text-right font-mono text-gray-700 dark:text-slate-300">
-                                                    {r.unit_price != null ? `฿${r.unit_price.toLocaleString()}` : "-"}
-                                                </td>
-                                                <td className="p-3 text-xs text-gray-500 dark:text-slate-400">
-                                                    {r.updated_at
-                                                        ? new Date(r.updated_at).toLocaleString("th-TH", { hour12: false })
-                                                        : "-"}
-                                                </td>
-                                                <td className="p-3 text-right">
-                                                    <button
-                                                        type="button"
-                                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${disabled
-                                                            ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-slate-700 dark:text-slate-500"
-                                                            : "bg-emerald-600 text-white hover:bg-emerald-700"
-                                                            }`}
-                                                        disabled={disabled || busy}
-                                                        onClick={() => handleSelect(r)}
-                                                        title={disabled ? "ต้องมีราคาและจำนวนคงเหลือ" : isAssignMode ? "Assign สต็อกนี้" : "เลือกสต็อกนี้"}
-                                                    >
-                                                        {busy && <Loader2 className="w-3 h-3 animate-spin" />}
-                                                        {busy ? "กำลังบันทึก…" : isAssignMode ? "Assign" : "เลือก"}
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody className="divide-y divide-gray-100 dark:divide-slate-700">
+                                    {loading ? (
+                                        <tr>
+                                            <td className="p-4 text-center text-gray-500 dark:text-slate-400" colSpan={8}>
+                                                <div className="flex items-center justify-center gap-2">
+                                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                                    กำลังโหลด…
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ) : tagData.rows.length === 0 ? (
+                                        <tr>
+                                            <td className="p-4 text-center text-gray-500 dark:text-slate-400" colSpan={8}>
+                                                ไม่พบรายการ
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        tagData.rows.map((r) => {
+                                            const disabled = !canPickTag(r);
+                                            return (
+                                                <tr key={r.tag_id} className="hover:bg-gray-50 dark:hover:bg-slate-800/50">
+                                                    <td className="p-3 text-gray-900 dark:text-white font-mono">{r.tag_code}</td>
+                                                    <td className="p-3 text-gray-700 dark:text-slate-300">{displayValue(r.species_name_th)}</td>
+                                                    <td className="p-3 text-gray-700 dark:text-slate-300">{displayValue(r.size_label)}</td>
+                                                    <td className="p-3 text-gray-700 dark:text-slate-300">{displayValue(r.zone_name ?? r.zone_key)}</td>
+                                                    <td className="p-3">
+                                                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${r.is_available
+                                                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                                                            : "bg-gray-100 text-gray-600 dark:bg-slate-700 dark:text-slate-400"
+                                                            }`}>
+                                                            {r.is_available ? "พร้อมขาย" : r.status ?? "ไม่พร้อม"}
+                                                        </span>
+                                                    </td>
+                                                    <td className="p-3 text-right font-mono text-gray-700 dark:text-slate-300">
+                                                        {r.unit_price != null ? `฿${r.unit_price.toLocaleString()}` : "-"}
+                                                    </td>
+                                                    <td className="p-3 text-xs text-gray-500 dark:text-slate-400">
+                                                        {r.updated_at
+                                                            ? new Date(r.updated_at).toLocaleString("th-TH", { hour12: false })
+                                                            : "-"}
+                                                    </td>
+                                                    <td className="p-3 text-right">
+                                                        <button
+                                                            type="button"
+                                                            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${disabled
+                                                                ? "bg-gray-100 text-gray-400 cursor-not-allowed dark:bg-slate-700 dark:text-slate-500"
+                                                                : "bg-blue-600 text-white hover:bg-blue-700"
+                                                                }`}
+                                                            disabled={disabled}
+                                                            onClick={() => handleTagSelect(r)}
+                                                            title={disabled ? "ต้นไม้ไม่พร้อมขาย" : "เลือกต้นนี้"}
+                                                        >
+                                                            เลือก
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        )}
                     </div>
 
                     <p className="mt-3 text-xs text-gray-500 dark:text-slate-400">
-                        หมายเหตุ: ปุ่มจะเปิดใช้เฉพาะรายการที่ qty_available &gt; 0 และ unit_price ไม่เป็นค่าว่าง
+                        {pickerMode === "rpc"
+                            ? "หมายเหตุ: ปุ่มจะเปิดใช้เฉพาะรายการที่ qty_available > 0 และ unit_price ไม่เป็นค่าว่าง"
+                            : "หมายเหตุ: เลือกต้นไม้เป็นรายต้น (Tag-based) สำหรับดีลที่ต้องการระบุต้นเฉพาะ"}
                     </p>
                 </div>
             </div>

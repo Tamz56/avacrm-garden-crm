@@ -3,9 +3,11 @@ import StockItemSelect, { StockItemOption } from "./StockItemSelect";
 import { useDealStockSizeOptions } from "../../hooks/useDealStockSizeOptions";
 import { DealItemStockPickerModal } from "./DealItemStockPickerModal";
 import type { DealStockPickerRow } from "../../types/stockPicker";
+import type { DealTagStockPickerRow } from "../../hooks/useDealTagStockPicker";
 import { buildStockDisplayLabel } from "../../lib/stockPickerFormat";
 import { useZoneOptions } from "../../hooks/useZoneOptions";
 import { useSpeciesOptions } from "../../hooks/useSpeciesOptions";
+import { useDealTagStockPickerTotalsV2 } from "../../hooks/useDealTagStockPickerTotals"; // Patch: Fallback sizes
 
 export interface DealItem {
     id?: string;
@@ -13,6 +15,7 @@ export interface DealItem {
     stock_group_id?: string; // FK to stock_groups (canonical ref)
     stock_tree_id?: string; // deprecated - clear when using stock_group_id
     stock_row_id?: string; // deprecated - clear when using stock_group_id
+    tag_id?: string; // FK to tree_tags (Tag-based picker) - NEW!
     selected_size_label?: string; // ขนาดที่เลือก (สำหรับ 2-step picker)
     description?: string;
     tree_name?: string;
@@ -26,7 +29,7 @@ export interface DealItem {
     price_per_meter?: number;
     gradeLabel?: string | null;
     // Preorder fields
-    source_type?: "from_stock" | "preorder_from_zone" | "needs_confirm";
+    source_type?: "from_stock" | "preorder_from_zone" | "needs_confirm" | "from_tag"; // Added from_tag
     preorder_zone_id?: string;
     preorder_plot_id?: string;
     species_id?: string;
@@ -124,7 +127,7 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
         item.stock_row_id = undefined;   // deprecated
 
         if (opt) {
-            // Use centralized formatter - SINGLE SOURCE OF TRUTH
+            // Use centralized formatter
             item.description = buildStockDisplayLabel([
                 opt.speciesName,
                 opt.speciesCode ? `(${opt.speciesCode})` : null,
@@ -132,6 +135,9 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
                 opt.zoneName,
             ]);
             item.tree_name = opt.speciesName;
+
+            // Sync selected_size_label to keep Dropdown consistent
+            item.selected_size_label = opt.sizeLabel || item.selected_size_label;
             item.size_label = opt.sizeLabel;
 
             // Auto-set trunk_size_inch จาก sizeLabel (parse "6" จาก "6 นิ้ว" หรือ "6")
@@ -205,8 +211,42 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
         ]);
     };
 
-    // ดึงขนาดที่มีของพร้อมขาย
-    const { options: sizeOptions, loading: sizesLoading } = useDealStockSizeOptions();
+    // ดึงขนาดที่มีของพร้อมขาย (RPC หลัก)
+    const { options: rpcSizeOptions, loading: sizesLoading } = useDealStockSizeOptions();
+
+    // Patch: Fallback from Tag Totals (กรณี RPC ว่าง)
+    const { rows: tagTotals } = useDealTagStockPickerTotalsV2();
+
+    // Merge options (Robust Map Strategy)
+    const sizeOptions = React.useMemo(() => {
+        // normalize RPC -> map by size_label
+        const bySize = new Map<string, { size_label: string; available_qty: number }>();
+
+        // 1. Add RPC options
+        for (const s of (rpcSizeOptions || [])) {
+            if (!s?.size_label) continue;
+            bySize.set(s.size_label, {
+                size_label: s.size_label,
+                available_qty: Number(s.available_qty ?? 0),
+            });
+        }
+
+        // 2. Fallback from totals_v2 (fill gaps)
+        for (const t of (tagTotals || [])) {
+            if (!t?.size_label) continue;
+            const prev = bySize.get(t.size_label);
+            if (!prev) {
+                // totals_v2 available_qty might be different, use what we have or 0
+                const qty = Number(t.qty_available ?? 0);
+                bySize.set(t.size_label, { size_label: t.size_label, available_qty: qty });
+            }
+        }
+
+        // 3. Sort
+        return Array.from(bySize.values()).sort((a, b) =>
+            a.size_label.localeCompare(b.size_label)
+        );
+    }, [rpcSizeOptions, tagTotals]);
 
     // ดึง Zone และ Species สำหรับ preorder
     const { options: zoneOptions, loading: zonesLoading } = useZoneOptions();
@@ -266,6 +306,16 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
         item.stock_tree_id = undefined; // deprecated - prevent constraint conflict
         item.stock_row_id = undefined;  // deprecated - prevent constraint conflict
 
+        // Clear Tag fields (RPC mode)
+        item.tag_id = undefined;
+        item.source_type = 'from_stock';
+
+        // Ensure size label is consistent
+        item.selected_size_label = row.size_label ?? item.selected_size_label;
+        item.size_label = row.size_label ?? item.size_label;
+
+        // Set price from stock
+
         // Set price from stock
         item.price_per_tree = Number(row.unit_price ?? 0);
 
@@ -291,6 +341,52 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
 
         setItems(next);
         setActiveItemIndex(null);
+        setStockPickerOpen(false); // Close modal
+    };
+
+    // Callback สำหรับ Tag mode (รายต้น)
+    const handleTagPicked = (row: DealTagStockPickerRow) => {
+        if (activeItemIndex === null) return;
+
+        const next = [...items];
+        const item = next[activeItemIndex];
+
+        // 1. Set tag_id (NEW)
+        item.tag_id = row.tag_id;
+        item.source_type = "from_tag";
+
+        // 2. Clear ALL RPC stock fields (กันชน)
+        item.stock_group_id = undefined;
+        item.stock_item_id = undefined;
+        item.stock_tree_id = undefined;
+        item.stock_row_id = undefined;
+
+        // 3. Ensure UI consistency (Dropdown won't be empty)
+        // สำคัญมาก: ต้อง set size_label กลับไปที่ item เพื่อให้ dropdown ไม่ว่าง
+        item.selected_size_label = row.size_label ?? item.selected_size_label ?? undefined;
+        item.size_label = row.size_label ?? item.size_label;
+
+        // 4. Update description
+        item.description = buildStockDisplayLabel([
+            row.tag_code ? `[${row.tag_code}]` : null,
+            row.species_name_th,
+            row.size_label,
+            row.zone_name ?? row.zone_key,
+        ]);
+        item.tree_name = row.species_name_th ?? undefined;
+        item.price_per_tree = Number(row.unit_price ?? 0);
+
+        // 4. Auto fill trunk size
+        if (row.size_label) {
+            const sizeMatch = row.size_label.match(/(\d+)/);
+            if (sizeMatch) {
+                item.trunk_size_inch = parseInt(sizeMatch[1], 10);
+            }
+        }
+
+        setItems(next);
+        setActiveItemIndex(null);
+        setStockPickerOpen(false);
     };
 
     return (
@@ -486,6 +582,11 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
                                         PREORDER 30 วัน
                                     </span>
                                 )}
+                                {item.source_type === 'from_tag' && (
+                                    <span className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full border border-blue-200">
+                                        🏷️ FROM TAG
+                                    </span>
+                                )}
                                 {/* ลบรายการ */}
                                 <button
                                     type="button"
@@ -500,13 +601,13 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
                             {/* Row 2: Stock Selection OR Preorder Fields */}
                             {item.source_type !== 'preorder_from_zone' ? (
                                 /* From Stock Mode */
-                                <div className="grid grid-cols-1 md:grid-cols-[2fr,1fr,1fr,1fr] gap-3 items-start">
-                                    <div>
-                                        <label className="block text-xs text-slate-500 mb-1">
-                                            ขนาด (จากสต็อก) *
-                                        </label>
+                                <div className="grid gap-3 items-end lg:grid-cols-[minmax(0,1fr)_minmax(360px,420px)]">
+                                    {/* LEFT: Size + Stock select + Table */}
+                                    <div className="min-w-0">
+                                        <label className="block text-xs text-slate-500 mb-1">ขนาด (จากสต็อก) *</label>
+
                                         <select
-                                            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500"
+                                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500"
                                             value={item.selected_size_label || ""}
                                             onChange={(e) => handleSizeChange(index, e.target.value || null)}
                                         >
@@ -515,77 +616,78 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
                                             </option>
                                             {sizeOptions.map((s) => (
                                                 <option key={s.size_label} value={s.size_label}>
-                                                    {s.size_label} นิ้ว — พร้อมขายรวม {s.available_qty} ต้น
+                                                    {`${s.size_label} นิ้ว${s.available_qty > 0 ? ` (พร้อมขาย ${s.available_qty})` : ""}`}
                                                 </option>
                                             ))}
                                         </select>
 
-                                        {/* Stock Picker */}
-                                        <div className="mt-2 flex gap-2">
-                                            <div className="flex-1">
+                                        <div className="mt-2 grid grid-cols-12 gap-2 items-end">
+                                            <div className="col-span-12 md:col-span-9">
                                                 <StockItemSelect
                                                     value={item.stock_group_id || null}
                                                     onChange={(opt) => handleStockSelect(index, opt)}
                                                     sizeLabel={item.selected_size_label}
                                                 />
                                             </div>
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setActiveItemIndex(index);
-                                                    setStockPickerOpen(true);
-                                                }}
-                                                className="shrink-0 px-3 py-2 text-xs rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 transition-colors"
-                                                title="เปิดตารางเลือกสต็อกแบบละเอียด"
-                                            >
-                                                📋 ตาราง
-                                            </button>
+
+                                            <div className="col-span-12 md:col-span-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setActiveItemIndex(index);
+                                                        setStockPickerOpen(true);
+                                                    }}
+                                                    className="w-full h-11 px-3 text-sm rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 transition-colors"
+                                                    title="เปิดตารางเลือกสต็อกแบบละเอียด"
+                                                >
+                                                    📋 ตาราง
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <input
-                                        className="mt-2 w-full text-xs border-b border-slate-100 focus:border-emerald-500 outline-none text-slate-600"
-                                        placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"
-                                        value={item.description || ""}
-                                        onChange={(e) => handleItemChange(index, "description", e.target.value)}
-                                    />
+                                    {/* RIGHT: Extra dropdown + Qty + Unit price */}
+                                    <div className="min-w-0">
+                                        <div className="grid grid-cols-1 gap-2">
+                                            {/* รายละเอียดเพิ่มเติม */}
+                                            <div>
+                                                <label className="block text-xs text-slate-500 mb-1">รายละเอียดเพิ่มเติม (ถ้ามี)</label>
+                                                <input
+                                                    className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm"
+                                                    placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"
+                                                    value={item.description || ""}
+                                                    onChange={(e) => handleItemChange(index, "description", e.target.value)}
+                                                />
+                                            </div>
 
-                                    {/* ขนาดลำต้น / จำนวน / ราคา (from_stock) */}
-                                    <div className="grid grid-cols-3 gap-3 mt-3">
-                                        <div>
-                                            <label className="block text-xs text-slate-500 mb-1">
-                                                ขนาดลำต้น (นิ้ว)
-                                            </label>
-                                            <select
-                                                className={`w-full rounded-lg border border-slate-200 px-2 py-1.5 text-sm ${item.stock_group_id ? "bg-slate-100 cursor-not-allowed" : ""}`}
-                                                value={item.trunk_size_inch || ""}
-                                                disabled={!!item.stock_group_id}
-                                                onChange={(e) => handleItemChange(index, "trunk_size_inch", Number(e.target.value))}
-                                            >
-                                                <option value="">-- เลือก --</option>
-                                                {DEAL_TRUNK_SIZE_OPTIONS.map((size) => (
-                                                    <option key={size} value={size}>{size} นิ้ว</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-slate-500 mb-1">จำนวน (ต้น)</label>
-                                            <input
-                                                type="number"
-                                                min={1}
-                                                className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
-                                                value={item.quantity}
-                                                onChange={(e) => handleItemChange(index, "quantity", Number(e.target.value || 0))}
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs text-slate-500 mb-1">ราคาต่อต้น (บาท)</label>
-                                            <input
-                                                type="number"
-                                                className="w-full rounded-lg border border-slate-200 px-3 py-1.5 text-sm"
-                                                value={item.price_per_tree}
-                                                onChange={(e) => handleItemChange(index, "price_per_tree", Number(e.target.value || 0))}
-                                            />
+                                            {/* จำนวน + ราคา */}
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label className="block text-xs text-slate-500 mb-1">จำนวน (ต้น)</label>
+                                                    <input
+                                                        type="number"
+                                                        min={1}
+                                                        step={1}
+                                                        inputMode="numeric"
+                                                        className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-right"
+                                                        value={item.quantity}
+                                                        onChange={(e) => handleItemChange(index, "quantity", Number(e.target.value || 1))}
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs text-slate-500 mb-1">ราคาต่อหน่วย (บาท)</label>
+                                                    <input
+                                                        type="number"
+                                                        min={0}
+                                                        step={1}
+                                                        inputMode="numeric"
+                                                        className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-right"
+                                                        value={item.price_per_tree}
+                                                        onChange={(e) => handleItemChange(index, "price_per_tree", Number(e.target.value || 0))}
+                                                    />
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -767,7 +869,10 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
                     setStockPickerOpen(false);
                     setActiveItemIndex(null);
                 }}
+                allowModeToggle={true} // เปิดให้สลับโหมดได้
+                mode="rpc"             // เริ่มต้นที่ RPC mode (หรือจะเปลี่ยนตาม logic ก็ได้)
                 onPicked={handleStockPicked}
+                onTagPicked={handleTagPicked}
                 initialFilters={{
                     size_label: activeItemIndex !== null ? items[activeItemIndex]?.selected_size_label : undefined,
                 }}

@@ -148,13 +148,19 @@ const NewDealModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: 
         price_type: item.price_type || 'per_tree',
         height_m: item.height_m || null,
         price_per_meter: item.price_per_meter || null,
+
         stock_group_id: item.stock_group_id || null,
-        // Preorder fields
+        tag_id: item.tag_id || null, // NEW: Tag-based picker
+
+        // Preorder & Source Info
         source_type: item.source_type || 'from_stock',
         preorder_zone_id: item.preorder_zone_id || null,
         preorder_plot_id: item.preorder_plot_id || null,
         species_id: item.species_id || null,
+
+        // Size Label (priority: size_label > trunk_size)
         size_label: item.size_label || (item.trunk_size_inch ? `${item.trunk_size_inch}` : null),
+
         lead_time_days: item.lead_time_days || 30,
         unit_price_estimate: item.unit_price_estimate || null,
         preorder_notes: item.preorder_notes || null,
@@ -193,8 +199,8 @@ const NewDealModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-lg w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="bg-white rounded-2xl shadow-lg w-[calc(100vw-2rem)] max-w-6xl max-h-[90vh] overflow-hidden flex flex-col">
         <div className="px-6 py-4 border-b flex items-center justify-between">
           <h2 className="text-lg font-semibold">สร้างดีลใหม่</h2>
           <button
@@ -205,7 +211,7 @@ const NewDealModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: 
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 overflow-y-auto">
+        <form onSubmit={handleSubmit} className="p-4 md:p-6 overflow-y-auto">
           {error && (
             <div className="rounded-xl bg-red-50 text-red-700 px-4 py-2 text-sm mb-4">
               {error}

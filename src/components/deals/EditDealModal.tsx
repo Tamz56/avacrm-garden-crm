@@ -118,6 +118,15 @@ export const EditDealModal: React.FC<EditDealModalProps> = ({
                         price_type: item.price_type || 'per_tree',
                         height_m: item.height_m,
                         price_per_meter: item.price_per_meter,
+                        // Map Tag & Preorder fields
+                        tag_id: item.tag_id,
+                        source_type: item.source_type || (item.tag_id ? 'from_tag' : 'from_stock'),
+                        preorder_zone_id: item.preorder_zone_id,
+                        preorder_plot_id: item.preorder_plot_id,
+                        species_id: item.species_id,
+                        lead_time_days: item.lead_time_days,
+                        expected_ready_date: item.expected_ready_date,
+                        preorder_notes: item.preorder_notes
                     }));
                     setItems(mappedItems);
                 }
@@ -175,27 +184,70 @@ export const EditDealModal: React.FC<EditDealModalProps> = ({
 
             // Then insert new items
             if (items.length > 0) {
-                const itemsToInsert = items.map(item => ({
+                // 1) Normalize Items: Enforce consistency between ID and Source Type
+                const normalizedItems = items.map((item) => {
+                    const isTag = !!item.tag_id || item.source_type === "from_tag";
+
+                    // enforce source_type
+                    const source_type = isTag ? "from_tag" : (item.source_type || "from_stock");
+
+                    // enforce exclusive fields (Tag vs Stock Group)
+                    const tag_id = isTag ? (item.tag_id || null) : null;
+                    const stock_group_id = isTag ? null : (item.stock_group_id || null);
+
+                    // enforce numeric
+                    const quantity = Number(item.quantity || 0);
+                    const price_per_tree = Number(item.price_per_tree || 0);
+
+                    return {
+                        ...item,
+                        source_type,
+                        tag_id,
+                        stock_group_id,
+                        quantity,
+                        price_per_tree,
+                    };
+                });
+
+                // 2) Map to DB columns
+                const itemsToInsert = normalizedItems.map(item => ({
                     deal_id: deal.id,
-                    stock_group_id: item.stock_group_id || null, // ใช้ stock_group_id แทน
-                    stock_item_id: null, // deprecated - ไม่ใช้แล้ว
+
+                    // exclusive picker fields
+                    stock_group_id: item.stock_group_id ?? null,
+                    stock_item_id: null, // deprecated
+                    tag_id: item.tag_id ?? null,
+
                     description: item.description || item.tree_name || "ไม่ระบุ",
                     quantity: item.quantity,
                     unit_price: item.price_per_tree,
                     trunk_size_inch: item.trunk_size_inch || null,
                     line_total: item.quantity * item.price_per_tree,
                     unit: "ต้น",
-                    // New fields for Price per Meter
+
+                    // Price per Meter
                     price_type: item.price_type || 'per_tree',
                     height_m: item.height_m || null,
                     price_per_meter: item.price_per_meter || null,
+
+                    // Source & Preorder Info
+                    source_type: item.source_type || 'from_stock',
+                    preorder_zone_id: item.preorder_zone_id || null,
+                    preorder_plot_id: item.preorder_plot_id || null,
+                    species_id: item.species_id || null,
+                    lead_time_days: item.lead_time_days || null,
+                    expected_ready_date: item.expected_ready_date || null,
+                    preorder_notes: item.preorder_notes || null
                 }));
 
                 const { error: insertError } = await supabase
                     .from("deal_items")
                     .insert(itemsToInsert);
 
-                if (insertError) throw insertError;
+                if (insertError) {
+                    console.error("Deal items insert failed", { dealId: deal.id, itemsToInsert, error: insertError });
+                    throw insertError;
+                }
             }
 
             // 3. Recalculate Commissions
@@ -220,7 +272,7 @@ export const EditDealModal: React.FC<EditDealModalProps> = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-[calc(100vw-2rem)] max-w-6xl max-h-[90vh] overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
                 {/* Header */}
                 <div className="px-6 py-4 border-b border-gray-100 dark:border-slate-700 flex items-center justify-between bg-white dark:bg-slate-800">
                     <div>
@@ -240,8 +292,8 @@ export const EditDealModal: React.FC<EditDealModalProps> = ({
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="flex-1 overflow-hidden flex flex-col">
-                    <div className="flex-1 overflow-y-auto p-6">
+                <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-6">
                         {error && (
                             <div className="rounded-xl bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 px-4 py-3 text-sm mb-6 flex items-start gap-2">
                                 <span className="mt-0.5">⚠️</span>
