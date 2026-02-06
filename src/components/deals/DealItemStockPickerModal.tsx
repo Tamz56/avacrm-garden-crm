@@ -3,7 +3,6 @@ import { useState } from "react";
 import { supabase } from "../../supabaseClient";
 import { useDealStockPicker } from "../../hooks/useDealStockPicker";
 import { useDealTagStockPicker, type DealTagStockPickerRow } from "../../hooks/useDealTagStockPicker";
-import { useDealTagStockPickerTotalsV2 } from "../../hooks/useDealTagStockPickerTotals";
 import type { DealStockPickerRow, DealStockPickerFilters } from "../../types/stockPicker";
 import { displayValue, zoneDisplayText } from "../../lib/stockPickerFormat";
 import { Loader2, X, RefreshCw, ToggleLeft, ToggleRight } from "lucide-react";

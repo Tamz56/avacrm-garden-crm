@@ -17,10 +17,11 @@ const DOC_TITLES: Record<DocType, { th: string; en: string }> = {
     RCPT: { th: 'ใบเสร็จรับเงิน', en: 'RECEIPT' },
 };
 
-const DOC_COPY_LABEL: Record<string, { th: string; en: string }> = {
+const _DOC_COPY_LABEL: Record<string, { th: string; en: string }> = {
     original: { th: 'ต้นฉบับ', en: 'ORIGINAL' },
     copy: { th: 'สำเนา', en: 'COPY' },
 };
+void _DOC_COPY_LABEL;
 
 // --- QT Defaults (Farm Standard) ---
 const DEFAULT_QT_BANK_INFO =
@@ -98,14 +99,14 @@ export const DocumentPrintTemplate: React.FC<Props> = ({ payload: directPayload,
         document.head.appendChild(link);
     }, []);
 
-    const items = (rawPayload?.items && Array.isArray(rawPayload.items)) ? rawPayload.items : [];
     const payload = rawPayload || { shipping: {}, discount: {}, toggles: {} } as any;
 
     const useVat = payload.toggles?.vat_enabled !== false;
 
     // ✅ Virtual Shipping Row Logic & Subtotal Safeguard (Moved to top level)
     const { rows, itemsSubTotal, grandTotal } = React.useMemo(() => {
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+        // Calculate items inside useMemo to avoid dependency warning
+        const items = (rawPayload?.items && Array.isArray(rawPayload.items)) ? rawPayload.items : [];
         const base: any[] = [...items];
         const shippingFee = Number(payload.shipping?.fee ?? 0);
         const shippingNote = payload.shipping?.note;
@@ -137,7 +138,7 @@ export const DocumentPrintTemplate: React.FC<Props> = ({ payload: directPayload,
         const grand = gross - (Number(payload.discount?.amount) || 0);
 
         return { rows: base, itemsSubTotal: sub, grandTotal: grand };
-    }, [items, payload.shipping, payload.discount]);
+    }, [rawPayload?.items, payload.shipping, payload.discount]);
 
     // --- EARLY RETURN IF NO DATA ---
     if (!rawPayload) {

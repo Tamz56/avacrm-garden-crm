@@ -1,19 +1,20 @@
-```
+
 import React from "react";
 import { useBillingDashboardSummary } from "../../hooks/useBillingDashboardSummary";
-import { formatMoney } from "../../utils/textUtils";
+
 
 export default function BillingKpiStrip() {
-    // Use "this_month" preset logic implicitly by passing no args or using the hook defaults
-    // The user provided code uses dates. Let's stick to the hook's preset capability which defaults to '7d' but we want 'this_month' for the main dashboard usually.
-    // Actually, the user snippet for Strip used manually calculated dates. 
-    // Let's use the hook's preset 'this_month' for simplicity if the hook supports it.
-    // Checking `useBillingDashboardSummary`: it takes initialPreset.
-
+    // Use "this_month" preset logic implicitly
     const { data, loading, error } = useBillingDashboardSummary('this_month');
 
-    // Ensure we switch to this_month if not already (though initialPreset handles it)
-    // We don't need to manually calculate dates if we trust the hook's preset logic which we just wrote.
+    // Helper helper if utils missing
+    const formatMoney = (amount: number) => {
+        return new Intl.NumberFormat('th-TH', {
+            style: 'currency',
+            currency: 'THB',
+            minimumFractionDigits: 0
+        }).format(amount);
+    };
 
     const totals = data?.totals;
     const docCount = totals?.doc_count ?? 0;

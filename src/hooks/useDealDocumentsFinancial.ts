@@ -106,6 +106,7 @@ export function useDealDocumentsFinancial(params: Params) {
         } finally {
             setLoading(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [key]);
 
     useEffect(() => {

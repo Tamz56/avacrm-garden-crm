@@ -296,13 +296,14 @@ function App() {
   }, [applyFromUrl]);
 
   // ✅ ให้เมนูเรียกอันนี้แทน setActivePage ตรง ๆ
-  const navigatePage = (page) => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const navigatePage = useCallback((page) => {
     const next = VALID_PAGES.has(page) ? page : DEFAULT_PAGE;
     setActivePage(next);
 
     // pushState เพื่อให้ back/forward ย้อนได้
     setQueryParam("page", next, { replace: false });
-  };
+  }, []);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(() =>
     window.matchMedia("(min-width: 1024px)").matches
@@ -335,11 +336,12 @@ function App() {
 
 
 
-  const handleOpenZone = (zoneId) => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleOpenZone = useCallback((zoneId) => {
     setZonesPreset({ initialZoneId: zoneId });
     navigatePage("zones");
     setQueryParam("zone_id", zoneId, { replace: false });
-  };
+  }, [navigatePage]);
 
   const handleOpenContext = useCallback((type, id) => {
     if (!id) return;
@@ -369,7 +371,7 @@ function App() {
       default:
         console.warn("Unknown context type:", type);
     }
-  }, []);
+  }, [handleOpenZone, navigatePage]);
 
   // Global reload for Dashboard
   const [dashboardReloadKey, setDashboardReloadKey] = useState(0);
