@@ -3,7 +3,8 @@ import React, { useState, useCallback } from "react";
 import {
     TreePine,
     HandCoins,
-    RefreshCw,
+    RefreshCcw,
+    ChevronDown,
     Pickaxe,
     PlusCircle,
 } from "lucide-react";
@@ -63,6 +64,7 @@ export default function Dashboard({
 }: DashboardProps) {
     const [timeRange, setTimeRange] = useState("this_month");
     const [chartMode, setChartMode] = useState<"revenue" | "trees_out">("revenue");
+    const [isRefreshing, setIsRefreshing] = useState(false);
 
     // 1. KPIs
     const { data: stats, loading: kpiLoading, refetch: refetchKpis } = useDashboardKpis(timeRange);
@@ -96,10 +98,17 @@ export default function Dashboard({
 
     // Refresh all data at once
     const handleRefreshAll = useCallback(async () => {
-        refetchKpis?.();
-        refetchChart?.();
-        // refetchTasks is now handled inside DashboardPriorityTasksCard
-        refetchZones?.();
+        setIsRefreshing(true);
+        try {
+            await Promise.all([
+                refetchKpis?.(),
+                refetchChart?.(),
+                refetchZones?.(),
+            ]);
+        } finally {
+            // หน่วงเล็กน้อยให้เห็น animation
+            setTimeout(() => setIsRefreshing(false), 400);
+        }
     }, [refetchKpis, refetchChart, refetchZones]);
 
     // Auto-reload when reloadKey changes (triggered by child pages)
@@ -130,7 +139,7 @@ export default function Dashboard({
     }, [zones]);
     void _zonesForTable;
 
-    const bgClass = isDarkMode ? "bg-slate-950" : "bg-slate-50";
+    const bgClass = isDarkMode ? "bg-black" : "bg-slate-50";
     const cardBg = isDarkMode
         ? "bg-slate-900/60 border-slate-800 shadow-[0_0_0_1px_rgba(15,23,42,0.8)]"
         : "bg-white border-slate-100 shadow-sm";
@@ -151,32 +160,49 @@ export default function Dashboard({
                             ระบบบริหารงานขายและต้นไม้ในแปลง – Ava Farm 888
                         </p>
                     </div>
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-2">
+                        {/* Refresh */}
                         <button
                             type="button"
                             onClick={handleRefreshAll}
-                            className={`inline - flex items - center gap - 1.5 rounded - lg border px - 3 py - 1.5 text - xs font - medium shadow - sm transition - colors
-                                ${isDarkMode
-                                    ? "border-slate-700 bg-slate-900 text-slate-200 hover:border-emerald-500/50 hover:text-emerald-300"
-                                    : "border-slate-200 bg-white text-slate-700 hover:border-emerald-300 hover:text-emerald-700"
-                                } `}
+                            disabled={isRefreshing}
+                            className={
+                                "inline-flex items-center gap-2 h-9 px-3 rounded-xl border text-sm font-medium transition-colors " +
+                                (isDarkMode
+                                    ? "bg-slate-900/40 border-slate-700 text-slate-100 hover:bg-slate-900/60"
+                                    : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50") +
+                                " disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+                            }
+                            title="รีเฟรชข้อมูล"
                         >
-                            <RefreshCw className="h-3.5 w-3.5" />
-                            รีเฟรช
+                            <RefreshCcw className={"w-4 h-4 " + (isRefreshing ? "animate-spin" : "")} />
+                            <span>รีเฟรช</span>
                         </button>
-                        <select
-                            className={`rounded - lg border px - 3 py - 1.5 text - xs shadow - sm outline - none focus: border - emerald - 500 focus: ring - 1 focus: ring - emerald - 500 ${isDarkMode
-                                ? "bg-slate-950 border-slate-700 text-slate-200"
-                                : "bg-white border-slate-200 text-slate-700"
-                                } `}
-                            value={timeRange}
-                            onChange={(e) => setTimeRange(e.target.value)}
-                        >
-                            <option value="this_month">เดือนนี้</option>
-                            <option value="last_3m">3 เดือนล่าสุด</option>
-                            <option value="last_6m">6 เดือนล่าสุด</option>
-                            <option value="last_12m">12 เดือนล่าสุด</option>
-                        </select>
+
+                        {/* Month select */}
+                        <div className="relative">
+                            <select
+                                value={timeRange}
+                                onChange={(e) => setTimeRange(e.target.value)}
+                                className={
+                                    "appearance-none h-9 pl-3 pr-9 rounded-xl border text-sm font-medium shadow-sm outline-none cursor-pointer transition-colors " +
+                                    (isDarkMode
+                                        ? "bg-slate-900/40 border-slate-700 text-slate-100 focus:border-slate-500"
+                                        : "bg-white border-slate-200 text-slate-700 focus:border-slate-400")
+                                }
+                            >
+                                <option value="this_month">เดือนนี้</option>
+                                <option value="last_3m">3 เดือนล่าสุด</option>
+                                <option value="last_6m">6 เดือนล่าสุด</option>
+                                <option value="last_12m">12 เดือนล่าสุด</option>
+                            </select>
+                            <ChevronDown
+                                className={
+                                    "pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 " +
+                                    (isDarkMode ? "text-slate-300" : "text-slate-500")
+                                }
+                            />
+                        </div>
                     </div>
                 </header>
 

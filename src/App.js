@@ -323,6 +323,12 @@ function App() {
     localStorage.setItem('ava-theme', newMode ? 'dark' : 'light');
   };
 
+  // Sync body background color for overscroll/margin areas
+  useEffect(() => {
+    document.body.style.backgroundColor = isDarkMode ? "#000000" : "";
+    return () => { document.body.style.backgroundColor = ""; };
+  }, [isDarkMode]);
+
   // Navigation Presets
   const [zonesPreset, setZonesPreset] = useState(null);
   const [tagPreset, setTagPreset] = useState(null);
@@ -401,7 +407,7 @@ function App() {
 
   return (
 
-    <div className={`flex min-h-screen font-sans transition-colors duration-200 ${isDarkMode ? "dark bg-slate-950 text-slate-50" : "bg-slate-50 text-slate-900"}`}>
+    <div className={`flex min-h-screen font-sans transition-colors duration-200 ${isDarkMode ? "dark bg-black text-slate-50" : "bg-slate-50 text-slate-900"}`}>
       {/* Sidebar */}
       <Sidebar
         activePage={activePage}
@@ -510,7 +516,7 @@ function App() {
         </header>
 
         {/* Page Content */}
-        <main className={`flex-1 overflow-auto transition-colors duration-200 ${isDarkMode ? "bg-slate-950" : "bg-slate-50"}`}>
+        <main className={`flex-1 overflow-auto transition-colors duration-200 ${isDarkMode ? "bg-black" : "bg-slate-50"}`}>
           {activePage === "dashboard" && (
             <Dashboard
               isDarkMode={isDarkMode}

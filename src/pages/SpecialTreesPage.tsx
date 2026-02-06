@@ -28,7 +28,7 @@ export const SpecialTreesPage: React.FC<Props> = ({ isDarkMode = false }) => {
 
     // Theme-aware styles
     const headerBg = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200";
-    const bodyBg = isDarkMode ? "bg-slate-900" : "bg-slate-50";
+    const bodyBg = isDarkMode ? "bg-black" : "bg-slate-50";
     const cardBg = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-100";
     const textMain = isDarkMode ? "text-white" : "text-slate-900";
     const textMuted = isDarkMode ? "text-slate-400" : "text-slate-500";

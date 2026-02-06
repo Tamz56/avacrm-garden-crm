@@ -40,9 +40,9 @@ export default function BillingConsolePage() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+        <div className="min-h-screen bg-slate-50 dark:bg-black">
             {/* Header */}
-            <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-20">
+            <div className="bg-white dark:bg-slate-950/60 border-b border-slate-200 dark:border-slate-800 sticky top-0 z-20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex items-center justify-between py-4">
                         <div className="flex items-center gap-3">
@@ -86,7 +86,7 @@ export default function BillingConsolePage() {
             {/* Content */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
                 {activeTab === 'dashboard' && (
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-4 min-h-[500px]">
+                    <div className="bg-white dark:bg-slate-950/60 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 min-h-[500px]">
                         <BillingDashboard />
                     </div>
                 )}
@@ -96,7 +96,7 @@ export default function BillingConsolePage() {
                 )}
 
                 {activeTab === 'create' && (
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-6 min-h-[500px]">
+                    <div className="bg-white dark:bg-slate-950/60 rounded-2xl border border-slate-200 dark:border-slate-800 p-6 min-h-[500px]">
                         <DocCreatePanel onSuccess={() => navigateTab('registry')} />
                     </div>
                 )}

@@ -61,9 +61,9 @@ const StockMainPage: React.FC<Props> = ({ onNavigateToZones, initialTagFilters, 
     };
 
     // Theme-aware styles
-    const containerBg = isDarkMode ? "bg-slate-900" : "bg-slate-50";
-    const tabBarBg = isDarkMode ? "bg-slate-800 border-slate-700" : "bg-white border-slate-200";
-    const contentBg = isDarkMode ? "bg-slate-900" : "bg-slate-50";
+    const containerBg = isDarkMode ? "bg-black" : "bg-slate-50";
+    const tabBarBg = isDarkMode ? "bg-slate-950/60 border-slate-800" : "bg-white border-slate-200";
+    const contentBg = isDarkMode ? "bg-black" : "bg-slate-50";
 
 
 
