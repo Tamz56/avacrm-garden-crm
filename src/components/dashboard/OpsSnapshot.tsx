@@ -91,7 +91,7 @@ export default function OpsSnapshot({ stats, alerts = [], loading = false }: Ops
                             </div>
                             <div className="rounded-xl border bg-slate-50 p-3 flex justify-between items-center">
                                 <span className="text-sm text-slate-600">Inspection Overdue</span>
-                                <span className={`text - sm font - bold tabular - nums ${stats.inspection_overdue_count ? 'text-rose-600' : 'text-slate-900'} `}>
+                                <span className={"text-sm font-bold tabular-nums " + (stats.inspection_overdue_count ? 'text-rose-600' : 'text-slate-900')}>
                                     {stats.inspection_overdue_count ?? 0}
                                 </span>
                             </div>

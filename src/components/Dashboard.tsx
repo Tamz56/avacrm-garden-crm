@@ -224,32 +224,34 @@ export default function Dashboard({
                 {/* Row C:Trends (Chart + Target) */}
                 <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
                     {/* Chart (2/3) */}
-                    <div className={`lg: col - span - 2 rounded - 2xl border p - 6 flex flex - col h - [360px] ${cardBg} `}>
-                        <div className="flex items-start justify-between mb-4">
-                            <div>
-                                <h2 className={`text - base font - semibold ${textMain} `}>
+                    <div className={"lg:col-span-2 rounded-2xl border p-6 flex flex-col h-[360px] " + cardBg}>
+                        <div className="flex items-start justify-between mb-4 gap-3">
+                            <div className="min-w-0">
+                                <h2 className={"text-base font-semibold " + textMain}>
                                     {chartMode === "revenue" ? "Revenue Trend" : "Trees Out Trend"}
                                 </h2>
-                                <p className={`text - sm ${textMuted} `}>
+                                <p className={"text-sm " + textMuted}>
                                     {chartMode === "revenue" ? "ยอดขายรวม (บาท)" : "จำนวนต้นไม้ที่ส่งออก (ต้น)"}
                                 </p>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 shrink-0">
                                 <button
                                     onClick={() => setChartMode("revenue")}
-                                    className={`px - 3 py - 1 rounded - full text - xs border transition - colors ${chartMode === "revenue"
-                                        ? "bg-slate-900 text-white border-slate-900"
-                                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                                        } `}
+                                    className={"px-3 py-1 rounded-full text-xs border transition-colors " +
+                                        (chartMode === "revenue"
+                                            ? "bg-slate-900 text-white border-slate-900"
+                                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                                        )}
                                 >
                                     Revenue
                                 </button>
                                 <button
                                     onClick={() => setChartMode("trees_out")}
-                                    className={`px - 3 py - 1 rounded - full text - xs border transition - colors ${chartMode === "trees_out"
-                                        ? "bg-slate-900 text-white border-slate-900"
-                                        : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                                        } `}
+                                    className={"px-3 py-1 rounded-full text-xs border transition-colors " +
+                                        (chartMode === "trees_out"
+                                            ? "bg-slate-900 text-white border-slate-900"
+                                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                                        )}
                                 >
                                     Trees out
                                 </button>
@@ -258,15 +260,15 @@ export default function Dashboard({
 
                         <div className="flex-1 min-h-0">
                             {chartLoading ? (
-                                <div className={`flex h - full items - center justify - center text - sm ${textMuted} `}>
+                                <div className={"flex h-full items-center justify-center text-sm " + textMuted}>
                                     Loading chart...
                                 </div>
                             ) : chartData.length === 0 ? (
-                                <div className={`flex h - full flex - col items - center justify - center text - center p - 6 rounded - xl ${isDarkMode ? "bg-slate-900/40" : "bg-slate-50"} `}>
-                                    <div className={`text - sm font - semibold ${textMain} `}>
+                                <div className={"flex h-full flex-col items-center justify-center text-center p-6 rounded-xl " + (isDarkMode ? "bg-slate-900/40" : "bg-slate-50")}>
+                                    <div className={"text-sm font-semibold " + textMain}>
                                         ยังไม่มีข้อมูล{chartMode === 'trees_out' ? 'การขนส่ง' : ''}ในช่วงนี้
                                     </div>
-                                    <div className={`text - xs ${textMuted} mt - 1`}>
+                                    <div className={"text-xs mt-1 " + textMuted}>
                                         {chartMode === 'trees_out'
                                             ? "ลองสร้างรายการขนส่งเพื่อเริ่มนับ Trees out"
                                             : "ไม่มียอดขายในช่วงเวลาที่เลือก"}
@@ -402,29 +404,30 @@ const KpiCard: React.FC<KpiCardProps> = ({
     isDarkMode = false,
     cardBg = "bg-white border-slate-100 shadow-sm",
 }) => (
-    <div className={`flex flex - col justify - between rounded - 2xl border p - 5 hover: shadow - md transition - shadow min - h - [110px] ${cardBg} `}>
-        <div className="flex items-start justify-between">
+    <div className={"flex flex-col justify-between rounded-2xl border p-5 hover:shadow-md transition-shadow min-h-[110px] " + cardBg}>
+        <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-4">
-                <div className={`flex h - 12 w - 12 items - center justify - center rounded - full ${iconColor} `}>
+                <div className={"flex h-12 w-12 items-center justify-center rounded-full " + iconColor}>
                     {icon}
                 </div>
                 <div>
-                    <div className={`text - sm font - medium ${isDarkMode ? "text-slate-400" : "text-slate-500"} `}>{label}</div>
-                    <div className={`text - 2xl font - bold tracking - tight mt - 0.5 ${isDarkMode ? "text-slate-50" : "text-slate-900"} `}>
+                    <div className={"text-sm font-medium " + (isDarkMode ? "text-slate-400" : "text-slate-500")}>{label}</div>
+                    <div className={"text-2xl font-bold tracking-tight mt-0.5 " + (isDarkMode ? "text-slate-50" : "text-slate-900")}>
                         {value}
                     </div>
                 </div>
             </div>
             <span
-                className={`inline - flex items - center rounded - full px - 2.5 py - 0.5 text - xs font - medium ${trendPositive
-                    ? (isDarkMode ? "bg-emerald-500/15 text-emerald-400" : "bg-emerald-50 text-emerald-700")
-                    : (isDarkMode ? "bg-rose-500/15 text-rose-400" : "bg-rose-50 text-rose-700")
-                    } `}
+                className={"inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium shrink-0 " +
+                    (trendPositive
+                        ? (isDarkMode ? "bg-emerald-500/15 text-emerald-400" : "bg-emerald-50 text-emerald-700")
+                        : (isDarkMode ? "bg-rose-500/15 text-rose-400" : "bg-rose-50 text-rose-700")
+                    )}
             >
                 {trend}
             </span>
         </div>
-        <div className={`mt - 4 text - xs pl - 16 ${isDarkMode ? "text-slate-400" : "text-slate-500"} `}>{sub}</div>
+        <div className={"mt-4 text-xs pl-16 " + (isDarkMode ? "text-slate-400" : "text-slate-500")}>{sub}</div>
     </div>
 );
 
