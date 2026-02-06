@@ -1,0 +1,22 @@
+name: CI Build
+
+on:
+  pull_request:
+  push:
+    branches: [ "wip/ui-before-mac" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: ".nvmrc"
+          cache: "npm"
+
+      - run: npm ci
+      - run: npm run build

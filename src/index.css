@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -59,4 +60,89 @@
 
 .dark .custom-scrollbar {
   scrollbar-color: #334155 #020617;
+}
+
+/* ============================
+   Print Styles (A4 Document)
+   ============================ */
+@page {
+  size: A4;
+  margin: 0;
+  /* ✅ Option A: wrapper คุม padding เอง (12mm) */
+}
+
+@media print {
+
+  html,
+  body {
+    height: auto !important;
+    background: #fff !important;
+  }
+
+  /* ให้สี/พื้นหลังออกตามจริง */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* กัน container ของ modal/scroll ครอปเนื้อหา (ปัญหาคลาสสิก) */
+  .overflow-auto,
+  .overflow-y-auto,
+  .modal,
+  .dialog,
+  .sheet,
+  .drawer {
+    overflow: visible !important;
+    height: auto !important;
+    max-height: none !important;
+  }
+
+  /* ========== Print Isolation (กัน UI รอบนอกทำให้เพี้ยน) ========== */
+  body * {
+    visibility: hidden !important;
+  }
+
+  #document-print,
+  #document-print * {
+    visibility: visible !important;
+  }
+
+  #document-print {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+  }
+
+  /* กันบาง layout ที่มี transform แล้วพิมพ์เพี้ยน */
+  * {
+    transform: none !important;
+    filter: none !important;
+  }
+
+  /* ให้หัวตาราง/ส่วนหัวตาราง behave แบบ print-friendly */
+  thead {
+    display: table-header-group;
+  }
+
+  /* ตัวเอกสาร - wrapper คุม padding เอง */
+  #document-print {
+    width: 210mm !important;
+    min-height: 297mm !important;
+    margin: 0 !important;
+    /* padding คุมใน wrapper แล้ว (12mm) */
+  }
+
+  /* กันการตัดหน้ากลางส่วนสำคัญ */
+  table,
+  tr,
+  td,
+  th {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
 }

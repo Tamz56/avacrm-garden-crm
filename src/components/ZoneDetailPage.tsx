@@ -88,7 +88,7 @@ const toThaiNumber = (value?: number | null) =>
 
 type TabId = "overview" | "plot" | "audit" | "dig_plan" | "operations" | "tags" | "movements" | "files";
 
-const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void }) => {
+const ZoneDetailPage = ({ zoneId, onBack, onCreateTask }: { zoneId: string; onBack: () => void, onCreateTask?: () => void }) => {
     // --- State & Hooks ---
     const [zone, setZone] = React.useState<any>(null);
     const [loadingZone, setLoadingZone] = React.useState(false);
@@ -690,6 +690,14 @@ const ZoneDetailPage = ({ zoneId, onBack }: { zoneId: string; onBack: () => void
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2">
+                    <button
+                        type="button"
+                        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                        onClick={onCreateTask}
+                    >
+                        + เพิ่มงาน
+                    </button>
+
                     <button
                         type="button"
                         className="inline-flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-700 hover:bg-emerald-100"

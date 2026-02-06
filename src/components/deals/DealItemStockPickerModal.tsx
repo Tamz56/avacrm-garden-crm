@@ -3,7 +3,6 @@ import { useState } from "react";
 import { supabase } from "../../supabaseClient";
 import { useDealStockPicker } from "../../hooks/useDealStockPicker";
 import { useDealTagStockPicker, type DealTagStockPickerRow } from "../../hooks/useDealTagStockPicker";
-import { useDealTagStockPickerTotalsV2 } from "../../hooks/useDealTagStockPickerTotals";
 import type { DealStockPickerRow, DealStockPickerFilters } from "../../types/stockPicker";
 import { displayValue, zoneDisplayText } from "../../lib/stockPickerFormat";
 import { Loader2, X, RefreshCw, ToggleLeft, ToggleRight } from "lucide-react";
@@ -64,10 +63,9 @@ export function DealItemStockPickerModal({
         limit: 300,
     };
     const tagData = useDealTagStockPicker(open && pickerMode === "tag" ? tagFilters : {});
-    const totals = useDealTagStockPickerTotalsV2();
+    // const totals = useDealTagStockPickerTotalsV2();
 
     // --- Unified data based on mode ---
-    const rows = pickerMode === "tag" ? tagData.rows : rpcData.rows;
     const loading = pickerMode === "tag" ? tagData.loading : rpcData.loading;
     const error = pickerMode === "tag" ? tagData.error : rpcData.error;
     const refetch = pickerMode === "tag" ? tagData.refresh : rpcData.refetch;
@@ -148,8 +146,8 @@ export function DealItemStockPickerModal({
                                 type="button"
                                 onClick={() => setPickerMode(pickerMode === "rpc" ? "tag" : "rpc")}
                                 className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${pickerMode === "tag"
-                                        ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
-                                        : "bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300"
+                                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                                    : "bg-gray-100 text-gray-700 dark:bg-slate-700 dark:text-slate-300"
                                     }`}
                                 title="สลับโหมด: สต็อก (รวม) ↔ รายต้น (Tag)"
                             >

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { supabase } from "./supabaseClient";
 import {
   Search,
@@ -10,6 +10,7 @@ import { LoginForm } from "./components/auth/LoginForm.tsx";
 import { PinGate } from "./components/auth/PinGate";
 import { PinSetup } from "./components/auth/PinSetup";
 import * as pinLock from "./pinLock";
+import { getQueryParam, setQueryParam } from "./utils/urlState";
 
 
 // Components
@@ -26,6 +27,26 @@ import { ZonesPage } from "./components/zones/ZonesPage.tsx";
 import TreeDatabaseMain from "./components/TreeDatabaseMain.tsx";
 import SalesActivityReport from "./components/dashboard/SalesActivityReport.tsx";
 import DigPlansPage from "./components/dig-plans/DigPlansPage.tsx";
+import BillingConsolePage from "./pages/BillingConsolePage.tsx";
+import TasksPage from "./pages/TasksPage.tsx";
+
+const DEFAULT_PAGE = "dashboard";
+const VALID_PAGES = new Set([
+  "dashboard",
+  "deals",
+  "billing",
+  "shipments",
+  "customers",
+  "stock",
+  "commission",
+  "db_schema",
+  "settings",
+  "commission_settings",
+  "zones",
+  "dig_plans",
+  "activity_report",
+  "tasks"
+]);
 
 function App() {
   const [session, setSession] = useState(null);
@@ -244,7 +265,45 @@ function App() {
   }, [session]);
 
 
-  const [activePage, setActivePage] = useState("dashboard");
+  const [activePage, setActivePage] = useState(DEFAULT_PAGE);
+
+  const applyFromUrl = useCallback(() => {
+    const p = getQueryParam("page");
+    const next = p && VALID_PAGES.has(p) ? p : DEFAULT_PAGE;
+    setActivePage(next);
+
+    // Read deep link params
+    const dealId = getQueryParam("deal_id");
+    if (dealId) setDealPresetId(dealId);
+
+    const customerId = getQueryParam("customer_id");
+    if (customerId) setCustomerPresetId(customerId);
+
+    const zoneId = getQueryParam("zone_id");
+    if (zoneId) setZonesPreset({ initialZoneId: zoneId });
+
+    const tagId = getQueryParam("tag_id");
+    if (tagId) setTagPreset({ initialTagId: tagId });
+  }, []);
+
+  useEffect(() => {
+    // init from URL
+    applyFromUrl();
+
+    // back/forward
+    window.addEventListener("popstate", applyFromUrl);
+    return () => window.removeEventListener("popstate", applyFromUrl);
+  }, [applyFromUrl]);
+
+  // ✅ ให้เมนูเรียกอันนี้แทน setActivePage ตรง ๆ
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const navigatePage = useCallback((page) => {
+    const next = VALID_PAGES.has(page) ? page : DEFAULT_PAGE;
+    setActivePage(next);
+
+    // pushState เพื่อให้ back/forward ย้อนได้
+    setQueryParam("page", next, { replace: false });
+  }, []);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(() =>
     window.matchMedia("(min-width: 1024px)").matches
@@ -267,18 +326,52 @@ function App() {
   // Navigation Presets
   const [zonesPreset, setZonesPreset] = useState(null);
   const [tagPreset, setTagPreset] = useState(null);
+  const [dealPresetId, setDealPresetId] = useState(null);
+  const [customerPresetId, setCustomerPresetId] = useState(null);
 
   const handleNavigateToZones = (preset) => {
     setZonesPreset(preset);
-    setActivePage("zones");
+    navigatePage("zones");
   };
 
 
 
-  const handleOpenZone = (zoneId) => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleOpenZone = useCallback((zoneId) => {
     setZonesPreset({ initialZoneId: zoneId });
-    setActivePage("zones");
-  };
+    navigatePage("zones");
+    setQueryParam("zone_id", zoneId, { replace: false });
+  }, [navigatePage]);
+
+  const handleOpenContext = useCallback((type, id) => {
+    if (!id) return;
+    switch (type) {
+      case 'deal':
+        setDealPresetId(id);
+        navigatePage('deals');
+        setQueryParam("deal_id", id, { replace: false });
+        break;
+      case 'customer':
+        setCustomerPresetId(id);
+        navigatePage('customers');
+        setQueryParam("customer_id", id, { replace: false });
+        break;
+      case 'zone':
+        handleOpenZone(id);
+        break;
+      case 'tag':
+        // Stock page expects initialTagFilters
+        setTagPreset({ initialTagId: id });
+        navigatePage('stock');
+        setQueryParam("tag_id", id, { replace: false });
+        break;
+      case 'stock':
+        navigatePage('stock');
+        break;
+      default:
+        console.warn("Unknown context type:", type);
+    }
+  }, [handleOpenZone, navigatePage]);
 
   // Global reload for Dashboard
   const [dashboardReloadKey, setDashboardReloadKey] = useState(0);
@@ -312,7 +405,7 @@ function App() {
       {/* Sidebar */}
       <Sidebar
         activePage={activePage}
-        setActivePage={setActivePage}
+        setActivePage={navigatePage}
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={setIsSidebarOpen}
         isDarkMode={isDarkMode}
@@ -423,31 +516,47 @@ function App() {
               isDarkMode={isDarkMode}
               onOpenZone={handleOpenZone}
               reloadKey={dashboardReloadKey}
-              onCreateDeal={() => setActivePage("deals")}
-              onCreateDigOrder={() => setActivePage("zones")}
-              onCreateShipment={() => setActivePage("shipments")}
+              onCreateDeal={() => navigatePage("deals")}
+              onCreateDigOrder={() => navigatePage("zones")}
+              onCreateShipment={() => navigatePage("shipments")}
               onOpenLifecycleView={() => {
                 setTagPreset({ initialTab: "lifecycle" });
-                setActivePage("stock");
+                navigatePage("stock");
               }}
               onOpenSpeciesStockView={() => {
                 setTagPreset({ initialTab: "species" });
-                setActivePage("stock");
+                navigatePage("stock");
               }}
               onSearchTags={() => {
                 setTagPreset({ initialTab: "tags" });
-                setActivePage("stock");
+                navigatePage("stock");
               }}
               onOpenRevenueReport={() => {
                 setTagPreset({ initialTab: "monthly" });
-                setActivePage("stock");
+                navigatePage("stock");
               }}
-              onOpenZonesList={() => setActivePage("zones")}
+              onOpenZonesList={() => navigatePage("zones")}
+              onOpenTasks={() => navigatePage("tasks")}
+            />
+
+          )}
+          {activePage === "deals" && (
+            <DealsMain
+              isDarkMode={isDarkMode}
+              onDataChanged={bumpDashboardReload}
+              initialDealId={dealPresetId}
+              onConsumeInitialDeal={() => setDealPresetId(null)}
             />
           )}
-          {activePage === "deals" && <DealsMain isDarkMode={isDarkMode} onDataChanged={bumpDashboardReload} />}
+          {activePage === "billing" && <BillingConsolePage />}
           {activePage === "shipments" && <ShipmentsPage isDarkMode={isDarkMode} onDataChanged={bumpDashboardReload} />}
-          {activePage === "customers" && <CustomersMain isDarkMode={isDarkMode} />}
+          {activePage === "customers" && (
+            <CustomersMain
+              isDarkMode={isDarkMode}
+              initialCustomerId={customerPresetId}
+              onConsumeInitialCustomer={() => setCustomerPresetId(null)}
+            />
+          )}
           {activePage === "stock" && (
             <StockMainPage
               onNavigateToZones={handleNavigateToZones}
@@ -459,11 +568,11 @@ function App() {
           {activePage === "db_schema" && <TreeDatabaseMain isDarkMode={isDarkMode} />}
           {activePage === "settings" && <SettingsPage isDarkMode={isDarkMode} />}
           {activePage === "commission_settings" && <CommissionConfigPage isDarkMode={isDarkMode} />}
-          {activePage === "settings" && <SettingsPage isDarkMode={isDarkMode} />}
-          {activePage === "commission_settings" && <CommissionConfigPage isDarkMode={isDarkMode} />}
+
           {activePage === "zones" && <ZonesPage initialFilters={zonesPreset} isDarkMode={isDarkMode} />}
           {activePage === "dig_plans" && <DigPlansPage />}
           {activePage === "activity_report" && <SalesActivityReport isDarkMode={isDarkMode} />}
+          {activePage === "tasks" && <TasksPage onNavigateToContext={handleOpenContext} />}
         </main>
       </div>
     </div>

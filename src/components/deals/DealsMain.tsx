@@ -5,6 +5,7 @@ import {
   RefreshCcw,
   Plus,
 } from "lucide-react";
+import CreateTaskModal from "../tasks/CreateTaskModal";
 import { supabase } from "../../supabaseClient";
 import DealCommissionPanel from "./DealCommissionPanel";
 import { DealStockAllocation } from "../DealStockSummaryCard";
@@ -89,6 +90,51 @@ const NewDealModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: 
     fetchOptions();
   }, []);
 
+  // --- helpers (แนะนำวางไว้เหนือ onSubmit) ---
+  const toNumOr = (v: any, fallback: number) => {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : fallback;
+  };
+
+  const toNumOrNull = (v: any) => {
+    if (v === null || v === undefined || v === "") return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  };
+
+  const toUuidOrNull = (v: any) => {
+    if (!v || typeof v !== "string") return null;
+    const s = v.trim();
+    return s.length > 0 ? s : null;
+  };
+
+  // Convert "01/30/2026" or Date -> "2026-01-30"
+  const toISODateOrNull = (v: any) => {
+    if (!v) return null;
+
+    // If it's already ISO-like (YYYY-MM-DD) keep it
+    if (typeof v === "string" && /^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+
+    // If it's a Date
+    if (v instanceof Date && !isNaN(v.getTime())) {
+      return v.toISOString().slice(0, 10);
+    }
+
+    // If it's string like MM/DD/YYYY
+    if (typeof v === "string") {
+      const s = v.trim();
+      const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (m) {
+        const mm = String(m[1]).padStart(2, "0");
+        const dd = String(m[2]).padStart(2, "0");
+        const yyyy = m[3];
+        return `${yyyy}-${mm}-${dd}`;
+      }
+    }
+
+    return null; // unknown format -> let DB receive null instead of crashing
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -122,49 +168,62 @@ const NewDealModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: 
         teamShare.referral_id ||
         null;
 
-      // Prepare deal object
+      // --- Prepare deal object ---
       const dealPayload = {
         title: dealData.name || "ดีลใหม่ (ยังไม่ตั้งชื่อ)",
-        customer_id: dealData.customer_id,
-        customer_name: customerName,
-        total_amount: total,
-        deposit_amount: deposit,
-        shipping_cost: Number(dealData.shipping_cost || 0),
-        remaining_amount: remaining,
-        closing_date: dealData.expected_close_date || null,
+        customer_id: toUuidOrNull(dealData.customer_id),
+        customer_name: customerName || null,
+
+        total_amount: toNumOr(total, 0),
+        deposit_amount: toNumOr(deposit, 0),
+        shipping_cost: toNumOr(dealData.shipping_cost, 0),
+        remaining_amount: toNumOr(remaining, 0),
+
+        closing_date: toISODateOrNull(dealData.expected_close_date),
         note_customer: dealData.note || null,
-        referral_sales_id: teamShare.referral_id || null,
-        closing_sales_id: teamShare.sales_agent_id || null,
-        team_leader_id: teamShare.team_leader_id || null,
-        owner_id: ownerId,
+
+        referral_sales_id: toUuidOrNull(teamShare.referral_id),
+        closing_sales_id: toUuidOrNull(teamShare.sales_agent_id),
+        team_leader_id: toUuidOrNull(teamShare.team_leader_id),
+        owner_id: toUuidOrNull(ownerId),
       };
 
-      // Prepare items array
-      const itemsPayload = items.map(item => ({
-        description: item.description || item.tree_name || "ไม่ระบุ",
-        qty: item.quantity,
-        unit_price: item.price_per_tree,
-        trunk_size_inch: item.trunk_size_inch || null,
-        price_type: item.price_type || 'per_tree',
-        height_m: item.height_m || null,
-        price_per_meter: item.price_per_meter || null,
+      // --- Prepare items array (jsonb[]) ---
+      const itemsPayload = items.map((item) => {
+        const qty = Math.max(1, toNumOr(item.quantity, 1));
 
-        stock_group_id: item.stock_group_id || null,
-        tag_id: item.tag_id || null, // NEW: Tag-based picker
+        // size_label priority: explicit size_label -> trunk_size_inch -> null
+        const trunkSize = toNumOrNull(item.trunk_size_inch);
+        const sizeLabel =
+          (item.size_label && String(item.size_label).trim()) ||
+          (trunkSize !== null ? String(trunkSize) : null);
 
-        // Preorder & Source Info
-        source_type: item.source_type || 'from_stock',
-        preorder_zone_id: item.preorder_zone_id || null,
-        preorder_plot_id: item.preorder_plot_id || null,
-        species_id: item.species_id || null,
+        return {
+          description: item.description || item.tree_name || "ไม่ระบุ",
 
-        // Size Label (priority: size_label > trunk_size)
-        size_label: item.size_label || (item.trunk_size_inch ? `${item.trunk_size_inch}` : null),
+          qty,
+          unit_price: toNumOr(item.price_per_tree, 0),
 
-        lead_time_days: item.lead_time_days || 30,
-        unit_price_estimate: item.unit_price_estimate || null,
-        preorder_notes: item.preorder_notes || null,
-      }));
+          trunk_size_inch: trunkSize,
+          price_type: item.price_type || "per_tree",
+          height_m: toNumOrNull(item.height_m),
+          price_per_meter: toNumOrNull(item.price_per_meter),
+
+          stock_group_id: toUuidOrNull(item.stock_group_id),
+          tag_id: toUuidOrNull(item.tag_id), // NOTE: RPC ยังไม่ได้ใช้ แต่ส่งไว้ไม่เสียหาย
+
+          // Preorder & Source Info
+          source_type: item.source_type || "from_stock",
+          preorder_zone_id: toUuidOrNull(item.preorder_zone_id),
+          preorder_plot_id: toUuidOrNull(item.preorder_plot_id),
+          species_id: toUuidOrNull(item.species_id),
+
+          size_label: sizeLabel,
+          lead_time_days: Math.max(0, toNumOr(item.lead_time_days, 30)),
+          unit_price_estimate: toNumOrNull(item.unit_price_estimate),
+          preorder_notes: item.preorder_notes || null,
+        };
+      });
 
       // Call the new RPC
       const { data: result, error: rpcError } = await supabase.rpc(
@@ -256,15 +315,18 @@ const NewDealModal = ({ onClose, onCreated }: { onClose: () => void, onCreated: 
 interface DealsMainProps {
   isDarkMode?: boolean;
   onDataChanged?: () => void;
+  initialDealId?: string | null;
+  onConsumeInitialDeal?: () => void;
 }
 
-const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
+const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged, initialDealId, onConsumeInitialDeal }) => {
   const [deals, setDeals] = useState<DealWithShipping[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [, setError] = useState<string | null>(null);
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
   const [searchTerm] = useState("");
   const [showNewDealModal, setShowNewDealModal] = useState(false);
+  const [showTaskModal, setShowTaskModal] = useState(false);
 
   // State for DealStockSummaryCard & DealShipmentsCard
   const [, setAllocations] = useState<DealStockAllocation[]>([]);
@@ -451,12 +513,18 @@ const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
     loadStockData();
   }, [loadStockData]);
 
-  // เซ็ตดีลตัวแรกให้ถูกเลือกอัตโนมัติ
+  // เซ็ตดีลตัวแรกให้ถูกเลือกอัตโนมัติ (หรือจาก initialId)
   useEffect(() => {
+    if (initialDealId) {
+      setSelectedDealId(initialDealId);
+      onConsumeInitialDeal?.();
+      return;
+    }
+
     if (deals.length && !selectedDealId) {
       setSelectedDealId(deals[0].id);
     }
-  }, [deals, selectedDealId]);
+  }, [deals, selectedDealId, initialDealId, onConsumeInitialDeal]);
 
   // filter ตาม search
   const filteredDeals = useMemo(() => {
@@ -657,6 +725,7 @@ const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
           </div>
         ) : (
           <DealDetailLayout
+            onCreateTask={() => setShowTaskModal(true)}
             deal={{
               ...selectedDeal,
               quantity: dealItems.reduce((sum, i) => sum + (i.quantity || 0), 0)
@@ -729,9 +798,23 @@ const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
               <>
                 <DealDocumentsPanel
                   dealId={selectedDealId!}
-                  dealInfo={{
-                    title: selectedDeal.title ?? undefined,
-                    customer_name: selectedDeal.customer_name ?? undefined,
+                  summary={{
+                    totalAmount: paymentSummary?.net_total ?? (selectedDeal.total_amount || 0),
+                    paidAmount: paymentSummary?.paid_total ?? 0,
+                    outstandingAmount: paymentSummary?.outstanding ?? (selectedDeal.total_amount || 0),
+                  }}
+                  items={dealItems.map(item => ({
+                    id: item.id || Math.random().toString(),
+                    description: item.description || "สินค้า",
+                    subText: item.trunk_size_inch ? `ขนาด ${item.trunk_size_inch} นิ้ว` : undefined,
+                    quantity: item.quantity || 0,
+                    unitPrice: item.price_per_tree || 0,
+                    amount: (item.quantity || 0) * (item.price_per_tree || 0)
+                  }))}
+                  customerInfo={{
+                    name: selectedDeal.customer_name || "ไม่ระบุชื่อ",
+                    phone: "081-111-1111", // Mock
+                    address: "123 หมู่ 4 ต.ปากช่อง อ.ปากช่อง จ.นครราชสีมา", // Mock
                   }}
                 />
               </>
@@ -852,6 +935,15 @@ const DealsMain: React.FC<DealsMainProps> = ({ onDataChanged }) => {
           }}
         />
       )}
+
+      {/* Task Modal */}
+      <CreateTaskModal
+        open={showTaskModal}
+        onClose={() => setShowTaskModal(false)}
+        initialContextType="deal"
+        initialContextId={selectedDeal?.id}
+        initialContextLabel={selectedDeal ? `${selectedDeal.deal_code || '(No Code)'}: ${selectedDeal.title}` : undefined}
+      />
     </div>
   );
 };

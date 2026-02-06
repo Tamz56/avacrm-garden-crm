@@ -5,7 +5,7 @@ import { supabase } from "../../supabaseClient";
 
 const ACTIVITY_TYPES = [
     { value: "call", label: "โทรคุย (Call)" },
-    { value: "line", label: "แชท / LINE" },
+    { value: "line_chat", label: "แชท / LINE" },
     { value: "meeting", label: "นัดเจอ / ดูหน้างาน" },
     { value: "followup", label: "ติดตามผล (Follow-up)" },
     { value: "note", label: "บันทึกโน้ตภายใน" },

@@ -28,6 +28,7 @@ type TagFilters = {
     species_id?: string;
     size_label?: string;
     zone_id?: string;
+    id?: string;
 };
 
 type Props = {

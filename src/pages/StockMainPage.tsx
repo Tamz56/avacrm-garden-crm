@@ -6,6 +6,8 @@ import { SpecialTreesPage } from "./SpecialTreesPage";
 import { SpeciesDatabasePage } from "../components/stock/SpeciesDatabasePage";
 import { SpeciesStockOverviewPage } from "../components/stock/SpeciesStockOverviewPage";
 import StockGroupsPage from "../components/stock/StockGroupsPage";
+import CreateTaskModal from "../components/tasks/CreateTaskModal";
+import { ListTodo } from "lucide-react";
 
 type TagFilters = {
     status?: string;
@@ -13,6 +15,8 @@ type TagFilters = {
     species_id?: string;
     size_label?: string;
     zone_id?: string;
+    id?: string;
+    initialTab?: string;
 };
 
 type Props = {
@@ -36,6 +40,7 @@ const StockMainPage: React.FC<Props> = ({ onNavigateToZones, initialTagFilters, 
     const [tagInitialFilters, setTagInitialFilters] = useState<TagFilters | null>(
         initialTagFilters || null
     );
+    const [showTaskModal, setShowTaskModal] = useState(false);
 
     // Update internal state if prop changes (e.g. from App.js navigation)
     React.useEffect(() => {
@@ -84,6 +89,14 @@ const StockMainPage: React.FC<Props> = ({ onNavigateToZones, initialTagFilters, 
                             จองแล้ว
                         </button>
                     </div>
+
+                    <button
+                        onClick={() => setShowTaskModal(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-md text-sm font-medium transition-colors mr-2 border border-indigo-100"
+                    >
+                        <ListTodo className="w-4 h-4" />
+                        เพิ่มงาน (Stock)
+                    </button>
 
                     {/* 1. ภาพรวมสต็อก (Lifecycle) */}
                     <button
@@ -195,7 +208,15 @@ const StockMainPage: React.FC<Props> = ({ onNavigateToZones, initialTagFilters, 
 
                 {activeTab === "species_db" && <SpeciesDatabasePage isDarkMode={isDarkMode} />}
             </div>
-        </div>
+
+            <CreateTaskModal
+                open={showTaskModal}
+                onClose={() => setShowTaskModal(false)}
+                initialContextType="stock"
+                initialContextId={null}
+                initialContextLabel="Stock Management"
+            />
+        </div >
     );
 };
 

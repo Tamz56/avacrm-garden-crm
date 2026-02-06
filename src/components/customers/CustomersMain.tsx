@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { supabase } from "../../supabaseClient";
 import { CustomerActivityModal, CustomerActivityRow } from "./CustomerActivityModal";
+import CreateTaskModal from "../tasks/CreateTaskModal";
 
 // --- Types ---
 type Customer360Row = {
@@ -261,7 +262,12 @@ const NewCustomerModal = ({
 
 // -------------------- Main Component --------------------
 
-const CustomersMain: React.FC = () => {
+type CustomersMainProps = {
+    initialCustomerId?: string | null;
+    onConsumeInitialCustomer?: () => void;
+};
+
+const CustomersMain: React.FC<CustomersMainProps> = ({ initialCustomerId, onConsumeInitialCustomer }) => {
     // State
     const [customers, setCustomers] = useState<Customer360Row[]>([]);
     const [loading, setLoading] = useState(false);
@@ -269,6 +275,7 @@ const CustomersMain: React.FC = () => {
     const [search, setSearch] = useState("");
     const [selectedCustomer, setSelectedCustomer] = useState<Customer360Row | null>(null);
     const [showNewCustomerModal, setShowNewCustomerModal] = useState(false);
+    const [showTaskModal, setShowTaskModal] = useState(false);
 
 
 
@@ -331,10 +338,22 @@ const CustomersMain: React.FC = () => {
         loadCustomers();
     }, [loadCustomers]);
 
-    // Auto-select first
+    // Auto-select first (or initialCustomerId)
     useEffect(() => {
-        if (customers.length > 0 && !selectedCustomer) setSelectedCustomer(customers[0]);
-    }, [customers, selectedCustomer]);
+        if (customers.length === 0) return;
+
+        if (initialCustomerId) {
+            const found = customers.find(c => c.id === initialCustomerId);
+            if (found) {
+                setSelectedCustomer(found);
+                onConsumeInitialCustomer?.(); // Consume only if found
+            }
+            // If not found yet (maybe pagination?), we might need smarter logic, but for now this is fine.
+            return;
+        }
+
+        if (!selectedCustomer) setSelectedCustomer(customers[0]);
+    }, [customers, selectedCustomer, initialCustomerId, onConsumeInitialCustomer]);
 
     // โหลด activities ของลูกค้ารายที่เลือก
     const loadActivities = useCallback(async (customerId?: string) => {
@@ -790,15 +809,23 @@ const CustomersMain: React.FC = () => {
                                     </div>
                                     กิจกรรมล่าสุดของลูกค้า
                                 </h3>
-                                <button
-                                    onClick={() => {
-                                        setEditingActivity(null);
-                                        setActivityModalOpen(true);
-                                    }}
-                                    className="text-xs px-3 py-1.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-500/30"
-                                >
-                                    + บันทึกกิจกรรม
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => setShowTaskModal(true)}
+                                        className="text-xs px-3 py-1.5 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700 shadow-sm"
+                                    >
+                                        + เพิ่มงาน
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setEditingActivity(null);
+                                            setActivityModalOpen(true);
+                                        }}
+                                        className="text-xs px-3 py-1.5 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 shadow-md shadow-emerald-500/30"
+                                    >
+                                        + บันทึกกิจกรรม
+                                    </button>
+                                </div>
                             </div>
 
                             {activitiesLoading ? (
@@ -891,6 +918,15 @@ const CustomersMain: React.FC = () => {
                     }}
                 />
             )}
+
+            {/* Task Modal */}
+            <CreateTaskModal
+                open={showTaskModal}
+                onClose={() => setShowTaskModal(false)}
+                initialContextType="customer"
+                initialContextId={selectedCustomer?.id}
+                initialContextLabel={selectedCustomer ? selectedCustomer.name || 'ไม่ระบุชื่อ' : undefined}
+            />
         </div>
     );
 };
