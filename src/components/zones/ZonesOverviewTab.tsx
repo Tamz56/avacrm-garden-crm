@@ -458,6 +458,7 @@ export const ZonesOverviewTab: React.FC<Props> = ({ initialFilters, isDarkMode =
                     zoneId={selectedZoneId}
                     onBack={() => setSelectedZoneId(null)}
                     onCreateTask={() => setShowTaskModal(true)}
+                    isDarkMode={isDarkMode}
                 />
                 <CreateTaskModal
                     open={showTaskModal}

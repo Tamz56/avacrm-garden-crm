@@ -115,7 +115,7 @@ const StockMainPage: React.FC<Props> = ({ onNavigateToZones, initialTagFilters, 
                         type="button"
                         onClick={() => setActiveTab("monthly_report")}
                         className={`px-4 py-2 rounded-t-lg text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === "monthly_report"
-                            ? (isDarkMode ? "border-cyan-400 text-cyan-400 bg-white/10" : "border-sky-500 text-sky-700 bg-sky-50")
+                            ? (isDarkMode ? "border-emerald-400 text-emerald-400 bg-white/10" : "border-sky-500 text-sky-700 bg-sky-50")
                             : (isDarkMode ? "border-transparent text-slate-400 hover:text-white hover:bg-white/5" : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50")
                             }`}
                     >
@@ -139,7 +139,7 @@ const StockMainPage: React.FC<Props> = ({ onNavigateToZones, initialTagFilters, 
                         type="button"
                         onClick={() => setActiveTab("tags")}
                         className={`px-4 py-2 rounded-t-lg text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === "tags"
-                            ? (isDarkMode ? "border-violet-400 text-violet-400 bg-white/10" : "border-violet-500 text-violet-700 bg-violet-50")
+                            ? (isDarkMode ? "border-emerald-400 text-emerald-400 bg-white/10" : "border-violet-500 text-violet-700 bg-violet-50")
                             : (isDarkMode ? "border-transparent text-slate-400 hover:text-white hover:bg-white/5" : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50")
                             }`}
                     >
@@ -151,7 +151,7 @@ const StockMainPage: React.FC<Props> = ({ onNavigateToZones, initialTagFilters, 
                         type="button"
                         onClick={() => setActiveTab("special_trees")}
                         className={`px-4 py-2 rounded-t-lg text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === "special_trees"
-                            ? (isDarkMode ? "border-amber-400 text-amber-400 bg-white/10" : "border-amber-500 text-amber-700 bg-amber-50")
+                            ? (isDarkMode ? "border-emerald-400 text-emerald-400 bg-white/10" : "border-amber-500 text-amber-700 bg-amber-50")
                             : (isDarkMode ? "border-transparent text-slate-400 hover:text-white hover:bg-white/5" : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50")
                             }`}
                     >
@@ -163,7 +163,7 @@ const StockMainPage: React.FC<Props> = ({ onNavigateToZones, initialTagFilters, 
                         type="button"
                         onClick={() => setActiveTab("stock_groups")}
                         className={`px-4 py-2 rounded-t-lg text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${activeTab === "stock_groups"
-                            ? (isDarkMode ? "border-blue-400 text-blue-400 bg-white/10" : "border-blue-500 text-blue-700 bg-blue-50")
+                            ? (isDarkMode ? "border-emerald-400 text-emerald-400 bg-white/10" : "border-blue-500 text-blue-700 bg-blue-50")
                             : (isDarkMode ? "border-transparent text-slate-400 hover:text-white hover:bg-white/5" : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50")
                             }`}
                     >
