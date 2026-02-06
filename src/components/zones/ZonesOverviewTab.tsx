@@ -545,8 +545,8 @@ export const ZonesOverviewTab: React.FC<Props> = ({ initialFilters, isDarkMode =
             />
 
             {/* ตารางแปลงปลูก */}
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/60 overflow-hidden">
-                <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+            <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 overflow-hidden">
+                <div className="px-4 py-3 border-b border-slate-100 dark:border-white/10 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                         <Sprout className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                         <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
@@ -569,7 +569,7 @@ export const ZonesOverviewTab: React.FC<Props> = ({ initialFilters, isDarkMode =
 
                 <div className="overflow-x-auto">
                     <table className="min-w-full text-sm">
-                        <thead className="bg-slate-50 dark:bg-slate-800/60 text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-slate-700">
+                        <thead className="bg-slate-50 dark:bg-white/5 text-slate-500 dark:text-slate-400 border-b border-slate-100 dark:border-white/10">
                             <tr>
                                 <th className="text-left px-4 py-2.5 font-medium">ชื่อแปลง</th>
                                 <th className="text-left px-4 py-2.5 font-medium">สถานที่</th>
@@ -642,12 +642,12 @@ export const ZonesOverviewTab: React.FC<Props> = ({ initialFilters, isDarkMode =
 
                                     return (
                                         <React.Fragment key={zone.id}>
-                                            <tr className="border-b border-slate-50 hover:bg-slate-50/60">
-                                                <td className="px-4 py-3 align-top text-slate-800">
+                                            <tr className="border-b border-slate-50 dark:border-white/10 hover:bg-slate-50/60 dark:hover:bg-white/5">
+                                                <td className="px-4 py-3 align-top text-slate-800 dark:text-slate-200">
                                                     <div className="flex flex-col gap-1">
                                                         <button
                                                             onClick={() => setSelectedZoneId(zone.id)}
-                                                            className="font-medium hover:text-emerald-600 hover:underline text-left"
+                                                            className="font-medium hover:text-emerald-600 dark:hover:text-emerald-400 hover:underline text-left"
                                                         >
                                                             {zone.name}
                                                         </button>
