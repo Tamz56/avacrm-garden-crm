@@ -145,26 +145,26 @@ const CommissionPayoutReport = () => {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-semibold">สรุปค่าคอมมิชชั่นสำหรับจ่าย (Payout Report)</h1>
-                    <p className="text-sm text-gray-500">
+                    <h1 className="text-xl font-semibold dark:text-slate-200">สรุปค่าคอมมิชชั่นสำหรับจ่าย (Payout Report)</h1>
+                    <p className="text-sm text-gray-500 dark:text-slate-400">
                         จัดการการจ่ายค่าคอมมิชชั่นรายเดือน
                     </p>
                 </div>
 
                 <div className="flex items-center gap-3">
                     <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-500" />
+                        <Calendar className="w-4 h-4 text-gray-500 dark:text-slate-400" />
                         <input
                             type="month"
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(e.target.value)}
-                            className="border rounded-lg px-3 py-1.5 text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                            className="border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 rounded-lg px-3 py-1.5 text-sm dark:text-slate-200 focus:ring-2 focus:ring-emerald-500 outline-none"
                         />
                     </div>
 
                     <button
                         onClick={handleExportCsv}
-                        className="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm hover:bg-gray-50 bg-white"
+                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-white/10 px-3 py-1.5 text-sm hover:bg-gray-50 dark:hover:bg-white/10 bg-white dark:bg-white/5 dark:text-slate-200"
                     >
                         <Download className="w-4 h-4" />
                         Export CSV
@@ -174,60 +174,60 @@ const CommissionPayoutReport = () => {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="rounded-xl border p-4 bg-white shadow-sm">
-                    <div className="text-xs text-gray-500 mb-1">ยอดคอมฯ ทั้งหมด (Due)</div>
-                    <div className="text-xl font-semibold text-gray-800">{formatBaht(totalDue)}</div>
+                <div className="rounded-xl border border-slate-200 dark:border-white/10 p-4 bg-white dark:bg-white/5 shadow-sm">
+                    <div className="text-xs text-gray-500 dark:text-slate-400 mb-1">ยอดคอมฯ ทั้งหมด (Due)</div>
+                    <div className="text-xl font-semibold text-gray-800 dark:text-slate-200">{formatBaht(totalDue)}</div>
                 </div>
-                <div className="rounded-xl border p-4 bg-white shadow-sm">
-                    <div className="text-xs text-gray-500 mb-1">จ่ายแล้ว (Paid)</div>
-                    <div className="text-xl font-semibold text-emerald-600">{formatBaht(totalPaid)}</div>
+                <div className="rounded-xl border border-slate-200 dark:border-white/10 p-4 bg-white dark:bg-white/5 shadow-sm">
+                    <div className="text-xs text-gray-500 dark:text-slate-400 mb-1">จ่ายแล้ว (Paid)</div>
+                    <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">{formatBaht(totalPaid)}</div>
                 </div>
-                <div className="rounded-xl border p-4 bg-white shadow-sm">
-                    <div className="text-xs text-gray-500 mb-1">คงเหลือที่ต้องจ่าย (Remaining)</div>
-                    <div className="text-xl font-semibold text-amber-600">{formatBaht(totalRemaining)}</div>
+                <div className="rounded-xl border border-slate-200 dark:border-white/10 p-4 bg-white dark:bg-white/5 shadow-sm">
+                    <div className="text-xs text-gray-500 dark:text-slate-400 mb-1">คงเหลือที่ต้องจ่าย (Remaining)</div>
+                    <div className="text-xl font-semibold text-amber-600 dark:text-amber-400">{formatBaht(totalRemaining)}</div>
                 </div>
             </div>
 
             {/* Error Message */}
             {error && (
-                <div className="p-4 bg-red-50 text-red-600 rounded-lg text-sm">
+                <div className="p-4 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 rounded-lg text-sm">
                     เกิดข้อผิดพลาด: {error}
                 </div>
             )}
 
             {/* Table */}
-            <div className="rounded-xl border overflow-hidden bg-white shadow-sm">
+            <div className="rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-white/5 shadow-sm">
                 <table className="min-w-full text-sm">
-                    <thead className="bg-gray-50 border-b">
+                    <thead className="bg-gray-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
                         <tr>
-                            <th className="px-4 py-3 text-left font-medium text-gray-500">เดือน</th>
-                            <th className="px-4 py-3 text-left font-medium text-gray-500">ชื่อ Sales</th>
-                            <th className="px-4 py-3 text-right font-medium text-gray-500">ยอดคอมฯ (Due)</th>
-                            <th className="px-4 py-3 text-right font-medium text-gray-500">จ่ายแล้ว</th>
-                            <th className="px-4 py-3 text-right font-medium text-gray-500">ค้างจ่าย</th>
-                            <th className="px-4 py-3 text-center font-medium text-gray-500">สถานะ</th>
-                            <th className="px-4 py-3 text-right font-medium text-gray-500">Action</th>
+                            <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-slate-400">เดือน</th>
+                            <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-slate-400">ชื่อ Sales</th>
+                            <th className="px-4 py-3 text-right font-medium text-gray-500 dark:text-slate-400">ยอดคอมฯ (Due)</th>
+                            <th className="px-4 py-3 text-right font-medium text-gray-500 dark:text-slate-400">จ่ายแล้ว</th>
+                            <th className="px-4 py-3 text-right font-medium text-gray-500 dark:text-slate-400">ค้างจ่าย</th>
+                            <th className="px-4 py-3 text-center font-medium text-gray-500 dark:text-slate-400">สถานะ</th>
+                            <th className="px-4 py-3 text-right font-medium text-gray-500 dark:text-slate-400">Action</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="dark:text-slate-300">
                         {loading ? (
-                            <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">กำลังโหลดข้อมูล...</td></tr>
+                            <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500 dark:text-slate-400">กำลังโหลดข้อมูล...</td></tr>
                         ) : rows.length === 0 ? (
-                            <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500">ไม่พบข้อมูลในเดือนนี้</td></tr>
+                            <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-500 dark:text-slate-400">ไม่พบข้อมูลในเดือนนี้</td></tr>
                         ) : (
                             rows.map((r, i) => {
                                 const status = r.remaining_in_month <= 0 ? 'Paid' : r.paid_in_month > 0 ? 'Partial' : 'Pending';
                                 return (
-                                    <tr key={i} className="border-b last:border-0 hover:bg-gray-50">
-                                        <td className="px-4 py-3 text-gray-500">{r.month}</td>
-                                        <td className="px-4 py-3 font-medium text-gray-900">{r.full_name || "Unknown"}</td>
+                                    <tr key={i} className="border-b border-slate-200 dark:border-white/10 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5">
+                                        <td className="px-4 py-3 text-gray-500 dark:text-slate-400">{r.month}</td>
+                                        <td className="px-4 py-3 font-medium text-gray-900 dark:text-slate-200">{r.full_name || "Unknown"}</td>
                                         <td className="px-4 py-3 text-right">{formatBaht(r.due_in_month)}</td>
-                                        <td className="px-4 py-3 text-right text-emerald-600">{formatBaht(r.paid_in_month)}</td>
-                                        <td className="px-4 py-3 text-right text-amber-600 font-medium">{formatBaht(r.remaining_in_month)}</td>
+                                        <td className="px-4 py-3 text-right text-emerald-600 dark:text-emerald-400">{formatBaht(r.paid_in_month)}</td>
+                                        <td className="px-4 py-3 text-right text-amber-600 dark:text-amber-400 font-medium">{formatBaht(r.remaining_in_month)}</td>
                                         <td className="px-4 py-3 text-center">
-                                            <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${status === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
-                                                status === 'Partial' ? 'bg-amber-100 text-amber-700' :
-                                                    'bg-gray-100 text-gray-700'
+                                            <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${status === 'Paid' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400' :
+                                                status === 'Partial' ? 'bg-amber-100 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400' :
+                                                    'bg-gray-100 text-gray-700 dark:bg-white/5 dark:text-slate-400'
                                                 }`}>
                                                 {status}
                                             </span>

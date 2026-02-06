@@ -67,60 +67,60 @@ const CommissionByRoleDashboard = () => {
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-xl font-semibold">รายงานค่าคอมมิชชั่นตามบทบาท (By Role)</h1>
-                <p className="text-sm text-gray-500">
+                <h1 className="text-xl font-semibold dark:text-slate-200">รายงานค่าคอมมิชชั่นตามบทบาท (By Role)</h1>
+                <p className="text-sm text-gray-500 dark:text-slate-400">
                     เปรียบเทียบยอดค่าคอมฯ ของ Referral / Sales Agent / Team Leader รายเดือน
                 </p>
             </div>
 
             {/* Summary cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="rounded-xl border p-4 bg-white shadow-sm">
+                <div className="rounded-xl border border-slate-200 dark:border-white/10 p-4 bg-white dark:bg-white/5 shadow-sm">
                     <div className="flex items-center justify-between mb-2">
-                        <div className="text-xs text-gray-500">Referral รวม</div>
-                        <div className="p-1.5 bg-amber-50 rounded-lg">
-                            <Users className="w-4 h-4 text-amber-600" />
+                        <div className="text-xs text-gray-500 dark:text-slate-400">Referral รวม</div>
+                        <div className="p-1.5 bg-amber-50 dark:bg-amber-500/10 rounded-lg">
+                            <Users className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                         </div>
                     </div>
-                    <div className="text-lg font-semibold">{formatBaht(totals.referral)}</div>
+                    <div className="text-lg font-semibold dark:text-slate-200">{formatBaht(totals.referral)}</div>
                 </div>
 
-                <div className="rounded-xl border p-4 bg-white shadow-sm">
+                <div className="rounded-xl border border-slate-200 dark:border-white/10 p-4 bg-white dark:bg-white/5 shadow-sm">
                     <div className="flex items-center justify-between mb-2">
-                        <div className="text-xs text-gray-500">Sales Agent รวม</div>
-                        <div className="p-1.5 bg-emerald-50 rounded-lg">
-                            <TrendingUp className="w-4 h-4 text-emerald-600" />
+                        <div className="text-xs text-gray-500 dark:text-slate-400">Sales Agent รวม</div>
+                        <div className="p-1.5 bg-emerald-50 dark:bg-emerald-500/10 rounded-lg">
+                            <TrendingUp className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                         </div>
                     </div>
-                    <div className="text-lg font-semibold">{formatBaht(totals.sales)}</div>
+                    <div className="text-lg font-semibold dark:text-slate-200">{formatBaht(totals.sales)}</div>
                 </div>
 
-                <div className="rounded-xl border p-4 bg-white shadow-sm">
+                <div className="rounded-xl border border-slate-200 dark:border-white/10 p-4 bg-white dark:bg-white/5 shadow-sm">
                     <div className="flex items-center justify-between mb-2">
-                        <div className="text-xs text-gray-500">Team Leader รวม</div>
-                        <div className="p-1.5 bg-blue-50 rounded-lg">
-                            <Layers className="w-4 h-4 text-blue-600" />
+                        <div className="text-xs text-gray-500 dark:text-slate-400">Team Leader รวม</div>
+                        <div className="p-1.5 bg-blue-50 dark:bg-blue-500/10 rounded-lg">
+                            <Layers className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                         </div>
                     </div>
-                    <div className="text-lg font-semibold">{formatBaht(totals.leader)}</div>
+                    <div className="text-lg font-semibold dark:text-slate-200">{formatBaht(totals.leader)}</div>
                 </div>
 
-                <div className="rounded-xl border p-4 bg-white shadow-sm ring-1 ring-emerald-100">
+                <div className="rounded-xl border border-slate-200 dark:border-white/10 p-4 bg-white dark:bg-emerald-500/10 shadow-sm ring-1 ring-emerald-100 dark:ring-emerald-500/20">
                     <div className="flex items-center justify-between mb-2">
-                        <div className="text-xs text-emerald-700 font-medium">รวมทุกบทบาท</div>
-                        <div className="p-1.5 bg-emerald-100 rounded-lg">
-                            <DollarSign className="w-4 h-4 text-emerald-700" />
+                        <div className="text-xs text-emerald-700 dark:text-emerald-400 font-medium">รวมทุกบทบาท</div>
+                        <div className="p-1.5 bg-emerald-100 dark:bg-emerald-500/20 rounded-lg">
+                            <DollarSign className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
                         </div>
                     </div>
-                    <div className="text-lg font-semibold text-emerald-700">{formatBaht(totals.grand)}</div>
+                    <div className="text-lg font-semibold text-emerald-700 dark:text-emerald-400">{formatBaht(totals.grand)}</div>
                 </div>
             </div>
 
             {/* Stacked bar chart */}
-            <div className="rounded-xl border p-6 h-96 bg-white shadow-sm">
-                <h3 className="text-sm font-semibold mb-4">แนวโน้มค่าคอมมิชชั่นแยกตามบทบาท</h3>
+            <div className="rounded-xl border border-slate-200 dark:border-white/10 p-6 h-96 bg-white dark:bg-white/5 shadow-sm">
+                <h3 className="text-sm font-semibold mb-4 dark:text-slate-200">แนวโน้มค่าคอมมิชชั่นแยกตามบทบาท</h3>
                 {loading ? (
-                    <div className="flex items-center justify-center h-full text-gray-500">
+                    <div className="flex items-center justify-center h-full text-gray-500 dark:text-slate-400">
                         กำลังโหลดข้อมูล...
                     </div>
                 ) : (
