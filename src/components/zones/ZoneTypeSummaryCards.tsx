@@ -21,10 +21,10 @@ export const ZoneTypeSummaryCards: React.FC<Props> = ({
     };
 
     const badgeColorByKey: Record<string, string> = {
-        production: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-        trial: "bg-amber-50 text-amber-700 ring-amber-100",
-        nursery: "bg-sky-50 text-sky-700 ring-sky-100",
-        untyped: "bg-slate-50 text-slate-700 ring-slate-100",
+        production: "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-900/40 dark:text-emerald-400 dark:ring-emerald-800",
+        trial: "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-900/40 dark:text-amber-400 dark:ring-amber-800",
+        nursery: "bg-sky-50 text-sky-700 ring-sky-100 dark:bg-sky-900/40 dark:text-sky-400 dark:ring-sky-800",
+        untyped: "bg-slate-50 text-slate-700 ring-slate-100 dark:bg-slate-800/40 dark:text-slate-400 dark:ring-slate-700",
     };
 
     return (
@@ -59,7 +59,7 @@ export const ZoneTypeSummaryCards: React.FC<Props> = ({
                     return (
                         <div
                             key={item.key}
-                            className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+                            className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900/60 px-4 py-3 shadow-sm"
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
@@ -69,10 +69,10 @@ export const ZoneTypeSummaryCards: React.FC<Props> = ({
                                         {icon}
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                             ประเภทแปลง
                                         </span>
-                                        <span className="text-sm font-semibold text-slate-900">
+                                        <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                                             {item.label}
                                         </span>
                                     </div>
@@ -93,8 +93,8 @@ export const ZoneTypeSummaryCards: React.FC<Props> = ({
                                     </span>
                                 </div>
                                 <div className="flex items-baseline justify-between gap-2 sm:col-span-2">
-                                    <span className="text-slate-500">จำนวนต้นตามแผน</span>
-                                    <span className="font-semibold text-emerald-700">
+                                    <span className="text-slate-500 dark:text-slate-400">จำนวนต้นตามแผน</span>
+                                    <span className="font-semibold text-emerald-700 dark:text-emerald-400">
                                         {item.plannedTrees.toLocaleString("th-TH")} ต้น
                                     </span>
                                 </div>
