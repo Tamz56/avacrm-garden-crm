@@ -3,33 +3,34 @@ import { Save, RefreshCw, AlertCircle } from "lucide-react";
 import { useCommissionConfig } from "../../hooks/useCommissionConfig";
 
 // Theme tokens
-const pageShell =
-    "min-h-[calc(100vh-64px)] p-6 bg-transparent text-slate-900 dark:text-slate-100";
+const shell =
+    "min-h-screen bg-white text-slate-900 dark:bg-black dark:text-slate-100";
 
-const panel =
-    "rounded-2xl border border-slate-200 bg-white/70 p-6 shadow-sm backdrop-blur " +
-    "dark:border-slate-800 dark:bg-slate-950/40";
-
-const bannerInfo =
-    "rounded-xl border border-blue-200 bg-blue-50 p-4 text-blue-900 " +
-    "dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-100";
-
-const bannerWarn =
-    "flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 " +
-    "dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100";
-
-const fieldLabel = "text-xs font-medium text-slate-700 dark:text-slate-200";
+const surface =
+    "rounded-2xl border border-slate-200 bg-white shadow-sm " +
+    "dark:border-white/10 dark:bg-white/5";
 
 const input =
-    "mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none " +
-    "focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 " +
-    "dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 " +
-    "dark:focus:ring-emerald-600";
+    "w-full rounded-xl border border-slate-200 bg-white px-3 py-2 " +
+    "text-slate-900 placeholder-slate-400 shadow-sm outline-none " +
+    "focus:ring-2 focus:ring-emerald-500/30 " +
+    "dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:placeholder-slate-400 " +
+    "dark:focus:ring-emerald-400/30";
 
-const btnSecondary =
-    "inline-flex items-center gap-2 rounded-lg bg-slate-200 px-4 py-2 text-sm font-medium text-slate-700 " +
-    "hover:bg-slate-300 disabled:opacity-60 transition-colors " +
-    "dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700";
+const ghostBtn =
+    "inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 " +
+    "text-sm font-medium text-slate-700 hover:bg-slate-50 " +
+    "dark:border-white/10 dark:bg-white/5 dark:text-slate-100 dark:hover:bg-white/10";
+
+const info =
+    "rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-blue-900 " +
+    "dark:border-blue-400/20 dark:bg-blue-500/10 dark:text-blue-100";
+
+const warn =
+    "flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-amber-900 " +
+    "dark:border-amber-400/20 dark:bg-amber-500/10 dark:text-amber-100";
+
+const fieldLabel = "text-xs font-medium text-slate-700 dark:text-slate-200";
 
 const CommissionConfigPage = () => {
     const { config, loading, error, reload, saveConfig } = useCommissionConfig();
@@ -66,10 +67,10 @@ const CommissionConfigPage = () => {
     };
 
     return (
-        <div className={pageShell}>
+        <div className={`${shell} p-6`}>
             <h1 className="text-2xl font-bold mb-6 text-slate-800 dark:text-slate-100">ตั้งค่าคอมมิชชั่น</h1>
 
-            <div className={`${bannerInfo} mb-6`}>
+            <div className={`${info} mb-6`}>
                 <p className="font-medium">หมายเหตุ:</p>
                 <p className="text-sm opacity-90 mt-1">การเปลี่ยนแปลงค่าคอมมิชชั่นในหน้านี้จะมีผลกับ <strong>ดีลใหม่</strong> เท่านั้น</p>
                 <p className="text-sm opacity-90">สำหรับดีลเดิมที่ต้องการคำนวณใหม่ กรุณาใช้ปุ่ม "Recalculate" ในหน้ารายละเอียดของดีลนั้นๆ</p>
@@ -79,7 +80,7 @@ const CommissionConfigPage = () => {
                 <button
                     onClick={reload}
                     disabled={loading || saving}
-                    className={btnSecondary}
+                    className={ghostBtn}
                 >
                     <RefreshCw className="w-4 h-4" />
                     Reload
@@ -91,7 +92,7 @@ const CommissionConfigPage = () => {
             {/* Show error if it's a real fetch error (not just fallback) */}
             {
                 error && config?.is_fallback && (
-                    <div className={`${bannerWarn} mb-4`}>
+                    <div className={`${warn} mb-4`}>
                         <AlertCircle className="h-4 w-4" />
                         <span>ไม่พบข้อมูล Config ในฐานข้อมูล (แสดงค่า Demo) - กรุณารัน SQL Script</span>
                     </div>
@@ -100,7 +101,7 @@ const CommissionConfigPage = () => {
 
             {
                 localConfig && (
-                    <div className={panel}>
+                    <div className={`${surface} p-6`}>
                         <div className="grid grid-cols-1 gap-4">
                             <div>
                                 <label className={fieldLabel}>

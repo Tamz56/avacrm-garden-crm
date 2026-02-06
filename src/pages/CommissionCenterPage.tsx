@@ -265,36 +265,38 @@ const COMMISSION_TABS = [
 ];
 
 // Theme tokens
-const pageShell =
-    "min-h-[calc(100vh-64px)] bg-transparent text-slate-900 dark:text-slate-100";
+const shell =
+    "min-h-screen bg-white text-slate-900 dark:bg-black dark:text-slate-100";
 
-const panel =
-    "rounded-2xl border border-slate-200 bg-white/70 p-6 shadow-sm backdrop-blur " +
-    "dark:border-slate-800 dark:bg-slate-950/40";
+const surface =
+    "rounded-2xl border border-slate-200 bg-white shadow-sm " +
+    "dark:border-white/10 dark:bg-white/5";
+
+const muted = "text-slate-500 dark:text-slate-400";
 
 const tabWrap =
-    "inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white/70 p-1 " +
-    "dark:border-slate-800 dark:bg-slate-950/40";
+    "inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 " +
+    "dark:border-white/10 dark:bg-white/5";
 
 const tabBtn = (active: boolean) =>
     "flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition " +
     (active
         ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
-        : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800/50");
+        : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10");
 
 export default function CommissionCenterPage() {
     const [activeTab, setActiveTab] = useState("summary");
 
     return (
-        <div className={pageShell}>
-            <div className={panel}>
+        <div className={shell}>
+            <div className={`${surface} p-6 m-6`}>
                 <header className="flex items-center justify-between mb-6">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
                             <DollarSign className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
                             ค่าคอมมิชชั่น
                         </h1>
-                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                        <p className={`text-sm mt-1 ${muted}`}>
                             ศูนย์รวมรายงานค่าคอมมิชชั่นจากดีล ทีมขาย และสรุปยอดสำหรับจ่าย
                         </p>
                     </div>

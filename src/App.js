@@ -323,10 +323,16 @@ function App() {
     localStorage.setItem('ava-theme', newMode ? 'dark' : 'light');
   };
 
-  // Sync body background color for overscroll/margin areas
+  // Sync body background color for overscroll/margin areas AND toggle html.dark for Tailwind
   useEffect(() => {
+    // Toggle dark class on html element for Tailwind dark: classes
+    document.documentElement.classList.toggle("dark", isDarkMode);
+    // Set body background for overscroll areas
     document.body.style.backgroundColor = isDarkMode ? "#000000" : "";
-    return () => { document.body.style.backgroundColor = ""; };
+    return () => {
+      document.documentElement.classList.remove("dark");
+      document.body.style.backgroundColor = "";
+    };
   }, [isDarkMode]);
 
   // Navigation Presets
