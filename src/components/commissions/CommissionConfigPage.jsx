@@ -2,6 +2,35 @@ import React, { useEffect, useState } from "react";
 import { Save, RefreshCw, AlertCircle } from "lucide-react";
 import { useCommissionConfig } from "../../hooks/useCommissionConfig";
 
+// Theme tokens
+const pageShell =
+    "min-h-[calc(100vh-64px)] p-6 bg-transparent text-slate-900 dark:text-slate-100";
+
+const panel =
+    "rounded-2xl border border-slate-200 bg-white/70 p-6 shadow-sm backdrop-blur " +
+    "dark:border-slate-800 dark:bg-slate-950/40";
+
+const bannerInfo =
+    "rounded-xl border border-blue-200 bg-blue-50 p-4 text-blue-900 " +
+    "dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-100";
+
+const bannerWarn =
+    "flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 " +
+    "dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100";
+
+const fieldLabel = "text-xs font-medium text-slate-700 dark:text-slate-200";
+
+const input =
+    "mt-1 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none " +
+    "focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 " +
+    "dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:placeholder:text-slate-500 " +
+    "dark:focus:ring-emerald-600";
+
+const btnSecondary =
+    "inline-flex items-center gap-2 rounded-lg bg-slate-200 px-4 py-2 text-sm font-medium text-slate-700 " +
+    "hover:bg-slate-300 disabled:opacity-60 transition-colors " +
+    "dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700";
+
 const CommissionConfigPage = () => {
     const { config, loading, error, reload, saveConfig } = useCommissionConfig();
     const [localConfig, setLocalConfig] = useState(null);
@@ -37,32 +66,32 @@ const CommissionConfigPage = () => {
     };
 
     return (
-        <div className="container mx-auto p-4">
-            <h1 className="text-2xl font-bold mb-6 text-gray-800">ตั้งค่าคอมมิชชั่น</h1>
+        <div className={pageShell}>
+            <h1 className="text-2xl font-bold mb-6 text-slate-800 dark:text-slate-100">ตั้งค่าคอมมิชชั่น</h1>
 
-            <div className="mb-6 rounded-lg bg-blue-50 p-4 text-sm text-blue-700 border border-blue-200">
+            <div className={`${bannerInfo} mb-6`}>
                 <p className="font-medium">หมายเหตุ:</p>
-                <p>การเปลี่ยนแปลงค่าคอมมิชชั่นในหน้านี้จะมีผลกับ <strong>ดีลใหม่</strong> เท่านั้น</p>
-                <p>สำหรับดีลเดิมที่ต้องการคำนวณใหม่ กรุณาใช้ปุ่ม "Recalculate" ในหน้ารายละเอียดของดีลนั้นๆ</p>
+                <p className="text-sm opacity-90 mt-1">การเปลี่ยนแปลงค่าคอมมิชชั่นในหน้านี้จะมีผลกับ <strong>ดีลใหม่</strong> เท่านั้น</p>
+                <p className="text-sm opacity-90">สำหรับดีลเดิมที่ต้องการคำนวณใหม่ กรุณาใช้ปุ่ม "Recalculate" ในหน้ารายละเอียดของดีลนั้นๆ</p>
             </div>
 
             <div className="flex justify-end mb-4">
                 <button
                     onClick={reload}
                     disabled={loading || saving}
-                    className="inline-flex items-center gap-2 rounded-lg bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-300 disabled:opacity-60 transition-colors"
+                    className={btnSecondary}
                 >
                     <RefreshCw className="w-4 h-4" />
                     Reload
                 </button>
             </div>
 
-            {loading && <div>กำลังโหลด...</div>}
+            {loading && <div className="text-slate-500 dark:text-slate-400">กำลังโหลด...</div>}
 
             {/* Show error if it's a real fetch error (not just fallback) */}
             {
                 error && config?.is_fallback && (
-                    <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700 mb-4">
+                    <div className={`${bannerWarn} mb-4`}>
                         <AlertCircle className="h-4 w-4" />
                         <span>ไม่พบข้อมูล Config ในฐานข้อมูล (แสดงค่า Demo) - กรุณารัน SQL Script</span>
                     </div>
@@ -71,10 +100,10 @@ const CommissionConfigPage = () => {
 
             {
                 localConfig && (
-                    <div className="space-y-4 rounded-xl border p-6 bg-white shadow-sm">
+                    <div className={panel}>
                         <div className="grid grid-cols-1 gap-4">
                             <div>
-                                <label className="text-xs font-medium text-gray-700">
+                                <label className={fieldLabel}>
                                     Referral Rate (เช่น 0.05 = 5%)
                                 </label>
                                 <input
@@ -82,12 +111,12 @@ const CommissionConfigPage = () => {
                                     step="0.0001"
                                     value={localConfig.referral_rate}
                                     onChange={(e) => handleChange("referral_rate", e.target.value)}
-                                    className="mt-1 w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                                    className={input}
                                 />
                             </div>
 
                             <div>
-                                <label className="text-xs font-medium text-gray-700">
+                                <label className={fieldLabel}>
                                     Sales Agent Rate (เช่น 0.10 = 10%)
                                 </label>
                                 <input
@@ -95,12 +124,12 @@ const CommissionConfigPage = () => {
                                     step="0.0001"
                                     value={localConfig.sales_rate}
                                     onChange={(e) => handleChange("sales_rate", e.target.value)}
-                                    className="mt-1 w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                                    className={input}
                                 />
                             </div>
 
                             <div>
-                                <label className="text-xs font-medium text-gray-700">
+                                <label className={fieldLabel}>
                                     Team Target (เป้ายอดขายทีมต่อเดือน)
                                 </label>
                                 <input
@@ -108,12 +137,12 @@ const CommissionConfigPage = () => {
                                     step="1000"
                                     value={localConfig.team_target}
                                     onChange={(e) => handleChange("team_target", e.target.value)}
-                                    className="mt-1 w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                                    className={input}
                                 />
                             </div>
 
                             <div>
-                                <label className="text-xs font-medium text-gray-700">
+                                <label className={fieldLabel}>
                                     Team Override Rate (เช่น 0.05 = 5%)
                                 </label>
                                 <input
@@ -121,12 +150,12 @@ const CommissionConfigPage = () => {
                                     step="0.0001"
                                     value={localConfig.team_rate}
                                     onChange={(e) => handleChange("team_rate", e.target.value)}
-                                    className="mt-1 w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                                    className={input}
                                 />
                             </div>
 
                             <div>
-                                <label className="text-xs font-medium text-gray-700">
+                                <label className={fieldLabel}>
                                     Solo Rate (หัวหน้าขายคนเดียวเกินเป้า)
                                 </label>
                                 <input
@@ -134,12 +163,12 @@ const CommissionConfigPage = () => {
                                     step="0.0001"
                                     value={localConfig.solo_rate}
                                     onChange={(e) => handleChange("solo_rate", e.target.value)}
-                                    className="mt-1 w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                                    className={input}
                                 />
                             </div>
                         </div>
 
-                        <div className="flex justify-end pt-4 border-t mt-2">
+                        <div className="flex justify-end pt-4 border-t border-slate-200 dark:border-slate-700 mt-4">
                             <button
                                 onClick={handleSave}
                                 disabled={saving || localConfig.is_fallback}
@@ -157,3 +186,4 @@ const CommissionConfigPage = () => {
 };
 
 export default CommissionConfigPage;
+

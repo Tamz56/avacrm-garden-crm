@@ -264,73 +264,81 @@ const COMMISSION_TABS = [
     { id: "payout", label: "สรุปจ่ายค่าคอมฯ เดือนนี้", icon: CreditCard },
 ];
 
+// Theme tokens
+const pageShell =
+    "min-h-[calc(100vh-64px)] bg-transparent text-slate-900 dark:text-slate-100";
+
+const panel =
+    "rounded-2xl border border-slate-200 bg-white/70 p-6 shadow-sm backdrop-blur " +
+    "dark:border-slate-800 dark:bg-slate-950/40";
+
+const tabWrap =
+    "inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white/70 p-1 " +
+    "dark:border-slate-800 dark:bg-slate-950/40";
+
+const tabBtn = (active: boolean) =>
+    "flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition " +
+    (active
+        ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+        : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800/50");
+
 export default function CommissionCenterPage() {
     const [activeTab, setActiveTab] = useState("summary");
 
     return (
-        <div className="p-6 space-y-6">
-            <header className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <DollarSign className="w-8 h-8 text-emerald-600" />
-                        ค่าคอมมิชชั่น
-                    </h1>
-                    <p className="text-sm text-slate-500 mt-1">
-                        ศูนย์รวมรายงานค่าคอมมิชชั่นจากดีล ทีมขาย และสรุปยอดสำหรับจ่าย
-                    </p>
-                </div>
-            </header>
+        <div className={pageShell}>
+            <div className={panel}>
+                <header className="flex items-center justify-between mb-6">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <DollarSign className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                            ค่าคอมมิชชั่น
+                        </h1>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                            ศูนย์รวมรายงานค่าคอมมิชชั่นจากดีล ทีมขาย และสรุปยอดสำหรับจ่าย
+                        </p>
+                    </div>
+                </header>
 
-            {/* Tabs */}
-            <div className="border-b border-slate-200">
-                <div className="flex gap-6">
+                {/* Tabs */}
+                <div className={tabWrap}>
                     {COMMISSION_TABS.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`
-                group flex items-center gap-2 py-4 text-sm font-medium border-b-2 transition-colors
-                ${activeTab === tab.id
-                                    ? "border-emerald-500 text-emerald-600"
-                                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-                                }
-              `}
+                            className={tabBtn(activeTab === tab.id)}
                         >
-                            <tab.icon
-                                className={`w-4 h-4 ${activeTab === tab.id
-                                    ? "text-emerald-500"
-                                    : "text-slate-400 group-hover:text-slate-500"
-                                    }`}
-                            />
+                            <tab.icon className="w-4 h-4" />
                             {tab.label}
                         </button>
                     ))}
                 </div>
-            </div>
 
-            {/* Tab Content */}
-            <div className="min-h-[500px]">
-                {activeTab === "summary" && (
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <CommissionDashboard />
-                    </div>
-                )}
-                {activeTab === "ledger" && (
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <CommissionLedger />
-                    </div>
-                )}
-                {activeTab === "team" && (
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <CommissionByRoleDashboard />
-                    </div>
-                )}
-                {activeTab === "payout" && (
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <CommissionPayoutTab />
-                    </div>
-                )}
+                {/* Tab Content */}
+                <div className="min-h-[500px] mt-6">
+                    {activeTab === "summary" && (
+                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <CommissionDashboard />
+                        </div>
+                    )}
+                    {activeTab === "ledger" && (
+                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <CommissionLedger />
+                        </div>
+                    )}
+                    {activeTab === "team" && (
+                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <CommissionByRoleDashboard />
+                        </div>
+                    )}
+                    {activeTab === "payout" && (
+                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <CommissionPayoutTab />
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
 }
+
