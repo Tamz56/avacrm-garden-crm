@@ -43,6 +43,7 @@ export function useDealDocumentsFinancial(params: Params) {
 
     const key = useMemo(() => JSON.stringify(params), [params]);
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     const load = useCallback(async () => {
         setLoading(true);
         setError(null);

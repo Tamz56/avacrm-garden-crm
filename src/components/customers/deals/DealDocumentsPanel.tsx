@@ -1,6 +1,7 @@
+```
 // src/components/customers/deals/DealDocumentsPanel.tsx
 import React, { useState, useRef, useEffect } from "react";
-import { FileText, Plus, Loader2, Ban, Eye, AlertCircle, X, Download, ShieldAlert, ShieldCheck, ChevronDown, ChevronUp } from "lucide-react";
+import { FileText, Plus, Loader2, Ban, Eye, AlertCircle, X, Download, ShieldAlert, ShieldCheck } from "lucide-react";
 import { useDealDocuments, DOC_TYPES, DealDocument, DocType } from "../../../hooks/useDealDocuments";
 import { useDealDocumentTamper } from "../../../hooks/useDealDocumentTamper";
 import { useMyRole } from "../../../hooks/useMyRole";
@@ -222,14 +223,6 @@ const DealDocumentsPanel: React.FC<DealDocumentsPanelProps> = ({
         customer: true,   // ✅ NEW: Customer Details section
         qtOptions: true,  // ✅ NEW: QT Options section
     });
-
-    // ✅ Helper for DD/MM/YYYY
-    const formatDMY = (iso?: string) => {
-        if (!iso) return '';
-        const [y, m, d] = iso.split('-');
-        if (!y || !m || !d) return iso;
-        return `${d}/${m}/${y}`;
-    };
 
     // ✅ QT DRAFT STATE (editable customer + QT-specific fields)
     const [qtDraft, setQtDraft] = useState<QTDraft>({
@@ -473,7 +466,7 @@ const DealDocumentsPanel: React.FC<DealDocumentsPanelProps> = ({
                         // ✅ Add Shipping as Line Item
                         ...(t.shippingFee > 0 ? [{
                             id: 'shipping-fee',
-                            description: `ค่าขนส่ง ${shipping.note ? `(${shipping.note})` : ''}`.trim(),
+                            description: `ค่าขนส่ง ${ shipping.note ? `(${shipping.note})` : '' } `.trim(),
                             quantity: 1,
                             unit: shipping.vehicle === 'pickup' ? 'เที่ยว (กระบะ)' :
                                 shipping.vehicle === 'truck6' ? 'เที่ยว (6 ล้อ)' :
@@ -528,7 +521,7 @@ const DealDocumentsPanel: React.FC<DealDocumentsPanelProps> = ({
             if (doc) {
                 setShowInputModal(false);
                 setSubmitAttempted(false); // Reset on success
-                alert(`สร้างเอกสาร ${doc.doc_no} สำเร็จ!`);
+                alert(`สร้างเอกสาร ${ doc.doc_no } สำเร็จ!`);
                 onDocumentCreated?.(doc); // ✅ Trigger callback if provided
             }
         } catch (e: any) {
@@ -569,7 +562,7 @@ const DealDocumentsPanel: React.FC<DealDocumentsPanelProps> = ({
         const day = d.getDate().toString().padStart(2, '0');
         const month = (d.getMonth() + 1).toString().padStart(2, '0');
         const year = d.getFullYear();
-        return `${day}/${month}/${year}`;
+        return `${ day } /${month}/${ year } `;
     };
 
     return (
@@ -633,26 +626,28 @@ const DealDocumentsPanel: React.FC<DealDocumentsPanelProps> = ({
                         return (
                             <div
                                 key={doc.id}
-                                className={`flex items-center justify-between p-3 rounded-xl border transition-all ${isCancelled
-                                    ? 'bg-slate-50 border-slate-100 opacity-60 grayscale dark:bg-slate-900 dark:border-slate-800'
-                                    : isHardBlocked
-                                        ? 'bg-red-50/50 border-red-200 dark:bg-red-900/10 dark:border-red-800'
-                                        : isSoftBlocked
-                                            ? 'bg-amber-50/50 border-amber-200 dark:bg-amber-900/10 dark:border-amber-800'
-                                            : 'bg-white border-slate-100 hover:border-indigo-200 hover:shadow-md dark:bg-slate-800 dark:border-slate-700'
-                                    }`}
+                                className={`flex items - center justify - between p - 3 rounded - xl border transition - all ${
+    isCancelled
+        ? 'bg-slate-50 border-slate-100 opacity-60 grayscale dark:bg-slate-900 dark:border-slate-800'
+        : isHardBlocked
+            ? 'bg-red-50/50 border-red-200 dark:bg-red-900/10 dark:border-red-800'
+            : isSoftBlocked
+                ? 'bg-amber-50/50 border-amber-200 dark:bg-amber-900/10 dark:border-amber-800'
+                : 'bg-white border-slate-100 hover:border-indigo-200 hover:shadow-md dark:bg-slate-800 dark:border-slate-700'
+} `}
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className={`h-10 w-10 rounded-lg flex items-center justify-center text-[10px] font-black tracking-tighter ${doc.doc_type === "DEP" ? "bg-amber-100 text-amber-700" :
-                                        doc.doc_type === "RCPT" ? "bg-emerald-100 text-emerald-700" :
-                                            doc.doc_type === "INV" ? "bg-blue-100 text-blue-700" :
-                                                "bg-indigo-100 text-indigo-700"
-                                        }`}>
+                                    <div className={`h - 10 w - 10 rounded - lg flex items - center justify - center text - [10px] font - black tracking - tighter ${
+    doc.doc_type === "DEP" ? "bg-amber-100 text-amber-700" :
+        doc.doc_type === "RCPT" ? "bg-emerald-100 text-emerald-700" :
+            doc.doc_type === "INV" ? "bg-blue-100 text-blue-700" :
+                "bg-indigo-100 text-indigo-700"
+} `}>
                                         {doc.doc_type}
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <span className={`text-sm font-bold ${isCancelled ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200'}`}>
+                                            <span className={`text - sm font - bold ${ isCancelled ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-200' } `}>
                                                 {doc.doc_no}
                                             </span>
                                             {isCancelled && (
@@ -763,7 +758,7 @@ const DealDocumentsPanel: React.FC<DealDocumentsPanelProps> = ({
 
                                         <div className="border border-slate-100 dark:border-slate-800 rounded-2xl overflow-hidden bg-white dark:bg-slate-900">
                                             {docLines.map((line) => (
-                                                <div key={line.id} className={`p-4 flex items-start gap-4 border-b border-slate-50 dark:border-slate-800 last:border-b-0 transition-opacity ${!line.included ? 'opacity-40' : ''}`}>
+                                                <div key={line.id} className={`p - 4 flex items - start gap - 4 border - b border - slate - 50 dark: border - slate - 800 last: border - b - 0 transition - opacity ${ !line.included ? 'opacity-40' : '' } `}>
                                                     <div className="pt-1">
                                                         <input
                                                             type="checkbox"
@@ -1054,12 +1049,13 @@ const DealDocumentsPanel: React.FC<DealDocumentsPanelProps> = ({
                                                         type="number"
                                                         value={shipping.fee}
                                                         onChange={(e) => setShipping({ ...shipping, fee: Number(e.target.value) })}
-                                                        className={`w-full h-11 px-3 border-2 rounded-xl text-sm focus:border-indigo-500 outline-none transition-all dark:bg-slate-800 ${submitAttempted && issues.some(i => i.field === "shipping_fee")
-                                                            ? 'border-amber-400 bg-amber-50/60 dark:bg-amber-900/10'
-                                                            : selectedDocType === 'QT' && shipping.fee <= 0
-                                                                ? 'border-amber-300 bg-amber-50 dark:bg-amber-900/10'
-                                                                : 'border-slate-100 dark:border-slate-700'
-                                                            }`}
+                                                        className={`w - full h - 11 px - 3 border - 2 rounded - xl text - sm focus: border - indigo - 500 outline - none transition - all dark: bg - slate - 800 ${
+    submitAttempted && issues.some(i => i.field === "shipping_fee")
+        ? 'border-amber-400 bg-amber-50/60 dark:bg-amber-900/10'
+        : selectedDocType === 'QT' && shipping.fee <= 0
+            ? 'border-amber-300 bg-amber-50 dark:bg-amber-900/10'
+            : 'border-slate-100 dark:border-slate-700'
+} `}
                                                     />
                                                     {submitAttempted && issues.some(i => i.field === "shipping_fee") && (
                                                         <div className="mt-1 text-[11px] font-bold text-amber-700">
@@ -1088,10 +1084,11 @@ const DealDocumentsPanel: React.FC<DealDocumentsPanelProps> = ({
                                                     type="number"
                                                     value={discountData.amount}
                                                     onChange={(e) => setDiscountData({ ...discountData, amount: Number(e.target.value) })}
-                                                    className={`w-full h-11 px-3 border-2 rounded-xl text-sm focus:border-indigo-500 outline-none transition-all dark:bg-slate-800 ${submitAttempted && issues.some(i => i.field === "discount_amount")
-                                                        ? 'border-amber-400 bg-amber-50/60 dark:bg-amber-900/10'
-                                                        : 'border-slate-100 dark:border-slate-700'
-                                                        }`}
+                                                    className={`w - full h - 11 px - 3 border - 2 rounded - xl text - sm focus: border - indigo - 500 outline - none transition - all dark: bg - slate - 800 ${
+    submitAttempted && issues.some(i => i.field === "discount_amount")
+        ? 'border-amber-400 bg-amber-50/60 dark:bg-amber-900/10'
+        : 'border-slate-100 dark:border-slate-700'
+} `}
                                                 />
                                                 {submitAttempted && issues.some(i => i.field === "discount_amount") && (
                                                     <div className="mt-1 text-[11px] font-bold text-amber-700">
@@ -1218,7 +1215,7 @@ const DealDocumentsPanel: React.FC<DealDocumentsPanelProps> = ({
                                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">ยอดสุทธิ (Grand Total)</div>
                                         <div className="flex items-baseline gap-2">
                                             <span className="text-3xl font-black text-slate-900 dark:text-white">฿{footerGrandTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
-                                            <span className={`text-[10px] px-2 py-0.5 rounded-full font-black uppercase tracking-tighter ${vatEnabled ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500'}`}>
+                                            <span className={`text - [10px] px - 2 py - 0.5 rounded - full font - black uppercase tracking - tighter ${ vatEnabled ? 'bg-indigo-100 text-indigo-600' : 'bg-slate-100 text-slate-500' } `}>
                                                 {vatEnabled ? 'VAT 7% Incl.' : 'No VAT'}
                                             </span>
                                             {/* ✅ Warning badge for issue count */}
@@ -1250,10 +1247,11 @@ const DealDocumentsPanel: React.FC<DealDocumentsPanelProps> = ({
                                             onClick={handleGenerate}
                                             disabled={generating || !canSubmit}
                                             title={!canSubmit ? issues.map(i => i.message).join(" • ") : undefined}
-                                            className={`flex-1 md:flex-none px-10 py-3.5 rounded-2xl text-sm font-black shadow-lg transition-all flex items-center justify-center gap-2 ${generating || !canSubmit
-                                                ? 'bg-slate-300 text-slate-600 cursor-not-allowed shadow-none'
-                                                : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200 dark:shadow-none'
-                                                }`}
+                                            className={`flex - 1 md: flex - none px - 10 py - 3.5 rounded - 2xl text - sm font - black shadow - lg transition - all flex items - center justify - center gap - 2 ${
+    generating || !canSubmit
+        ? 'bg-slate-300 text-slate-600 cursor-not-allowed shadow-none'
+        : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200 dark:shadow-none'
+} `}
                                         >
                                             {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                                             ยืนยันการสร้าง
@@ -1296,10 +1294,11 @@ const DealDocumentsPanel: React.FC<DealDocumentsPanelProps> = ({
                             <button
                                 disabled={showPreview.tampered_at != null}
                                 title={showPreview.tampered_at ? 'Cannot download tampered document' : 'ดาวน์โหลด PDF'}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transition-all ${showPreview.tampered_at
-                                    ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
-                                    : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200 dark:shadow-none'
-                                    }`}
+                                className={`flex items - center gap - 2 px - 4 py - 2 rounded - xl text - sm font - bold shadow - lg transition - all ${
+    showPreview.tampered_at
+        ? 'bg-slate-300 text-slate-500 cursor-not-allowed shadow-none'
+        : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-indigo-200 dark:shadow-none'
+} `}
                             >
                                 <Download className="h-4 w-4" /> ดาวน์โหลด PDF
                             </button>

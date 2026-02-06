@@ -364,7 +364,6 @@ function App() {
         setQueryParam("tag_id", id, { replace: false });
         break;
       case 'stock':
-      case 'tag': // Fallback for tag if no ID
         navigatePage('stock');
         break;
       default:

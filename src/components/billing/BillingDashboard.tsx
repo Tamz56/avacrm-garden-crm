@@ -132,7 +132,7 @@ export const BillingDashboard = () => {
                                     axisLine={{ stroke: '#e2e8f0' }}
                                     tickFormatter={(v) => {
                                         // YYYY-MM-DD -> DD/MM
-                                        const [y, m, d] = String(v).split('-');
+                                        const [, m, d] = String(v).split('-');
                                         return `${d}/${m}`;
                                     }}
                                 />

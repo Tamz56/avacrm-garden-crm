@@ -1,6 +1,6 @@
 // src/components/billing/DocCreatePanel.tsx
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, Loader2, ArrowLeft, FileText, User, Calendar } from 'lucide-react';
+import { Search, Loader2, ArrowLeft, FileText, Calendar } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import DealDocumentsPanel from '../customers/deals/DealDocumentsPanel';
 import { useDealPaymentSummary } from '../../hooks/useDealPaymentSummary';
@@ -165,7 +165,7 @@ export default function DocCreatePanel({ onSuccess }: { onSuccess?: () => void }
     const [loadingDetails, setLoadingDetails] = useState(false);
 
     // Payment summary hook
-    const { data: paymentSummary, refetch: refetchPayment } = useDealPaymentSummary(selectedDeal?.id);
+    const { data: paymentSummary } = useDealPaymentSummary(selectedDeal?.id);
 
     // Fetch deal details when selected
     const fetchDetails = useCallback(async (deal: DealSearchResult) => {

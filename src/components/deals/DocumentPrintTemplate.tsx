@@ -105,7 +105,8 @@ export const DocumentPrintTemplate: React.FC<Props> = ({ payload: directPayload,
 
     // ✅ Virtual Shipping Row Logic & Subtotal Safeguard (Moved to top level)
     const { rows, itemsSubTotal, grandTotal } = React.useMemo(() => {
-        const base = [...items];
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        const base: any[] = [...items];
         const shippingFee = Number(payload.shipping?.fee ?? 0);
         const shippingNote = payload.shipping?.note;
 
@@ -164,7 +165,7 @@ export const DocumentPrintTemplate: React.FC<Props> = ({ payload: directPayload,
     // Copy/Original Logic
     // @ts-ignore
     const isCopy = rawPayload?.isCopy === true;
-    const copyLabel = isCopy ? DOC_COPY_LABEL.copy : DOC_COPY_LABEL.original;
+    // const copyLabel = isCopy ? DOC_COPY_LABEL.copy : DOC_COPY_LABEL.original;
 
 
 
@@ -172,7 +173,7 @@ export const DocumentPrintTemplate: React.FC<Props> = ({ payload: directPayload,
     const titles = DOC_TITLES[doc_type] || { th: 'เอกสาร', en: 'DOCUMENT' };
 
     // Helper to format date
-    const dateStr = formatDMY(payload.doc_no ? payload.doc_date : undefined) || '...................';
+    // const dateStr = formatDMY(payload.doc_no ? payload.doc_date : undefined) || '...................';
 
     return (
         <div
@@ -350,7 +351,7 @@ export const DocumentPrintTemplate: React.FC<Props> = ({ payload: directPayload,
                     <tbody>
                         {rows.map((item, idx) => {
                             // @ts-ignore
-                            const isShipping = item.is_shipping || item.description === 'ค่าขนส่ง';
+                            // const isShipping = item.is_shipping || item.description === 'ค่าขนส่ง';
                             return (
                                 <tr key={idx} className={`h-9 border-b border-emerald-300 last:border-b-0`}>
                                     <td className="p-2 text-center text-slate-500 font-bold">{idx + 1}</td>

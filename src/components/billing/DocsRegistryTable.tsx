@@ -2,7 +2,7 @@
 // Registry Table: ตารางเอกสารทั้งหมดสำหรับ Billing Console
 import React, { useState } from 'react';
 import {
-    Eye, DollarSign, Ban, Search, Filter, FileText, Loader2,
+    Eye, DollarSign, Ban, Search, FileText, Loader2,
     CheckCircle2, Clock, AlertCircle, XCircle, ReceiptText
 } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
@@ -27,12 +27,7 @@ const PAYMENT_STATE_CONFIG: Record<PaymentState, { label: string; color: string;
     'n/a': { label: '-', color: 'bg-slate-100 text-slate-500', icon: null },
 };
 
-const STATUS_COLORS: Record<string, string> = {
-    issued: 'bg-emerald-100 text-emerald-700',
-    draft: 'bg-slate-100 text-slate-500',
-    cancelled: 'bg-red-100 text-red-600',
-    voided: 'bg-red-100 text-red-600',
-};
+
 
 type Props = {
     dealId?: string; // Optional: filter by deal

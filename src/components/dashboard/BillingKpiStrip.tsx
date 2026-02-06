@@ -1,20 +1,7 @@
-import React, { useMemo } from "react";
+```
+import React from "react";
 import { useBillingDashboardSummary } from "../../hooks/useBillingDashboardSummary";
-
-function toISODate(d: Date) {
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${y}-${m}-${day}`;
-}
-
-function startOfMonth(d: Date) {
-    return new Date(d.getFullYear(), d.getMonth(), 1);
-}
-
-function formatMoney(n: number) {
-    return `฿${(n || 0).toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
-}
+import { formatMoney } from "../../utils/textUtils";
 
 export default function BillingKpiStrip() {
     // Use "this_month" preset logic implicitly by passing no args or using the hook defaults
@@ -23,7 +10,7 @@ export default function BillingKpiStrip() {
     // Let's use the hook's preset 'this_month' for simplicity if the hook supports it.
     // Checking `useBillingDashboardSummary`: it takes initialPreset.
 
-    const { data, loading, error, preset, setPreset } = useBillingDashboardSummary('this_month');
+    const { data, loading, error } = useBillingDashboardSummary('this_month');
 
     // Ensure we switch to this_month if not already (though initialPreset handles it)
     // We don't need to manually calculate dates if we trust the hook's preset logic which we just wrote.

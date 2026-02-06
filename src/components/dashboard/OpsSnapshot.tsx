@@ -1,5 +1,12 @@
+```
 import React, { useState } from 'react';
-import { ChevronDown, ChevronUp, AlertCircle, AlertTriangle, Layers } from 'lucide-react';
+import {
+    Activity,
+    ClipboardList,
+    Shovel,
+    AlertOctagon,
+    Construction
+} from "lucide-react";
 
 interface OpsSnapshotProps {
     stats: {
@@ -35,9 +42,9 @@ export default function OpsSnapshot({ stats, alerts = [], loading = false }: Ops
 
     // Derived summary text
     const summaryText = [
-        stats.untagged_qty ? `${stats.untagged_qty.toLocaleString()} untagged` : null,
-        stats.active_dig_orders_count ? `${stats.active_dig_orders_count} digging` : null,
-        alertCount ? `${alertCount} alerts` : null
+        stats.untagged_qty ? `${ stats.untagged_qty.toLocaleString() } untagged` : null,
+        stats.active_dig_orders_count ? `${ stats.active_dig_orders_count } digging` : null,
+        alertCount ? `${ alertCount } alerts` : null
     ].filter(Boolean).join(' • ') || "All systems nominal";
 
     return (
@@ -86,7 +93,7 @@ export default function OpsSnapshot({ stats, alerts = [], loading = false }: Ops
                             </div>
                             <div className="rounded-xl border bg-slate-50 p-3 flex justify-between items-center">
                                 <span className="text-sm text-slate-600">Inspection Overdue</span>
-                                <span className={`text-sm font-bold tabular-nums ${stats.inspection_overdue_count ? 'text-rose-600' : 'text-slate-900'}`}>
+                                <span className={`text - sm font - bold tabular - nums ${ stats.inspection_overdue_count ? 'text-rose-600' : 'text-slate-900' } `}>
                                     {stats.inspection_overdue_count ?? 0}
                                 </span>
                             </div>
