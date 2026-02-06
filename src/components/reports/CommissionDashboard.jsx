@@ -17,6 +17,14 @@ const toBaht = (val) =>
         maximumFractionDigits: 0,
     })}`;
 
+// Theme tokens
+const surface =
+    "rounded-xl border border-slate-200 bg-white p-4 shadow-sm " +
+    "dark:border-white/10 dark:bg-white/5";
+
+const muted = "text-gray-500 dark:text-slate-400";
+const mutedSmall = "text-gray-400 dark:text-slate-500";
+
 // Helper: Format Date to YYYY-MM-DD (Local Time Safe)
 const toDateOnly = (date) => {
     if (!date) return null;
@@ -131,17 +139,17 @@ const CommissionDashboard = () => {
         <div className="space-y-6">
             {/* Header */}
             <div className="flex items-center justify-between">
-                <h2 className="text-xl font-semibold">
+                <h2 className="text-xl font-semibold dark:text-slate-100">
                     รายงานค่าคอมมิชชั่น (Commission Dashboard)
                 </h2>
-                <span className="text-xs text-gray-500">
+                <span className={`text-xs ${muted}`}>
                     ข้อมูลจาก view v_commission_by_person_month
                 </span>
             </div>
 
             {/* Error box */}
             {errorMsg && (
-                <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-400/20 dark:bg-red-500/10 dark:text-red-300">
                     <AlertCircle className="h-4 w-4" />
                     <span>{errorMsg}</span>
                 </div>
@@ -149,51 +157,51 @@ const CommissionDashboard = () => {
 
             {/* Summary cards */}
             <div className="grid gap-4 md:grid-cols-3">
-                <div className="rounded-xl border bg-white p-4 shadow-sm">
+                <div className={surface}>
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-xs text-gray-500">ค่าคอมฯ รวมเดือนนี้</p>
-                            <p className="mt-1 text-2xl font-semibold">
+                            <p className={`text-xs ${muted}`}>ค่าคอมฯ รวมเดือนนี้</p>
+                            <p className="mt-1 text-2xl font-semibold dark:text-slate-100">
                                 {toBaht(summary.teamTotal)}
                             </p>
-                            <p className="text-[10px] text-gray-400 mt-1">
+                            <p className={`text-[10px] ${mutedSmall} mt-1`}>
                                 ก่อนรวม override: {toBaht(baseTotalThisMonth)}
                             </p>
                         </div>
-                        <div className="rounded-full bg-emerald-50 p-3">
-                            <DollarSign className="h-5 w-5 text-emerald-600" />
+                        <div className="rounded-full bg-emerald-50 dark:bg-emerald-500/10 p-3">
+                            <DollarSign className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                         </div>
                     </div>
                 </div>
 
-                <div className="rounded-xl border bg-white p-4 shadow-sm">
+                <div className={surface}>
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-xs text-gray-500">
+                            <p className={`text-xs ${muted}`}>
                                 จำนวน Sales ที่มีค่าคอมฯ เดือนนี้
                             </p>
-                            <p className="mt-1 text-2xl font-semibold">
+                            <p className="mt-1 text-2xl font-semibold dark:text-slate-100">
                                 {summary.numSales}
                             </p>
                         </div>
-                        <div className="rounded-full bg-blue-50 p-3">
-                            <Users className="h-5 w-5 text-blue-600" />
+                        <div className="rounded-full bg-blue-50 dark:bg-blue-500/10 p-3">
+                            <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
                         </div>
                     </div>
                 </div>
 
-                <div className="rounded-xl border bg-white p-4 shadow-sm">
+                <div className={surface}>
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-xs text-gray-500">
+                            <p className={`text-xs ${muted}`}>
                                 ค่าคอมฯ เฉลี่ยต่อ Sales (เดือนนี้)
                             </p>
-                            <p className="mt-1 text-2xl font-semibold">
+                            <p className="mt-1 text-2xl font-semibold dark:text-slate-100">
                                 {toBaht(summary.avg)}
                             </p>
                         </div>
-                        <div className="rounded-full bg-purple-50 p-3">
-                            <TrendingUp className="h-5 w-5 text-purple-600" />
+                        <div className="rounded-full bg-purple-50 dark:bg-purple-500/10 p-3">
+                            <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                         </div>
                     </div>
                 </div>
@@ -202,8 +210,8 @@ const CommissionDashboard = () => {
             {/* Chart + table */}
             <div className="grid gap-6 lg:grid-cols-2">
                 {/* Team commission by month */}
-                <div className="rounded-xl border bg-white p-4 shadow-sm">
-                    <h3 className="mb-3 text-sm font-semibold">
+                <div className={surface}>
+                    <h3 className="mb-3 text-sm font-semibold dark:text-slate-100">
                         ยอดค่าคอมฯ รวมต่อเดือน (6 เดือนล่าสุด)
                     </h3>
                     <div className="h-64">
@@ -236,31 +244,31 @@ const CommissionDashboard = () => {
                 </div>
 
                 {/* Top earners this month */}
-                <div className="rounded-xl border bg-white p-4 shadow-sm">
-                    <h3 className="mb-3 text-sm font-semibold">
+                <div className={surface}>
+                    <h3 className="mb-3 text-sm font-semibold dark:text-slate-100">
                         Top Commission Earners (เดือนนี้)
                     </h3>
                     {topThisMonth.length === 0 ? (
-                        <p className="text-sm text-gray-500">
+                        <p className={`text-sm ${muted}`}>
                             ยังไม่มีข้อมูลค่าคอมฯ สำหรับเดือนนี้
                         </p>
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="min-w-full text-sm">
                                 <thead>
-                                    <tr className="border-b bg-gray-50 text-left">
-                                        <th className="px-3 py-2">#</th>
-                                        <th className="px-3 py-2">ชื่อ</th>
-                                        <th className="px-3 py-2 text-right">ค่าคอมฯ รวม</th>
+                                    <tr className="border-b border-slate-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 text-left">
+                                        <th className="px-3 py-2 dark:text-slate-200">#</th>
+                                        <th className="px-3 py-2 dark:text-slate-200">ชื่อ</th>
+                                        <th className="px-3 py-2 text-right dark:text-slate-200">ค่าคอมฯ รวม</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {topThisMonth.map((row, idx) => (
-                                        <tr key={row.full_name} className="border-b last:border-0">
-                                            <td className="px-3 py-2 text-gray-500">
+                                        <tr key={row.full_name} className="border-b border-slate-200 dark:border-white/10 last:border-0">
+                                            <td className={`px-3 py-2 ${muted}`}>
                                                 {idx + 1}
                                             </td>
-                                            <td className="px-3 py-2">
+                                            <td className="px-3 py-2 dark:text-slate-100">
                                                 <div>{row.full_name}</div>
                                                 {Number(row.team_override_commission) > 0 && (
                                                     <div className="text-[10px] text-emerald-600">
@@ -268,12 +276,12 @@ const CommissionDashboard = () => {
                                                     </div>
                                                 )}
                                             </td>
-                                            <td className="px-3 py-2 text-right">
+                                            <td className="px-3 py-2 text-right dark:text-slate-100">
                                                 <div className="font-medium">
                                                     {toBaht(Number(row.total_commission_with_override))}
                                                 </div>
                                                 {Number(row.team_override_commission) > 0 && (
-                                                    <div className="text-[10px] text-gray-400">
+                                                    <div className={`text-[10px] ${mutedSmall}`}>
                                                         (Base: {toBaht(row.total_commission)})
                                                     </div>
                                                 )}
@@ -288,7 +296,7 @@ const CommissionDashboard = () => {
             </div>
 
             {loading && (
-                <p className="text-xs text-gray-400">
+                <p className={`text-xs ${mutedSmall}`}>
                     กำลังโหลดข้อมูลค่าคอมฯ จาก Supabase...
                 </p>
             )}
