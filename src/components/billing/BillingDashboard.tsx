@@ -51,35 +51,35 @@ export const BillingDashboard = () => {
                         <span className="text-xl font-bold">Dashboard เอกสารการเงิน</span>
                     </div>
 
-                    <div className="text-sm text-zinc-500 ml-1">
-                        ช่วงวันที่: <span className="font-bold text-zinc-700">{formatDMY(from)}</span> ถึง <span className="font-bold text-zinc-700">{formatDMY(to)}</span>
+                    <div className="text-sm text-zinc-500 dark:text-slate-400 ml-1">
+                        ช่วงวันที่: <span className="font-bold text-zinc-700 dark:text-slate-200">{formatDMY(from)}</span> ถึง <span className="font-bold text-zinc-700 dark:text-slate-200">{formatDMY(to)}</span>
                     </div>
                 </div>
 
                 <div className="flex gap-2 flex-wrap items-center">
                     <button
-                        className={`px-3 py-2 rounded-lg text-sm border font-medium transition-all ${preset === '7d' ? 'bg-zinc-800 text-white border-zinc-800 shadow-md transform scale-105' : 'bg-white hover:bg-zinc-50 border-zinc-200 text-zinc-600'
+                        className={`px-3 py-2 rounded-lg text-sm border font-medium transition-all ${preset === '7d' ? 'bg-zinc-800 text-white border-zinc-800 shadow-md transform scale-105 dark:bg-white dark:text-zinc-800 dark:border-white' : 'bg-white hover:bg-zinc-50 border-zinc-200 text-zinc-600 dark:bg-white/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10'
                             }`}
                         onClick={() => setPreset('7d')}
                     >
                         7 วัน
                     </button>
                     <button
-                        className={`px-3 py-2 rounded-lg text-sm border font-medium transition-all ${preset === '30d' ? 'bg-zinc-800 text-white border-zinc-800 shadow-md transform scale-105' : 'bg-white hover:bg-zinc-50 border-zinc-200 text-zinc-600'
+                        className={`px-3 py-2 rounded-lg text-sm border font-medium transition-all ${preset === '30d' ? 'bg-zinc-800 text-white border-zinc-800 shadow-md transform scale-105 dark:bg-white dark:text-zinc-800 dark:border-white' : 'bg-white hover:bg-zinc-50 border-zinc-200 text-zinc-600 dark:bg-white/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10'
                             }`}
                         onClick={() => setPreset('30d')}
                     >
                         30 วัน
                     </button>
                     <button
-                        className={`px-3 py-2 rounded-lg text-sm border font-medium transition-all ${preset === 'this_month' ? 'bg-zinc-800 text-white border-zinc-800 shadow-md transform scale-105' : 'bg-white hover:bg-zinc-50 border-zinc-200 text-zinc-600'
+                        className={`px-3 py-2 rounded-lg text-sm border font-medium transition-all ${preset === 'this_month' ? 'bg-zinc-800 text-white border-zinc-800 shadow-md transform scale-105 dark:bg-white dark:text-zinc-800 dark:border-white' : 'bg-white hover:bg-zinc-50 border-zinc-200 text-zinc-600 dark:bg-white/5 dark:border-white/10 dark:text-slate-200 dark:hover:bg-white/10'
                             }`}
                         onClick={() => setPreset('this_month')}
                     >
                         เดือนนี้
                     </button>
 
-                    <div className="flex gap-2 items-center ml-2 bg-zinc-50 p-1 rounded-lg border border-zinc-200">
+                    <div className="flex gap-2 items-center ml-2 bg-zinc-50 dark:bg-white/5 p-1 rounded-lg border border-zinc-200 dark:border-white/10">
                         <input
                             type="date"
                             value={from}
@@ -87,9 +87,9 @@ export const BillingDashboard = () => {
                                 setFrom(e.target.value);
                                 setPreset('custom');
                             }}
-                            className="px-2 py-1.5 rounded bg-white border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                            className="px-2 py-1.5 rounded bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-sm dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                         />
-                        <span className="text-zinc-400 text-xs font-bold px-1">ถึง</span>
+                        <span className="text-zinc-400 dark:text-slate-500 text-xs font-bold px-1">ถึง</span>
                         <input
                             type="date"
                             value={to}
@@ -97,7 +97,7 @@ export const BillingDashboard = () => {
                                 setTo(e.target.value);
                                 setPreset('custom');
                             }}
-                            className="px-2 py-1.5 rounded bg-white border border-zinc-200 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
+                            className="px-2 py-1.5 rounded bg-white dark:bg-white/5 border border-zinc-200 dark:border-white/10 text-sm dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                         />
                     </div>
                 </div>
@@ -105,10 +105,10 @@ export const BillingDashboard = () => {
 
             {/* KPI */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <KpiCard title="จำนวนเอกสาร" value={`${kpis.doc_count} ใบ`} color="text-slate-700" bg="bg-white" />
-                <KpiCard title="ยอดรวม" value={thb(kpis.total_amount)} color="text-indigo-600" bg="bg-indigo-50/30" />
-                <KpiCard title="รับแล้ว" value={thb(kpis.paid_amount)} color="text-emerald-600" bg="bg-emerald-50/30" />
-                <KpiCard title="ค้างชำระ" value={thb(kpis.outstanding_amount)} color="text-rose-600" bg="bg-rose-50/30" />
+                <KpiCard title="จำนวนเอกสาร" value={`${kpis.doc_count} ใบ`} color="text-slate-700 dark:text-slate-100" bg="bg-white dark:bg-white/5" />
+                <KpiCard title="ยอดรวม" value={thb(kpis.total_amount)} color="text-indigo-600 dark:text-indigo-400" bg="bg-indigo-50/30 dark:bg-indigo-500/10" />
+                <KpiCard title="รับแล้ว" value={thb(kpis.paid_amount)} color="text-emerald-600 dark:text-emerald-400" bg="bg-emerald-50/30 dark:bg-emerald-500/10" />
+                <KpiCard title="ค้างชำระ" value={thb(kpis.outstanding_amount)} color="text-rose-600 dark:text-rose-400" bg="bg-rose-50/30 dark:bg-rose-500/10" />
             </div>
 
             {error && (
@@ -198,17 +198,17 @@ export const BillingDashboard = () => {
 
 function KpiCard({ title, value, color, bg }: { title: string; value: string; color?: string, bg?: string }) {
     return (
-        <div className={`rounded-2xl border border-zinc-100 p-4 shadow-sm ${bg || 'bg-white'}`}>
-            <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider">{title}</div>
-            <div className={`text-2xl font-black mt-1 ${color || 'text-zinc-800'}`}>{value}</div>
+        <div className={`rounded-2xl border border-zinc-100 dark:border-white/10 p-4 shadow-sm ${bg || 'bg-white dark:bg-white/5'}`}>
+            <div className="text-xs font-bold text-zinc-400 dark:text-slate-500 uppercase tracking-wider">{title}</div>
+            <div className={`text-2xl font-black mt-1 ${color || 'text-zinc-800 dark:text-slate-100'}`}>{value}</div>
         </div>
     );
 }
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
     return (
-        <div className="rounded-2xl border border-zinc-100 bg-white p-5 shadow-sm">
-            <div className="font-bold text-zinc-700 mb-4 flex items-center gap-2">
+        <div className="rounded-2xl border border-zinc-100 dark:border-white/10 bg-white dark:bg-white/5 p-5 shadow-sm">
+            <div className="font-bold text-zinc-700 dark:text-slate-100 mb-4 flex items-center gap-2">
                 {title}
             </div>
             {children}
