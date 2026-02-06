@@ -601,19 +601,16 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
                             {/* Row 2: Stock Selection OR Preorder Fields */}
                             {item.source_type !== 'preorder_from_zone' ? (
                                 /* From Stock Mode */
-                                <div className="grid gap-3 items-end lg:grid-cols-[minmax(0,1fr)_minmax(360px,420px)]">
-                                    {/* LEFT: Size + Stock select + Table */}
-                                    <div className="min-w-0">
+                                <div className="grid grid-cols-12 gap-4 items-end">
+                                    {/* LEFT */}
+                                    <div className="col-span-12 xl:col-span-7 min-w-0">
                                         <label className="block text-xs text-slate-500 mb-1">ขนาด (จากสต็อก) *</label>
-
                                         <select
-                                            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500"
+                                            className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-emerald-500/70 focus:border-emerald-500"
                                             value={item.selected_size_label || ""}
                                             onChange={(e) => handleSizeChange(index, e.target.value || null)}
                                         >
-                                            <option value="">
-                                                {sizesLoading ? "กำลังโหลด..." : "— เลือกขนาด —"}
-                                            </option>
+                                            <option value="">{sizesLoading ? "กำลังโหลด..." : "— เลือกขนาด —"}</option>
                                             {sizeOptions.map((s) => (
                                                 <option key={s.size_label} value={s.size_label}>
                                                     {`${s.size_label} นิ้ว${s.available_qty > 0 ? ` (พร้อมขาย ${s.available_qty})` : ""}`}
@@ -637,7 +634,7 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
                                                         setActiveItemIndex(index);
                                                         setStockPickerOpen(true);
                                                     }}
-                                                    className="w-full h-11 px-3 text-sm rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 transition-colors"
+                                                    className="w-full h-11 px-3 py-3 text-base rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-200 transition-colors"
                                                     title="เปิดตารางเลือกสต็อกแบบละเอียด"
                                                 >
                                                     📋 ตาราง
@@ -646,21 +643,19 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
                                         </div>
                                     </div>
 
-                                    {/* RIGHT: Extra dropdown + Qty + Unit price */}
-                                    <div className="min-w-0">
-                                        <div className="grid grid-cols-1 gap-2">
-                                            {/* รายละเอียดเพิ่มเติม */}
+                                    {/* RIGHT */}
+                                    <div className="col-span-12 xl:col-span-5">
+                                        <div className="grid gap-2">
                                             <div>
                                                 <label className="block text-xs text-slate-500 mb-1">รายละเอียดเพิ่มเติม (ถ้ามี)</label>
                                                 <input
-                                                    className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm"
+                                                    className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 py-3 text-base"
                                                     placeholder="รายละเอียดเพิ่มเติม (ถ้ามี)"
                                                     value={item.description || ""}
                                                     onChange={(e) => handleItemChange(index, "description", e.target.value)}
                                                 />
                                             </div>
 
-                                            {/* จำนวน + ราคา */}
                                             <div className="grid grid-cols-2 gap-2">
                                                 <div>
                                                     <label className="block text-xs text-slate-500 mb-1">จำนวน (ต้น)</label>
@@ -669,7 +664,7 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
                                                         min={1}
                                                         step={1}
                                                         inputMode="numeric"
-                                                        className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-right"
+                                                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-base text-right"
                                                         value={item.quantity}
                                                         onChange={(e) => handleItemChange(index, "quantity", Number(e.target.value || 1))}
                                                     />
@@ -682,7 +677,7 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
                                                         min={0}
                                                         step={1}
                                                         inputMode="numeric"
-                                                        className="w-full h-11 rounded-xl border border-slate-200 bg-white px-3 text-sm text-right"
+                                                        className="h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-base text-right"
                                                         value={item.price_per_tree}
                                                         onChange={(e) => handleItemChange(index, "price_per_tree", Number(e.target.value || 0))}
                                                     />
@@ -691,6 +686,7 @@ const DealFormBody: React.FC<DealFormBodyProps> = ({
                                         </div>
                                     </div>
                                 </div>
+
                             ) : (
                                 /* Preorder from Zone Mode */
                                 <div className="grid grid-cols-1 md:grid-cols-[1fr,1fr,1fr,1fr,1fr] gap-3 items-start">

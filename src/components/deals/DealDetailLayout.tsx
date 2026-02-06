@@ -54,6 +54,7 @@ export type DealDetailLayoutProps = {
     onPrintQuote?: () => void;
     onAddShipment?: () => void;
     onEditShipment?: (shipmentId: string) => void;
+    onCreateTask?: () => void;
     payments?: DealPayment[];
     onEditPayment?: (payment: DealPayment) => void;
     onDeletePayment?: (payment: DealPayment) => void;
@@ -96,6 +97,7 @@ const DealDetailLayout: React.FC<DealDetailLayoutProps> = ({
     onPrintQuote,
     onAddShipment,
     onEditShipment,
+    onCreateTask,
     payments = [],
     onEditPayment,
     onDeletePayment,
@@ -219,6 +221,17 @@ const DealDetailLayout: React.FC<DealDetailLayoutProps> = ({
 
                     {/* Right: Actions */}
                     <div className="flex items-center gap-2">
+                        {onCreateTask && (
+                            <button
+                                type="button"
+                                onClick={onCreateTask}
+                                className="px-3 py-1.5 text-xs font-medium rounded-lg border shadow-sm transition-all active:scale-95 flex items-center gap-1.5
+                bg-white border-gray-300 text-gray-700 hover:bg-gray-50
+                dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700"
+                            >
+                                📋 งาน
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={onEditDeal}
@@ -403,8 +416,8 @@ const DealDetailLayout: React.FC<DealDetailLayoutProps> = ({
                                                             </div>
                                                         ) : (
                                                             <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-lg overflow-hidden shrink-0 ${(item as any).source_type === 'preorder_from_zone'
-                                                                    ? 'bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20'
-                                                                    : 'bg-gray-100 dark:bg-slate-800'
+                                                                ? 'bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20'
+                                                                : 'bg-gray-100 dark:bg-slate-800'
                                                                 }`}>
                                                                 {(item as any).source_type === 'preorder_from_zone' ? '🌱' : '🌳'}
                                                             </div>

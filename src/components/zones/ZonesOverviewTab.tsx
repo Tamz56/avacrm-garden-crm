@@ -22,6 +22,7 @@ import { trunkSizeOptions } from "../../constants/treeOptions";
 import ZoneDetailPage from "../ZoneDetailPage";
 import { SpeciesFormDialog } from "../stock/SpeciesFormDialog";
 import { useStockZoneLifecycle, StockZoneLifecycleRow } from "../../hooks/useStockZoneLifecycle";
+import CreateTaskModal from "../tasks/CreateTaskModal";
 
 // default หนึ่งแถวของชนิดต้นไม้ในแปลง
 // default หนึ่งแถวของชนิดต้นไม้ในแปลง
@@ -96,6 +97,7 @@ export const ZonesOverviewTab: React.FC<Props> = ({ initialFilters, isDarkMode =
     const [isEditMode, setIsEditMode] = useState(false);
     const [currentZone, setCurrentZone] = useState(null);
     const [selectedZoneId, setSelectedZoneId] = useState(null); // For detail view
+    const [showTaskModal, setShowTaskModal] = useState(false);
 
     // Filter State
     const [searchQuery, setSearchQuery] = useState("");
@@ -446,13 +448,25 @@ export const ZonesOverviewTab: React.FC<Props> = ({ initialFilters, isDarkMode =
         );
     }
 
+    const selectedZoneForTask = selectedZoneId ? zones.find(z => z.id === selectedZoneId) : null;
+
     // ถ้ามีการเลือกแปลง ให้แสดงหน้า Detail
     if (selectedZoneId) {
         return (
-            <ZoneDetailPage
-                zoneId={selectedZoneId}
-                onBack={() => setSelectedZoneId(null)}
-            />
+            <>
+                <ZoneDetailPage
+                    zoneId={selectedZoneId}
+                    onBack={() => setSelectedZoneId(null)}
+                    onCreateTask={() => setShowTaskModal(true)}
+                />
+                <CreateTaskModal
+                    open={showTaskModal}
+                    onClose={() => setShowTaskModal(false)}
+                    initialContextType="zone"
+                    initialContextId={selectedZoneId}
+                    initialContextLabel={selectedZoneForTask ? selectedZoneForTask.name : undefined}
+                />
+            </>
         );
     }
 
@@ -468,7 +482,7 @@ export const ZonesOverviewTab: React.FC<Props> = ({ initialFilters, isDarkMode =
                         ฐานข้อมูลแปลงปลูก แปลงทดลอง และแปลงพัฒนาต้นไม้
                         เพื่อส่งต่อข้อมูลไปยังสต็อกขาย (CRM Stock)
                     </p>
-                </div>
+                </div >
                 <div className="flex flex-wrap items-center gap-2">
                     <button
                         onClick={handleOpenCreate}
@@ -478,40 +492,41 @@ export const ZonesOverviewTab: React.FC<Props> = ({ initialFilters, isDarkMode =
                         <span>เพิ่มแปลงใหม่</span>
                     </button>
                 </div>
-            </div>
+            </div >
 
             {/* Zone Summary Cards */}
-            <ZoneTypeSummaryCards
-                items={[
-                    {
-                        key: "production",
-                        label: "แปลงผลิตจริง",
-                        zoneCount: plotTypeMetrics.PRODUCTION.zones,
-                        areaRai: plotTypeMetrics.PRODUCTION.areaRai,
-                        plannedTrees: plotTypeMetrics.PRODUCTION.plannedTrees,
-                    },
-                    {
-                        key: "trial",
-                        label: "แปลงทดลอง",
-                        zoneCount: plotTypeMetrics.TEST.zones,
-                        areaRai: plotTypeMetrics.TEST.areaRai,
-                        plannedTrees: plotTypeMetrics.TEST.plannedTrees,
-                    },
-                    {
-                        key: "nursery",
-                        label: "Nursery / แปลงพัก",
-                        zoneCount: plotTypeMetrics.NURSERY.zones,
-                        areaRai: plotTypeMetrics.NURSERY.areaRai,
-                        plannedTrees: plotTypeMetrics.NURSERY.plannedTrees,
-                    },
-                    {
-                        key: "untyped",
-                        label: "ยังไม่กำหนดประเภท",
-                        zoneCount: plotTypeMetrics.UNSET.zones,
-                        areaRai: plotTypeMetrics.UNSET.areaRai,
-                        plannedTrees: plotTypeMetrics.UNSET.plannedTrees,
-                    },
-                ]}
+            < ZoneTypeSummaryCards
+                items={
+                    [
+                        {
+                            key: "production",
+                            label: "แปลงผลิตจริง",
+                            zoneCount: plotTypeMetrics.PRODUCTION.zones,
+                            areaRai: plotTypeMetrics.PRODUCTION.areaRai,
+                            plannedTrees: plotTypeMetrics.PRODUCTION.plannedTrees,
+                        },
+                        {
+                            key: "trial",
+                            label: "แปลงทดลอง",
+                            zoneCount: plotTypeMetrics.TEST.zones,
+                            areaRai: plotTypeMetrics.TEST.areaRai,
+                            plannedTrees: plotTypeMetrics.TEST.plannedTrees,
+                        },
+                        {
+                            key: "nursery",
+                            label: "Nursery / แปลงพัก",
+                            zoneCount: plotTypeMetrics.NURSERY.zones,
+                            areaRai: plotTypeMetrics.NURSERY.areaRai,
+                            plannedTrees: plotTypeMetrics.NURSERY.plannedTrees,
+                        },
+                        {
+                            key: "untyped",
+                            label: "ยังไม่กำหนดประเภท",
+                            zoneCount: plotTypeMetrics.UNSET.zones,
+                            areaRai: plotTypeMetrics.UNSET.areaRai,
+                            plannedTrees: plotTypeMetrics.UNSET.plannedTrees,
+                        },
+                    ]}
                 totalZones={summary?.totalZones || 0}
                 totalPlannedTrees={summary?.totalPlanned || 0}
             />
@@ -1134,6 +1149,15 @@ export const ZonesOverviewTab: React.FC<Props> = ({ initialFilters, isDarkMode =
                     setShowSpeciesDialog(false);
                     setPendingSpeciesRowId(null);
                 }}
+            />
+
+            {/* Task Modal */}
+            <CreateTaskModal
+                open={showTaskModal}
+                onClose={() => setShowTaskModal(false)}
+                initialContextType="zone"
+                initialContextId={selectedZoneId}
+                initialContextLabel={selectedZoneForTask ? selectedZoneForTask.name : undefined}
             />
         </div >
     );

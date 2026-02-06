@@ -11,7 +11,7 @@ import {
     Settings,
     Sliders,
     BarChart,
-
+    FileText,
     Shovel,
     LogOut,
     Lock as LockIcon
@@ -97,6 +97,11 @@ const navGroups: NavGroup[] = [
     {
         title: "FINANCE & SETTINGS",
         items: [
+            {
+                id: "billing",
+                label: "ศูนย์เอกสาร",
+                icon: <FileText size={18} />,
+            },
             {
                 id: "commission",
                 label: "ค่าคอมมิชชั่น",
