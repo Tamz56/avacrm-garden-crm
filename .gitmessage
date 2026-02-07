@@ -1,0 +1,7 @@
+# <type>(<scope>): <subject>
+#
+# types: feat, fix, refactor, chore, docs, test, perf, ci, build, style
+# scopes: dashboard, zones, deals, stock, auth, infra, ui
+#
+# body (optional): why + how
+# footer (optional): refs/notes
