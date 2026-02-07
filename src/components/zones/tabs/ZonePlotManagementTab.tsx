@@ -38,6 +38,7 @@ type Props = {
     savingPlotType?: boolean;
     saveMessage?: string | null;
     onReload?: () => void;
+    isDarkMode?: boolean;
 };
 
 export function ZonePlotManagementTab({
@@ -60,6 +61,7 @@ export function ZonePlotManagementTab({
     savingPlotType = false,
     saveMessage,
     onReload,
+    isDarkMode = false,
 }: Props) {
     // Local state for accordion
     const [localOpen, setLocalOpen] = React.useState(isInventoryOpen ?? false);
@@ -181,7 +183,7 @@ export function ZonePlotManagementTab({
     return (
         <div className="space-y-6">
             {/* SECTION 1: กำหนดจำนวนต้นไม้ในแปลง (ระบบ) */}
-            <section className="rounded-xl border border-slate-200 bg-white overflow-hidden">
+            <section className={`rounded-xl border overflow-hidden ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
                 <button
                     type="button"
                     onClick={(e) => {
@@ -189,11 +191,11 @@ export function ZonePlotManagementTab({
                         e.stopPropagation();
                         handleToggle();
                     }}
-                    className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-slate-50 transition-colors"
+                    className={`w-full flex items-center justify-between px-4 py-3 text-left transition-colors ${isDarkMode ? "hover:bg-white/5" : "hover:bg-slate-50"}`}
                 >
                     <div>
-                        <h3 className="text-sm font-semibold text-slate-900">กำหนดจำนวนต้นไม้ในแปลง (ระบบ)</h3>
-                        <p className="text-xs text-slate-500">{plantCountDrafts.length} รายการ</p>
+                        <h3 className={`text-sm font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}>กำหนดจำนวนต้นไม้ในแปลง (ระบบ)</h3>
+                        <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{plantCountDrafts.length} รายการ</p>
                     </div>
                     <div className="flex items-center gap-2">
                         {!localOpen && (
@@ -204,14 +206,14 @@ export function ZonePlotManagementTab({
                 </button>
 
                 {localOpen && (
-                    <div className="px-4 pb-4 space-y-3 border-t border-slate-100">
+                    <div className={`px-4 pb-4 space-y-3 border-t ${isDarkMode ? "border-white/10" : "border-slate-100"}`}>
                         {/* Action buttons */}
                         <div className="flex items-center justify-between gap-2 pt-3">
                             <button
                                 type="button"
                                 onClick={addPlantCountRow}
                                 disabled={savingPlantCounts}
-                                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs disabled:opacity-50 ${isDarkMode ? "bg-white/5 border-white/10 text-slate-200 hover:bg-white/10" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"}`}
                             >
                                 <Plus className="h-3.5 w-3.5" /> เพิ่มแถว
                             </button>
@@ -232,7 +234,7 @@ export function ZonePlotManagementTab({
 
                         {/* Validation warning */}
                         {plantCountDrafts.length > 0 && invalidRows.length > 0 && (
-                            <div className="flex items-center gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-xs text-amber-700">
+                            <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs ${isDarkMode ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-amber-50 border-amber-200 text-amber-700"}`}>
                                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
                                 <span>มี {invalidRows.length} แถวที่ยังไม่ครบถ้วน (ต้องเลือกชนิด, ขนาด และระบุจำนวน)</span>
                             </div>
@@ -244,9 +246,9 @@ export function ZonePlotManagementTab({
                         )}
 
                         {/* Table */}
-                        <div className="overflow-x-auto border rounded-lg border-slate-200">
+                        <div className={`overflow-x-auto border rounded-lg ${isDarkMode ? "border-white/10" : "border-slate-200"}`}>
                             <table className="min-w-full text-xs">
-                                <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                                <thead className={`border-b ${isDarkMode ? "bg-white/5 text-slate-400 border-white/10" : "bg-slate-50 text-slate-600 border-slate-200"}`}>
                                     <tr>
                                         <th className="px-3 py-2 text-left font-medium">ชนิด</th>
                                         <th className="px-3 py-2 text-left font-medium">ขนาด</th>
@@ -257,7 +259,7 @@ export function ZonePlotManagementTab({
                                 <tbody>
                                     {plantCountDrafts.length === 0 && (
                                         <tr>
-                                            <td colSpan={4} className="px-3 py-6 text-center text-slate-400">
+                                            <td colSpan={4} className={`px-3 py-6 text-center ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
                                                 ยังไม่มีข้อมูล — กดปุ่ม "เพิ่มแถว" เพื่อเริ่มต้น
                                             </td>
                                         </tr>
@@ -268,13 +270,16 @@ export function ZonePlotManagementTab({
                                         const hasQtyError = typeof d.planted_count !== "number" || d.planted_count <= 0;
 
                                         return (
-                                            <tr key={d.id} className={`border-b border-slate-100 hover:bg-slate-50 ${isRowInvalid(d) ? 'bg-rose-50/50' : ''}`}>
+                                            <tr key={d.id} className={`border-b ${isDarkMode ? "border-white/5 hover:bg-white/5" : "border-slate-100 hover:bg-slate-50"} ${isRowInvalid(d) ? (isDarkMode ? 'bg-rose-500/10' : 'bg-rose-50/50') : ''}`}>
                                                 <td className="px-3 py-2">
                                                     <select
                                                         value={d.species_id}
                                                         onChange={(e) => updatePlantCountRow?.(d.id, { species_id: e.target.value })}
                                                         disabled={savingPlantCounts}
-                                                        className={`w-full rounded-lg border px-2 py-1.5 text-xs bg-white disabled:bg-slate-50 disabled:text-slate-400 ${hasSpeciesError ? 'border-rose-300 focus:border-rose-500' : 'border-slate-300'}`}
+                                                        className={`w-full rounded-lg border px-2 py-1.5 text-xs disabled:text-slate-400 ${isDarkMode
+                                                                ? `bg-black text-white disabled:bg-white/5 ${hasSpeciesError ? 'border-rose-500' : 'border-white/10'}`
+                                                                : `bg-white disabled:bg-slate-50 ${hasSpeciesError ? 'border-rose-300 focus:border-rose-500' : 'border-slate-300'}`
+                                                            }`}
                                                     >
                                                         <option value="">-- เลือกชนิด --</option>
                                                         {speciesOptions.map((s: any) => (
@@ -287,7 +292,10 @@ export function ZonePlotManagementTab({
                                                         value={d.size_label}
                                                         onChange={(e) => updatePlantCountRow?.(d.id, { size_label: e.target.value })}
                                                         disabled={savingPlantCounts}
-                                                        className={`w-full rounded-lg border px-2 py-1.5 text-xs bg-white disabled:bg-slate-50 disabled:text-slate-400 ${hasSizeError ? 'border-rose-300 focus:border-rose-500' : 'border-slate-300'}`}
+                                                        className={`w-full rounded-lg border px-2 py-1.5 text-xs disabled:text-slate-400 ${isDarkMode
+                                                                ? `bg-black text-white disabled:bg-white/5 ${hasSizeError ? 'border-rose-500' : 'border-white/10'}`
+                                                                : `bg-white disabled:bg-slate-50 ${hasSizeError ? 'border-rose-300 focus:border-rose-500' : 'border-slate-300'}`
+                                                            }`}
                                                     >
                                                         <option value="">-- เลือกขนาด --</option>
                                                         {trunkSizeOptions.map((opt) => (
@@ -303,7 +311,10 @@ export function ZonePlotManagementTab({
                                                         onChange={(e) => updatePlantCountRow?.(d.id, { planted_count: e.target.value === "" ? "" : Number(e.target.value) })}
                                                         disabled={savingPlantCounts}
                                                         placeholder="0"
-                                                        className={`w-20 rounded-lg border px-2 py-1.5 text-right text-xs disabled:bg-slate-50 disabled:text-slate-400 ${hasQtyError ? 'border-rose-300 focus:border-rose-500' : 'border-slate-300'}`}
+                                                        className={`w-20 rounded-lg border px-2 py-1.5 text-right text-xs disabled:text-slate-400 ${isDarkMode
+                                                                ? `bg-black text-white disabled:bg-white/5 ${hasQtyError ? 'border-rose-500' : 'border-white/10'}`
+                                                                : `disabled:bg-slate-50 ${hasQtyError ? 'border-rose-300 focus:border-rose-500' : 'border-slate-300'}`
+                                                            }`}
                                                     />
                                                 </td>
                                                 <td className="px-3 py-2 text-center">
@@ -312,7 +323,7 @@ export function ZonePlotManagementTab({
                                                         onClick={() => removePlantCountRow?.(d.id)}
                                                         disabled={savingPlantCounts}
                                                         title="ลบแถวนี้"
-                                                        className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50 transition-colors"
+                                                        className={`p-1.5 rounded-lg disabled:opacity-50 transition-colors ${isDarkMode ? "text-rose-400 hover:bg-rose-500/10" : "text-rose-500 hover:bg-rose-50 hover:text-rose-600"}`}
                                                     >
                                                         <Trash2 className="h-4 w-4" />
                                                     </button>
@@ -328,9 +339,9 @@ export function ZonePlotManagementTab({
             </section>
 
             {/* SECTION 2: ตั้งค่าประเภทแปลง */}
-            <section className="rounded-xl border border-slate-200 bg-white p-5">
+            <section className={`rounded-xl border p-5 ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
                 <div className="flex items-center justify-between gap-3">
-                    <h3 className="text-base font-semibold text-slate-900">ตั้งค่าประเภทแปลง</h3>
+                    <h3 className={`text-base font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}>ตั้งค่าประเภทแปลง</h3>
                     <button
                         type="button"
                         onClick={handleSavePlotType}
@@ -346,7 +357,10 @@ export function ZonePlotManagementTab({
                         value={selectedPlotTypeId ?? ""}
                         onChange={(e) => setSelectedPlotTypeId?.(String(e.target.value))}
                         disabled={savingPlotType || plotTypeOptions.length === 0}
-                        className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm disabled:bg-slate-50 disabled:text-slate-400"
+                        className={`w-full rounded-lg border px-3 py-2.5 text-sm disabled:text-slate-400 ${isDarkMode
+                                ? "bg-black text-white border-white/10 disabled:bg-white/5"
+                                : "bg-white border-slate-200 disabled:bg-slate-50"
+                            }`}
                     >
                         <option value="">-- เลือกประเภทแปลง --</option>
                         {plotTypeOptions.map((o) => (
@@ -369,19 +383,22 @@ export function ZonePlotManagementTab({
             </section>
 
             {/* SECTION 3: Plot Inventory Summary */}
-            <section className="rounded-xl border border-slate-200 bg-white p-5">
+            <section className={`rounded-xl border p-5 ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
                 <div className="flex items-center justify-between mb-4">
                     <div>
-                        <h3 className="text-sm font-semibold text-slate-900">สรุป Tag ตามแปลง (Plot)</h3>
-                        <p className="text-xs text-slate-500">ข้อมูลจำนวนต้นที่บันทึกในระบบ vs ติด Tag แล้ว</p>
+                        <h3 className={`text-sm font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}>สรุป Tag ตามแปลง (Plot)</h3>
+                        <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>ข้อมูลจำนวนต้นที่บันทึกในระบบ vs ติด Tag แล้ว</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <label className="text-xs text-slate-500">เลือกแปลง:</label>
+                        <label className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>เลือกแปลง:</label>
                         <select
                             value={selectedPlotId}
                             onChange={(e) => setSelectedPlotId(e.target.value)}
                             disabled={plotsLoading || plots.length === 0}
-                            className="rounded-lg border border-slate-200 px-2 py-1 text-xs disabled:bg-slate-50"
+                            className={`rounded-lg border px-2 py-1 text-xs disabled:text-slate-400 ${isDarkMode
+                                    ? "bg-black text-white border-white/10 disabled:bg-white/5"
+                                    : "border-slate-200 disabled:bg-slate-50"
+                                }`}
                         >
                             {plotsLoading && <option value="">กำลังโหลด...</option>}
                             {!plotsLoading && plots.length === 0 && <option value="">ไม่มีแปลง</option>}
@@ -394,7 +411,7 @@ export function ZonePlotManagementTab({
                         <button
                             type="button"
                             onClick={() => refreshPlotSummary()}
-                            className="rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
+                            className={`rounded-lg border px-2 py-1 text-xs hover:bg-opacity-50 ${isDarkMode ? "border-white/10 text-slate-300 hover:bg-white/10" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
                         >
                             🔄
                         </button>
@@ -431,6 +448,7 @@ export function ZonePlotManagementTab({
                     defaultSpeciesId={createTagDefaults.speciesId}
                     defaultSizeLabel={createTagDefaults.sizeLabel}
                     lockPlot={true}
+                    isDarkMode={isDarkMode}
                 />
             )}
         </div>

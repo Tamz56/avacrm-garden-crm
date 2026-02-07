@@ -11,6 +11,11 @@ import {
     Truck,
     CreditCard,
 } from "lucide-react";
+import { PREMIUM_STYLES } from "../../constants/ui";
+
+// Style Constants
+const { SURFACE, SURFACE_HOVER, TITLE, MUTED, SOFT_INNER } = PREMIUM_STYLES;
+
 
 const fmtDue = (iso?: string | null) => {
     if (!iso) return "-";
@@ -168,15 +173,15 @@ export default function DashboardPriorityTasksCard({ onOpenTasks }: { onOpenTask
     );
 
     return (
-        <div className="bg-white rounded-2xl border border-slate-100 p-5 h-full flex flex-col shadow-sm">
+        <div className={`${SURFACE} ${SURFACE_HOVER} p-5 h-full flex flex-col`}>
             <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex items-start gap-2.5">
                     <div className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-100 text-slate-700 border border-slate-100">
                         <ListChecks className="h-4 w-4" />
                     </div>
                     <div>
-                        <div className="text-sm font-semibold text-slate-900 leading-tight">Priority tasks</div>
-                        <div className="mt-0.5 text-[11px] text-slate-500 font-medium">
+                        <div className={`text-sm ${TITLE} leading-tight`}>Priority tasks</div>
+                        <div className={`mt-0.5 text-[11px] ${MUTED} font-medium`}>
                             {pendingCount} pending • {inProgressCount} in progress
                             {overdueCount > 0 && (
                                 <>
@@ -209,7 +214,7 @@ export default function DashboardPriorityTasksCard({ onOpenTasks }: { onOpenTask
                 </div>
             </div>
 
-            <div className="mt-0 flex-1 min-h-0 relative rounded-xl border border-slate-100 bg-white overflow-hidden shadow-sm">
+            <div className={`mt-0 flex-1 min-h-0 relative ${SOFT_INNER} overflow-hidden shadow-sm`}>
                 {loading && <div className="p-4 text-slate-400 text-sm text-center">กำลังโหลดงาน...</div>}
                 {!loading && error && <div className="p-4 text-rose-600 text-sm text-center">{error}</div>}
 
@@ -230,8 +235,8 @@ export default function DashboardPriorityTasksCard({ onOpenTasks }: { onOpenTask
                                     <div
                                         key={t.id}
                                         className={[
-                                            "group relative flex items-center gap-2 px-3 py-2.5",
-                                            "cursor-pointer transition-colors hover:bg-slate-50/80",
+                                            "group relative flex items-center gap-2 px-3 py-2.5 border-b border-slate-100 dark:border-white/5 last:border-0",
+                                            "cursor-pointer transition-colors hover:bg-slate-50/80 dark:hover:bg-white/5",
                                         ].join(" ")}
                                         onMouseEnter={() => setHoverId(t.id)}
                                         onMouseLeave={() => setHoverId((prev) => (prev === t.id ? null : prev))}
@@ -260,19 +265,19 @@ export default function DashboardPriorityTasksCard({ onOpenTasks }: { onOpenTask
                                             ].join(" ")}
                                         />
 
-                                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-50 text-slate-400 group-hover:text-amber-500 transition-colors">
+                                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-slate-50 dark:bg-white/5 text-slate-400 group-hover:text-amber-500 transition-colors">
                                             {taskIcon(t.task_type)}
                                         </div>
 
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center flex-wrap gap-y-1">
-                                                <div className="truncate text-[13px] font-medium leading-tight text-slate-900 group-hover:text-indigo-700 transition-colors mr-1">
+                                                <div className={`truncate text-[13px] font-medium leading-tight ${TITLE} group-hover:text-indigo-700 dark:group-hover:text-indigo-400 transition-colors mr-1`}>
                                                     {title}
                                                 </div>
                                                 <ContextCapsule type={t.context_type} id={t.context_id} />
                                             </div>
 
-                                            <div className="mt-0.5 flex items-center gap-2 text-[11px] text-slate-500 leading-tight">
+                                            <div className={`mt-0.5 flex items-center gap-2 text-[11px] ${MUTED} leading-tight`}>
                                                 <span>
                                                     Due: {fmtDue(t.due_date)}
                                                     {due.label && (

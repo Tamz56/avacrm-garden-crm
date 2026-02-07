@@ -60,6 +60,8 @@ type Props = {
         speciesId?: string; // Optional: for display or further filtering
         sizeLabel?: string; // Optional
         initialZoneId?: string; // New: Open detail page automatically
+        focus?: string; // e.g. 'inventory'
+        hl?: number; // 1 = Trigger one-shot highlight
     };
     isDarkMode?: boolean;
 };
@@ -456,6 +458,8 @@ export const ZonesOverviewTab: React.FC<Props> = ({ initialFilters, isDarkMode =
             <>
                 <ZoneDetailPage
                     zoneId={selectedZoneId}
+                    initialTab={initialFilters?.focus}
+                    shouldHighlight={!!initialFilters?.hl}
                     onBack={() => setSelectedZoneId(null)}
                     onCreateTask={() => setShowTaskModal(true)}
                     isDarkMode={isDarkMode}

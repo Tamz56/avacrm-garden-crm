@@ -17,6 +17,7 @@ export type CreateTagModalProps = {
     defaultSpeciesId?: string;
     defaultSizeLabel?: string;
     lockPlot?: boolean; // Disable plot change when preselected
+    isDarkMode?: boolean;
 };
 
 export const CreateTagModal: React.FC<CreateTagModalProps> = ({
@@ -30,6 +31,7 @@ export const CreateTagModal: React.FC<CreateTagModalProps> = ({
     defaultSpeciesId = "",
     defaultSizeLabel = "",
     lockPlot = false,
+    isDarkMode = false,
 }) => {
     const [isBatch, setIsBatch] = React.useState(false);
     const [saving, setSaving] = React.useState(false);
@@ -237,26 +239,28 @@ export const CreateTagModal: React.FC<CreateTagModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-            <div className="w-full max-w-md rounded-2xl bg-white p-4 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className={`w-full max-w-md rounded-2xl p-4 shadow-xl ${isDarkMode ? "bg-slate-900 border border-white/10" : "bg-white"}`}>
                 <div className="mb-3 flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-slate-900">
+                    <h3 className={`text-sm font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}>
                         {isBatch ? "สร้าง Tag แบบกลุ่ม (Batch)" : "สร้าง Tag ใหม่ในแปลงนี้"}
                     </h3>
                     <button
                         type="button"
                         onClick={onClose}
-                        className="rounded-full p-1 text-slate-400 hover:bg-slate-100"
+                        className={`rounded-full p-1 ${isDarkMode ? "text-slate-400 hover:bg-white/10" : "text-slate-400 hover:bg-slate-100"}`}
                     >
                         <X className="h-4 w-4" />
                     </button>
                 </div>
 
-                <div className="mb-4 flex rounded-lg bg-slate-100 p-1">
+                <div className={`mb-4 flex rounded-lg p-1 ${isDarkMode ? "bg-white/5" : "bg-slate-100"}`}>
                     <button
                         type="button"
                         onClick={() => setIsBatch(false)}
-                        className={`flex-1 rounded-md py-1 text-xs font-medium transition-all ${!isBatch ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                        className={`flex-1 rounded-md py-1 text-xs font-medium transition-all ${!isBatch
+                            ? (isDarkMode ? "bg-white/10 text-white shadow-sm" : "bg-white text-slate-900 shadow-sm")
+                            : (isDarkMode ? "text-slate-400 hover:text-slate-300" : "text-slate-500 hover:text-slate-700")
                             }`}
                     >
                         สร้างทีละใบ
@@ -264,7 +268,9 @@ export const CreateTagModal: React.FC<CreateTagModalProps> = ({
                     <button
                         type="button"
                         onClick={() => setIsBatch(true)}
-                        className={`flex-1 rounded-md py-1 text-xs font-medium transition-all ${isBatch ? "bg-white text-emerald-700 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                        className={`flex-1 rounded-md py-1 text-xs font-medium transition-all ${isBatch
+                            ? (isDarkMode ? "bg-emerald-500/20 text-emerald-400 shadow-sm" : "bg-white text-emerald-700 shadow-sm")
+                            : (isDarkMode ? "text-slate-400 hover:text-slate-300" : "text-slate-500 hover:text-slate-700")
                             }`}
                     >
                         ⚡ สร้างเป็นล็อต (Batch)
@@ -273,12 +279,12 @@ export const CreateTagModal: React.FC<CreateTagModalProps> = ({
 
                 <form onSubmit={handleSubmit} className="space-y-3 text-xs">
                     <div>
-                        <label className="mb-1 block text-slate-600">ชนิด / พันธุ์ไม้</label>
+                        <label className={`mb-1 block ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>ชนิด / พันธุ์ไม้</label>
                         <select
                             name="speciesId"
                             value={form.speciesId}
                             onChange={handleChange}
-                            className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                            className={`w-full rounded-lg border px-2 py-1.5 text-xs ${isDarkMode ? "bg-black border-white/10 text-white" : "border-slate-200"}`}
                         >
                             <option value="">-- เลือกพันธุ์ไม้ --</option>
                             {speciesOptions.map((sp) => (
@@ -291,13 +297,13 @@ export const CreateTagModal: React.FC<CreateTagModalProps> = ({
 
                     {/* Plot Selector */}
                     <div>
-                        <label className="mb-1 block text-slate-600">เลือกแปลง (Plot)</label>
+                        <label className={`mb-1 block ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>เลือกแปลง (Plot)</label>
                         <select
                             name="plotId"
                             value={form.plotId ?? ""}
                             onChange={handleChange}
                             disabled={plotsLoading || plots.length === 0 || lockPlot}
-                            className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs disabled:bg-slate-50"
+                            className={`w-full rounded-lg border px-2 py-1.5 text-xs disabled:opacity-50 ${isDarkMode ? "bg-black border-white/10 text-white disabled:bg-white/5" : "border-slate-200 disabled:bg-slate-50"}`}
                         >
                             <option value="" disabled>
                                 {plotsLoading ? "กำลังโหลด..." : plots.length === 0 ? "ไม่มีแปลง" : "-- เลือกแปลง --"}
@@ -322,48 +328,51 @@ export const CreateTagModal: React.FC<CreateTagModalProps> = ({
 
                     <div className="grid grid-cols-2 gap-2">
                         <div>
-                            <label className="mb-1 block text-slate-600">ขนาด</label>
+                            <label className={`mb-1 block ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>ขนาด</label>
                             <input
                                 name="sizeLabel"
                                 value={form.sizeLabel}
                                 onChange={handleChange}
                                 placeholder={`เช่น 3 นิ้ว`}
-                                className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                                className={`w-full rounded-lg border px-2 py-1.5 text-xs ${isDarkMode ? "bg-black border-white/10 text-white placeholder-slate-600" : "border-slate-200"}`}
                             />
                         </div>
                         <div>
-                            <label className="mb-1 block text-slate-600">จำนวนต้นต่อ Tag</label>
+                            <label className={`mb-1 block ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>จำนวนต้นต่อ Tag</label>
                             <input
                                 type="number"
                                 name="qty"
                                 min={1}
                                 value={form.qty}
                                 onChange={handleChange}
-                                className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                                className={`w-full rounded-lg border px-2 py-1.5 text-xs ${isDarkMode ? "bg-black border-white/10 text-white" : "border-slate-200"}`}
                             />
                         </div>
                     </div>
 
                     {/* Inventory Summary Card */}
                     {form.speciesId && form.sizeLabel && (
-                        <div className={`rounded-lg border p-3 ${inv ? "border-sky-200 bg-sky-50" : "border-amber-200 bg-amber-50"}`}>
+                        <div className={`rounded-lg border p-3 ${isDarkMode
+                            ? (inv ? "border-sky-500/20 bg-sky-500/10" : "border-amber-500/20 bg-amber-500/10")
+                            : (inv ? "border-sky-200 bg-sky-50" : "border-amber-200 bg-amber-50")
+                            }`}>
                             {loadingInv ? (
-                                <p className="text-xs text-slate-500">กำลังตรวจสอบ Inventory...</p>
+                                <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>กำลังตรวจสอบ Inventory...</p>
                             ) : invMsg ? (
-                                <p className="text-xs text-amber-700">⚠️ {invMsg}</p>
+                                <p className={`text-xs ${isDarkMode ? "text-amber-400" : "text-amber-700"}`}>⚠️ {invMsg}</p>
                             ) : inv ? (
                                 <div className="space-y-1">
                                     <div className="flex justify-between text-xs">
-                                        <span className="text-slate-600">ปลูกในระบบ:</span>
-                                        <span className="font-medium text-slate-800">{inv.planted_qty.toLocaleString()} ต้น</span>
+                                        <span className={`${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>ปลูกในระบบ:</span>
+                                        <span className={`font-medium ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>{inv.planted_qty.toLocaleString()} ต้น</span>
                                     </div>
                                     <div className="flex justify-between text-xs">
-                                        <span className="text-slate-600">ติด Tag แล้ว:</span>
-                                        <span className="font-medium text-sky-700">{taggedQty.toLocaleString()} ต้น</span>
+                                        <span className={`${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>ติด Tag แล้ว:</span>
+                                        <span className={`font-medium ${isDarkMode ? "text-sky-400" : "text-sky-700"}`}>{taggedQty.toLocaleString()} ต้น</span>
                                     </div>
-                                    <div className="flex justify-between text-xs border-t border-sky-200 pt-1">
-                                        <span className="font-medium text-slate-700">คงเหลือสร้าง Tag ได้:</span>
-                                        <span className={`font-bold ${remainingQty > 0 ? "text-emerald-600" : "text-red-600"}`}>
+                                    <div className={`flex justify-between text-xs border-t pt-1 ${isDarkMode ? "border-white/10" : "border-sky-200"}`}>
+                                        <span className={`font-medium ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>คงเหลือสร้าง Tag ได้:</span>
+                                        <span className={`font-bold ${remainingQty > 0 ? (isDarkMode ? "text-emerald-400" : "text-emerald-600") : "text-red-600"}`}>
                                             {remainingQty.toLocaleString()} ต้น
                                         </span>
                                     </div>
@@ -373,8 +382,8 @@ export const CreateTagModal: React.FC<CreateTagModalProps> = ({
                     )}
 
                     {isBatch && (
-                        <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3">
-                            <label className="mb-1 block font-medium text-emerald-800">
+                        <div className={`rounded-lg border p-3 ${isDarkMode ? "border-emerald-500/20 bg-emerald-500/10" : "border-emerald-100 bg-emerald-50"}`}>
+                            <label className={`mb-1 block font-medium ${isDarkMode ? "text-emerald-400" : "text-emerald-800"}`}>
                                 จำนวน Tag ที่ต้องการสร้าง (ใบ)
                             </label>
                             <div className="flex gap-2">
@@ -385,7 +394,7 @@ export const CreateTagModal: React.FC<CreateTagModalProps> = ({
                                     max={remainingQty > 0 ? remainingQty : 500}
                                     value={form.tagsCount || 10}
                                     onChange={handleChange}
-                                    className="w-full rounded-lg border border-emerald-200 px-2 py-1.5 text-xs focus:border-emerald-500 focus:ring-emerald-500"
+                                    className={`w-full rounded-lg border px-2 py-1.5 text-xs focus:ring-emerald-500 ${isDarkMode ? "bg-black border-emerald-500/30 text-emerald-400 focus:border-emerald-500" : "border-emerald-200 focus:border-emerald-500"}`}
                                 />
                                 <div className="flex gap-1">
                                     {[10, 20, 50, 100].filter(n => n <= remainingQty || remainingQty === 0).map((num) => (
@@ -393,14 +402,14 @@ export const CreateTagModal: React.FC<CreateTagModalProps> = ({
                                             key={num}
                                             type="button"
                                             onClick={() => setForm((prev: any) => ({ ...prev, tagsCount: num }))}
-                                            className="rounded border border-emerald-200 bg-white px-2 text-[10px] text-emerald-700 hover:bg-emerald-50"
+                                            className={`rounded border px-2 text-[10px] ${isDarkMode ? "border-emerald-500/30 bg-black text-emerald-400 hover:bg-emerald-500/10" : "border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50"}`}
                                         >
                                             {num}
                                         </button>
                                     ))}
                                 </div>
                             </div>
-                            <p className="mt-1 text-[10px] text-emerald-600">
+                            <p className={`mt-1 text-[10px] ${isDarkMode ? "text-emerald-400/80" : "text-emerald-600"}`}>
                                 ระบบจะสร้าง Tag ใหม่ {form.tagsCount || 10} ใบ ({requestedTrees} ต้น) โดยรันเลขต่อเนื่องกัน
                                 {requestedTrees > remainingQty && remainingQty > 0 && (
                                     <span className="text-red-600 font-medium"> (เกินคงเหลือ!)</span>
@@ -411,33 +420,33 @@ export const CreateTagModal: React.FC<CreateTagModalProps> = ({
 
                     <div className="grid grid-cols-2 gap-2">
                         <div>
-                            <label className="mb-1 block text-slate-600">แถวที่ (Row)</label>
+                            <label className={`mb-1 block ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>แถวที่ (Row)</label>
                             <input
                                 name="row"
                                 value={form.row}
                                 onChange={handleChange}
-                                className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                                className={`w-full rounded-lg border px-2 py-1.5 text-xs ${isDarkMode ? "bg-black border-white/10 text-white" : "border-slate-200"}`}
                             />
                         </div>
                         <div>
-                            <label className="mb-1 block text-slate-600">ลำดับในแถว (Position)</label>
+                            <label className={`mb-1 block ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>ลำดับในแถว (Position)</label>
                             <input
                                 name="position"
                                 value={form.position}
                                 onChange={handleChange}
-                                className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                                className={`w-full rounded-lg border px-2 py-1.5 text-xs ${isDarkMode ? "bg-black border-white/10 text-white" : "border-slate-200"}`}
                             />
                         </div>
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-slate-600">หมายเหตุ</label>
+                        <label className={`mb-1 block ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>หมายเหตุ</label>
                         <textarea
                             name="notes"
                             value={form.notes}
                             onChange={handleChange}
                             rows={2}
-                            className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs"
+                            className={`w-full rounded-lg border px-2 py-1.5 text-xs ${isDarkMode ? "bg-black border-white/10 text-white" : "border-slate-200"}`}
                         />
                     </div>
 
@@ -445,7 +454,7 @@ export const CreateTagModal: React.FC<CreateTagModalProps> = ({
                         <button
                             type="button"
                             onClick={onClose}
-                            className="rounded-full border border-slate-200 px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-50"
+                            className={`rounded-full border px-3 py-1.5 text-xs ${isDarkMode ? "border-white/10 text-slate-300 hover:bg-white/10" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
                         >
                             ยกเลิก
                         </button>

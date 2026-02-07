@@ -10,7 +10,9 @@ import {
     Trash2,
     Sprout,
 } from "lucide-react";
+import { PREMIUM_STYLES } from "../constants/ui";
 import { supabase } from "../supabaseClient";
+import { HL, HIGHLIGHT_TARGETS, normalizeHighlightKey } from "../constants/deeplink";
 
 import { usePlantingPlotDetail } from "../hooks/usePlantingPlotDetail";
 import { useZoneTreeInventoryFlow } from "../hooks/useZoneTreeInventoryFlow";
@@ -88,7 +90,21 @@ const toThaiNumber = (value?: number | null) =>
 
 type TabId = "overview" | "plot" | "audit" | "dig_plan" | "operations" | "tags" | "movements" | "files";
 
-const ZoneDetailPage = ({ zoneId, onBack, onCreateTask, isDarkMode = false }: { zoneId: string; onBack: () => void, onCreateTask?: () => void, isDarkMode?: boolean }) => {
+const ZoneDetailPage = ({
+    zoneId,
+    onBack,
+    onCreateTask,
+    isDarkMode = false,
+    initialTab,
+    shouldHighlight
+}: {
+    zoneId: string;
+    onBack: () => void;
+    onCreateTask?: () => void;
+    isDarkMode?: boolean;
+    initialTab?: string;
+    shouldHighlight?: boolean;
+}) => {
     // --- State & Hooks ---
     const [zone, setZone] = React.useState<any>(null);
     const [loadingZone, setLoadingZone] = React.useState(false);
@@ -97,8 +113,21 @@ const ZoneDetailPage = ({ zoneId, onBack, onCreateTask, isDarkMode = false }: { 
     const [zoneOverview, setZoneOverview] = React.useState<any | null>(null);
     const [loadingOverview, setLoadingOverview] = React.useState(false);
 
+    // Highlight duration (ms)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const HIGHLIGHT_MS = 5000;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const PULSE_DURATION = "1.6s";
+
+    // ✅ Scroll to Top on Zone Change (Prevent scroll carry-over)
+    // ✅ Scroll to Top on Zone Change (Prevent scroll carry-over)
+    // Ensures we start at the top, just like a fresh page load
+    React.useLayoutEffect(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    }, [zoneId]);
+
     // ✅ Tabs State (Fix)
-    const [activeTab, setActiveTab] = React.useState<TabId>("overview");
+    const [activeTab, setActiveTab] = React.useState<TabId>((initialTab as TabId) || "overview");
     const [focusDigupOrderId, setFocusDigupOrderId] = React.useState<string | null>(null);
 
     const handleJumpToDigupOrder = (orderId: string) => {
@@ -128,6 +157,8 @@ const ZoneDetailPage = ({ zoneId, onBack, onCreateTask, isDarkMode = false }: { 
 
         return () => clearTimeout(t);
     }, [activeTab, focusDigupOrderId]);
+
+
     const [isMapOpen, setIsMapOpen] = React.useState(false);
     const handleTabChange = (tab: TabId) => setActiveTab(tab);
 
@@ -248,6 +279,84 @@ const ZoneDetailPage = ({ zoneId, onBack, onCreateTask, isDarkMode = false }: { 
     }, [lifecycleRows]);
 
     // --- Planting Plot Tree Counts (ระบบ) ---
+
+
+
+    // ✅ Deep Link V4: Multi-target (Smart Scroll & One-Shot)
+    const didRunRef = React.useRef(false);
+    const [highlightKey, setHighlightKey] = React.useState<string | null>(null);
+
+    React.useEffect(() => {
+        // Guard: Run only once context logic is satisfied
+        if (didRunRef.current) return;
+
+        // Verify data is ready
+        if (tagLifecycleLoading) return;
+
+        // Check params
+        const url = new URL(window.location.href);
+        const resolvedKey = normalizeHighlightKey(url.searchParams);
+
+        if (!resolvedKey) return; // No valid deep link
+
+        const target = HIGHLIGHT_TARGETS[resolvedKey];
+        if (!target) return;
+
+        const targetId = target.id;
+
+        didRunRef.current = true; // Mark as run
+
+        // 1. Force Tab
+        if (target.tab && activeTab !== target.tab) setActiveTab(target.tab);
+
+        const run = async () => {
+            // 2. Wait for element (retry loop)
+            let el: HTMLElement | null = null;
+            for (let i = 0; i < 50; i++) {
+                el = document.getElementById(targetId);
+                if (el) break;
+                await new Promise((r) => setTimeout(r, 60));
+            }
+
+            if (el) {
+                const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+                // 3. Smart Scroll: Only scroll if NOT in viewport
+                const rect = el.getBoundingClientRect();
+                const vh = window.innerHeight || document.documentElement.clientHeight;
+                const isInViewport = rect.top >= 0 && rect.bottom <= vh;
+
+                if (!isInViewport) {
+                    el.scrollIntoView({
+                        block: "center",
+                        inline: "nearest",
+                        behavior: isReduced ? "auto" : "smooth",
+                    });
+                }
+
+                // 4. Apply highlight (Always, if supported)
+                if (!isReduced) {
+                    setHighlightKey(resolvedKey);
+                    setTimeout(() => setHighlightKey(null), HIGHLIGHT_MS);
+                }
+
+                // 5. Clean URL (One-shot)
+                const newParams = new URLSearchParams(window.location.search);
+                newParams.delete("focus");
+                newParams.delete("hl");
+                const newPath = `${window.location.pathname}?${newParams.toString()}`;
+                window.history.replaceState({}, "", newPath);
+
+            }
+        };
+
+        // Use requestAnimationFrame to ensure we run after paint/layout
+        requestAnimationFrame(() => {
+            run();
+        });
+
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [tagLifecycleLoading, zoneId]);
     type PlantCountDraft = {
         id: string;
         species_id: string;
@@ -740,22 +849,29 @@ const ZoneDetailPage = ({ zoneId, onBack, onCreateTask, isDarkMode = false }: { 
             </div >
 
             {/* ===== SECTION 1: ภาพรวมแปลง (Top Row) ===== */}
-            < section className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-6" >
-                <div className={`rounded-2xl border p-4 shadow-sm ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
-                    <div className={`text-xs font-medium ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>จำนวนต้นไม้ทั้งหมดในแปลง (ระบบ)</div>
-                    <div className={`mt-1 text-2xl font-bold ${isDarkMode ? "text-white" : "text-slate-900"}`}>
+            <section className="grid gap-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 mb-8">
+                <div className={`p-4 flex flex-col justify-between ${PREMIUM_STYLES.SURFACE} ${PREMIUM_STYLES.SURFACE_HOVER}`}>
+                    <div className={`text-xs font-medium ${PREMIUM_STYLES.MUTED}`}>จำนวนต้นไม้ทั้งหมดในแปลง (ระบบ)</div>
+                    <div className={`mt-1 text-2xl font-bold ${PREMIUM_STYLES.TITLE}`}>
                         {zoneInvLoading ? "..." : toThaiNumber(zoneInvSummary?.trees_in_plot_now ?? inventorySummary.totalPlanted)}{" "}
                         <span className="text-sm font-normal">ต้น</span>
                     </div>
-                    <div className={`mt-1 text-[11px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                    <div className={`mt-1 text-[11px] ${PREMIUM_STYLES.MUTED}`}>
                         {inventorySummary.speciesCount} ชนิดไม้ · จำนวนตามแผน
                     </div>
-                    <div className="mt-0.5 text-[10px] text-amber-600 bg-amber-50 border border-amber-100 rounded px-1.5 py-0.5 inline-block">
+                    <div className="mt-2 text-[10px] text-amber-600 bg-amber-50 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20 rounded px-1.5 py-0.5 inline-block self-start">
                         ⚠️ ตัวเลขระบบ ไม่ใช่จำนวนพร้อมขาย
                     </div>
                 </div>
 
-                <div className={`rounded-2xl border p-4 shadow-sm ${isDarkMode ? "bg-emerald-500/10 border-emerald-500/20" : "bg-emerald-50/50 border-emerald-100"}`}>
+                <div
+                    id={HIGHLIGHT_TARGETS[HL.READY_FROM_TAG].id}
+                    className={`relative p-4 flex flex-col justify-between transition-all duration-300 scroll-mt-24 ${PREMIUM_STYLES.SURFACE} ${PREMIUM_STYLES.SURFACE_HOVER} ${highlightKey === HL.READY_FROM_TAG
+                        ? (isDarkMode
+                            ? "ring-2 ring-emerald-500/70 bg-emerald-500/10 shadow-[0_0_0_8px_rgba(16,185,129,0.1)] animate-pulse [animation-duration:1.6s]"
+                            : "ring-2 ring-emerald-500/70 bg-emerald-50 shadow-[0_0_0_8px_rgba(16,185,129,0.18)] animate-pulse [animation-duration:1.6s]")
+                        : ""
+                        }`}>
                     <div className="flex items-center justify-between">
                         <div className={`text-xs font-medium ${isDarkMode ? "text-emerald-400" : "text-emerald-700"}`}>พร้อมขาย (จาก Tag)</div>
                         <Sprout className={`w-4 h-4 ${isDarkMode ? "text-emerald-400" : "text-emerald-500"}`} />
@@ -765,9 +881,23 @@ const ZoneDetailPage = ({ zoneId, onBack, onCreateTask, isDarkMode = false }: { 
                         <span className="text-sm font-normal">ต้น</span>
                     </div>
                     <div className={`mt-1 text-[11px] ${isDarkMode ? "text-emerald-400/80" : "text-emerald-600"}`}>สถานะ: in_zone (ยังไม่จอง/ยังไม่สั่งขุด)</div>
+
+                    {/* Highlight Badge */}
+                    {highlightKey === HL.READY_FROM_TAG && (
+                        <div className="absolute -top-2 -right-2 bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-full shadow-lg z-10 animate-bounce">
+                            ดูตรงนี้
+                        </div>
+                    )}
                 </div>
 
-                <div className={`rounded-2xl border p-4 shadow-sm ${isDarkMode ? "bg-amber-500/10 border-amber-500/20" : "bg-amber-50/50 border-amber-100"}`}>
+                <div
+                    id={HIGHLIGHT_TARGETS[HL.RESERVED_FROM_TAG].id}
+                    className={`relative rounded-2xl border p-4 shadow-sm transition-all duration-300 scroll-mt-24 ${isDarkMode ? "bg-amber-500/10 border-amber-500/20" : "bg-amber-50/50 border-amber-100"} ${highlightKey === HL.RESERVED_FROM_TAG
+                        ? (isDarkMode
+                            ? "ring-2 ring-amber-500/70 shadow-[0_0_0_8px_rgba(245,158,11,0.1)] animate-pulse [animation-duration:1.6s]"
+                            : "ring-2 ring-amber-500/70 shadow-[0_0_0_8px_rgba(245,158,11,0.18)] animate-pulse [animation-duration:1.6s]")
+                        : ""
+                        }`}>
                     <div className="flex items-center justify-between">
                         <div className={`text-xs font-medium ${isDarkMode ? "text-amber-400" : "text-amber-700"}`}>จองแล้ว (จาก Tag)</div>
                         <CheckCircle2 className={`w-4 h-4 ${isDarkMode ? "text-amber-400" : "text-amber-500"}`} />
@@ -777,9 +907,15 @@ const ZoneDetailPage = ({ zoneId, onBack, onCreateTask, isDarkMode = false }: { 
                         <span className="text-sm font-normal">ต้น</span>
                     </div>
                     <div className={`mt-1 text-[11px] ${isDarkMode ? "text-amber-400/80" : "text-amber-600"}`}>สถานะ: reserved (จองไว้แล้ว รอดำเนินการ)</div>
+                    {/* Highlight Badge */}
+                    {highlightKey === HL.RESERVED_FROM_TAG && (
+                        <div className="absolute -top-2 -right-2 bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded-full shadow-lg z-10 animate-bounce">
+                            ดูตรงนี้
+                        </div>
+                    )}
                 </div>
 
-                <div className={`rounded-2xl border p-4 shadow-sm ${isDarkMode ? "bg-sky-500/10 border-sky-500/20" : "bg-sky-50/50 border-sky-100"}`}>
+                <div className={`p-4 flex flex-col justify-between ${PREMIUM_STYLES.SURFACE} ${PREMIUM_STYLES.SURFACE_HOVER}`}>
                     <div className={`text-xs font-medium ${isDarkMode ? "text-sky-400" : "text-sky-700"}`}>จำนวนต้นจากการสำรวจล่าสุด</div>
                     <div className={`mt-1 text-2xl font-bold ${isDarkMode ? "text-sky-400" : "text-sky-700"}`}>
                         {zoneInvLoading ? "..." : toThaiNumber(zoneInvSummary?.latest_inspection_qty ?? inspectedTotal)}{" "}
@@ -794,17 +930,19 @@ const ZoneDetailPage = ({ zoneId, onBack, onCreateTask, isDarkMode = false }: { 
                     </div>
                 </div>
 
-                <div className={`rounded-2xl border p-4 shadow-sm ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
-                    <div className={`text-xs font-medium ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>ข้อมูลพื้นที่</div>
-                    <div className={`mt-1 text-lg font-bold ${isDarkMode ? "text-white" : "text-slate-900"}`}>
+                <div className={`p-4 flex flex-col justify-between ${PREMIUM_STYLES.SURFACE} ${PREMIUM_STYLES.SURFACE_HOVER}`}>
+                    <div className={`text-xs font-medium ${PREMIUM_STYLES.MUTED}`}>ข้อมูลพื้นที่</div>
+                    <div className={`mt-1 text-lg font-bold ${PREMIUM_STYLES.TITLE}`}>
                         {zone.area_rai ?? zoneInvSummary?.area_rai ?? "-"} ไร่
                     </div>
-                    <div className={`mt-1 text-[11px] ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
-                        {zone.area_width_m && zone.area_length_m ? `ขนาดโดยประมาณ ${zone.area_width_m}×${zone.area_length_m} ม.` : "รายละเอียดขนาด: -"}
+                    <div className={`mt-1 text-[11px] ${PREMIUM_STYLES.MUTED}`}>
+                        {zone.area_width_m && zone.area_length_m ? `ขนาด ${zone.area_width_m}×${zone.area_length_m} ม.` : "ไม่ระบุขนาด"}
                     </div>
-                    <div className={`text-[11px] ${isDarkMode ? "text-slate-500" : "text-slate-500"}`}>ฟาร์ม: {zone.farm_name ?? zoneInvSummary?.farm_name ?? "-"}</div>
+                    <div className={`text-[11px] ${PREMIUM_STYLES.MUTED}`}>
+                        ฟาร์ม: {zone.farm_name ?? zoneInvSummary?.farm_name ?? "-"}
+                    </div>
                 </div>
-            </section >
+            </section>
 
             {/* ===== TAB NAVIGATION ===== */}
             < nav className={`flex gap-1 mb-6 p-1 rounded-xl ${isDarkMode ? "bg-black border border-white/10" : "bg-slate-100"}`}>
@@ -853,6 +991,8 @@ const ZoneDetailPage = ({ zoneId, onBack, onCreateTask, isDarkMode = false }: { 
                             setIsMapOpen={setIsMapOpen}
                             onReload={onTagMutated}
                             avgTreeSize={avgTreeSize}
+                            isDarkMode={isDarkMode}
+                            highlightKey={highlightKey}
                         />
 
                         <ZonePlotManagementTab
@@ -873,6 +1013,7 @@ const ZoneDetailPage = ({ zoneId, onBack, onCreateTask, isDarkMode = false }: { 
                             savingPlotType={savingPlotType}
                             saveMessage={saveMessage}
                             onReload={onTagMutated}
+                            isDarkMode={isDarkMode}
                         />
                     </div>
                 )
@@ -1038,6 +1179,7 @@ const ZoneDetailPage = ({ zoneId, onBack, onCreateTask, isDarkMode = false }: { 
                             reloadSummary={reloadSummary}
                             reloadStockDiff={reloadStockDiff}
                             inventoryItems={inventoryItems}
+                            isDarkMode={isDarkMode}
                         />
                     </>
                 )
@@ -1046,26 +1188,26 @@ const ZoneDetailPage = ({ zoneId, onBack, onCreateTask, isDarkMode = false }: { 
             {/* ===================== TAB: OPERATIONS ===================== */}
             {
                 activeTab === "operations" && (
-                    <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-6">
+                    <section className={`rounded-xl shadow-sm border p-4 mb-6 ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
                         <div className="flex items-center justify-between mb-3">
                             <div>
-                                <h2 className="text-lg font-semibold text-slate-800">ประวัติคำสั่งขุดล้อมในแปลงนี้</h2>
-                                <p className="text-xs text-slate-500 mt-1">
+                                <h2 className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-slate-800"}`}>ประวัติคำสั่งขุดล้อมในแปลงนี้</h2>
+                                <p className={`text-xs mt-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
                                     ใช้ติดตามคำสั่งขุดล้อมแต่ละชุด แก้ไขสถานะจาก แผน → กำลังขุด → ขุดแล้ว หรือยกเลิกได้
                                 </p>
                             </div>
                         </div>
 
-                        {digupOrdersLoading && <p className="text-sm text-slate-500">กำลังโหลดประวัติคำสั่งขุดล้อม...</p>}
+                        {digupOrdersLoading && <p className={`text-sm ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>กำลังโหลดประวัติคำสั่งขุดล้อม...</p>}
                         {digupOrdersError && <p className="text-sm text-rose-500">โหลดประวัติคำสั่งขุดล้อมไม่สำเร็จ: {digupOrdersError}</p>}
                         {!digupOrdersLoading && !digupOrdersError && digupOrders.length === 0 && (
-                            <p className="text-sm text-slate-400">ยังไม่มีการบันทึกคำสั่งขุดล้อมในแปลงนี้</p>
+                            <p className={`text-sm ${isDarkMode ? "text-slate-400" : "text-slate-400"}`}>ยังไม่มีการบันทึกคำสั่งขุดล้อมในแปลงนี้</p>
                         )}
 
                         {!digupOrdersLoading && digupOrders.length > 0 && (
                             <div className="overflow-x-auto mt-2">
                                 <table className="min-w-full text-sm">
-                                    <thead className="bg-slate-50 text-xs text-slate-500 border-b border-slate-100">
+                                    <thead className={`text-xs border-b ${isDarkMode ? "bg-white/5 text-slate-400 border-white/10" : "bg-slate-50 text-slate-500 border-slate-100"}`}>
                                         <tr>
                                             <th className="px-3 py-2 text-left font-medium">วันที่ขุด</th>
                                             <th className="px-3 py-2 text-left font-medium">ชนิด/พันธุ์ต้นไม้</th>
@@ -1081,21 +1223,25 @@ const ZoneDetailPage = ({ zoneId, onBack, onCreateTask, isDarkMode = false }: { 
                                             <tr
                                                 key={o.id}
                                                 ref={(el) => { rowRefs.current[o.id] = el; }}
-                                                className={`border - b border - slate - 50 transition - colors relative ${focusDigupOrderId === o.id
-                                                    ? "bg-amber-50 ring-1 ring-amber-200 before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-amber-400"
-                                                    : "hover:bg-slate-50"
-                                                    } `}
+                                                className={`border-b transition-colors relative ${focusDigupOrderId === o.id
+                                                    ? isDarkMode
+                                                        ? "bg-amber-900/20 ring-1 ring-amber-700 before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-amber-500"
+                                                        : "bg-amber-50 ring-1 ring-amber-200 before:content-[''] before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-amber-400"
+                                                    : isDarkMode
+                                                        ? "border-white/10 hover:bg-white/5"
+                                                        : "border-slate-50 hover:bg-slate-50"
+                                                    }`}
                                             >
-                                                <td className="px-3 py-2 text-slate-700">{o.digup_date ? new Date(o.digup_date).toLocaleDateString("th-TH") : "-"}</td>
-                                                <td className="px-3 py-2 text-slate-800 font-medium">{o.species_name_th || "-"}</td>
-                                                <td className="px-3 py-2 text-slate-600">{o.size_label ? `${o.size_label} นิ้ว` : "-"}</td>
-                                                <td className="px-3 py-2 text-right text-slate-800">{o.qty.toLocaleString("th-TH")}</td>
+                                                <td className={`px-3 py-2 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{o.digup_date ? new Date(o.digup_date).toLocaleDateString("th-TH") : "-"}</td>
+                                                <td className={`px-3 py-2 font-medium ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>{o.species_name_th || "-"}</td>
+                                                <td className={`px-3 py-2 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>{o.size_label ? `${o.size_label} นิ้ว` : "-"}</td>
+                                                <td className={`px-3 py-2 text-right ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>{o.qty.toLocaleString("th-TH")}</td>
                                                 <td className="px-3 py-2">
                                                     <span className={"inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium " + (statusBadgeClass[o.status] || "")}>
                                                         {statusLabel[o.status] || o.status}
                                                     </span>
                                                 </td>
-                                                <td className="px-3 py-2 text-xs text-slate-500">{o.notes || "-"}</td>
+                                                <td className={`px-3 py-2 text-xs ${isDarkMode ? "text-slate-500" : "text-slate-500"}`}>{o.notes || "-"}</td>
                                                 <td className="px-3 py-2 text-right">
                                                     <div className="inline-flex gap-1">
                                                         {o.status === "planned" && (
@@ -1141,7 +1287,7 @@ const ZoneDetailPage = ({ zoneId, onBack, onCreateTask, isDarkMode = false }: { 
                                                                         alert("อัปเดตสถานะไม่สำเร็จ");
                                                                     }
                                                                 }}
-                                                                className="px-2 py-1 rounded-lg text-xs bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                                                className={`px-2 py-1 rounded-lg text-xs ${isDarkMode ? "bg-white/10 text-slate-400 hover:bg-white/20" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
                                                             >
                                                                 ยกเลิก
                                                             </button>
@@ -1159,7 +1305,7 @@ const ZoneDetailPage = ({ zoneId, onBack, onCreateTask, isDarkMode = false }: { 
             }
 
             {/* ===================== TAB: DIG PLAN ===================== */}
-            {activeTab === "dig_plan" && <ZoneDigPlanTab zoneId={zoneId} onJumpToOrder={handleJumpToDigupOrder} />}
+            {activeTab === "dig_plan" && <ZoneDigPlanTab zoneId={zoneId} onJumpToOrder={handleJumpToDigupOrder} isDarkMode={isDarkMode} />}
 
             {/* ===================== TAB: OPERATIONS ===================== */}
 
@@ -1183,10 +1329,10 @@ const ZoneDetailPage = ({ zoneId, onBack, onCreateTask, isDarkMode = false }: { 
             }
 
             {/* ===================== TAB: MOVEMENTS ===================== */}
-            {activeTab === "movements" && <ZoneMovementsTab zoneId={zoneId} />}
+            {activeTab === "movements" && <ZoneMovementsTab zoneId={zoneId} isDarkMode={isDarkMode} />}
 
             {/* ===================== TAB: FILES ===================== */}
-            {activeTab === "files" && <ZoneFilesNotesTab />}
+            {activeTab === "files" && <ZoneFilesNotesTab isDarkMode={isDarkMode} />}
 
 
 

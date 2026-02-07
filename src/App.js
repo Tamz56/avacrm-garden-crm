@@ -11,6 +11,7 @@ import { PinGate } from "./components/auth/PinGate";
 import { PinSetup } from "./components/auth/PinSetup";
 import * as pinLock from "./pinLock";
 import { getQueryParam, setQueryParam } from "./utils/urlState";
+import { buildZoneUrl } from "./constants/deeplink.ts";
 
 
 // Components
@@ -280,7 +281,11 @@ function App() {
     if (customerId) setCustomerPresetId(customerId);
 
     const zoneId = getQueryParam("zone_id");
-    if (zoneId) setZonesPreset({ initialZoneId: zoneId });
+    if (zoneId) {
+      const hl = getQueryParam("hl");
+      const focus = getQueryParam("focus") || "inventory"; // Default focus if not specified
+      setZonesPreset({ initialZoneId: zoneId, hl: hl ? 1 : undefined, focus });
+    }
 
     const tagId = getQueryParam("tag_id");
     if (tagId) setTagPreset({ initialTagId: tagId });
@@ -348,11 +353,19 @@ function App() {
 
 
 
+
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const handleOpenZone = useCallback((zoneId) => {
-    setZonesPreset({ initialZoneId: zoneId });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleOpenZone = useCallback((zoneId, opts = {}) => {
+    // opts: { focus: 'inventory', highlight: true, ... }
+    setZonesPreset({ initialZoneId: zoneId, ...opts });
     navigatePage("zones");
-    setQueryParam("zone_id", zoneId, { replace: false });
+
+    // Explicitly update URL params for deep linking persistence (so refresh works)
+    // Use canonical helper to build clean URL
+    const newUrl = buildZoneUrl(zoneId, opts);
+    window.history.pushState({}, "", newUrl); // Use pushState for new history logic
   }, [navigatePage]);
 
   const handleOpenContext = useCallback((type, id) => {

@@ -6,7 +6,6 @@ import {
     RefreshCcw,
     ChevronDown,
     Pickaxe,
-    PlusCircle,
 } from "lucide-react";
 import {
     BarChart,
@@ -20,16 +19,17 @@ import {
 import { useDashboardKpis } from "../hooks/useDashboardKpis";
 import { useDashboardChart } from "../hooks/useDashboardChart";
 import { useDashboardDigAndAlerts } from "../hooks/useDashboardDigAndAlerts";
+import { PREMIUM_STYLES } from "../constants/ui";
 import { useDashboardZonesOverview } from "../hooks/useDashboardZonesOverview";
-// import SalesActivityMiniCard from "./dashboard/SalesActivityMiniCard";
 import DashboardPriorityTasksCard from "./dashboard/DashboardPriorityTasksCard";
-// import TagLifecycleSummaryCard from "./tags/TagLifecycleSummaryCard";
 import BillingKpiStrip from "./dashboard/BillingKpiStrip";
 import OpsSnapshot from "./dashboard/OpsSnapshot";
+import { MonthlyTargetCard } from "./dashboard/MonthlyTargetCard";
+import { ZonesSnapshot } from "./dashboard/ZonesSnapshot";
 
 interface DashboardProps {
     isDarkMode: boolean;
-    onOpenZone?: (zoneId: string) => void;
+    onOpenZone?: (zoneId: string, opts?: any) => void;
     reloadKey?: number; // For global reload from parent
     // Quick actions
     onCreateDeal?: () => void;
@@ -44,9 +44,15 @@ interface DashboardProps {
     onOpenTasks?: () => void;
 }
 
-
-
 // ... existing imports ...
+
+// Style Constants
+const PAGE_BG = "min-h-screen bg-slate-50 dark:bg-black dark:bg-[radial-gradient(900px_circle_at_20%_-10%,rgba(16,185,129,0.14),transparent_55%),radial-gradient(900px_circle_at_80%_0%,rgba(59,130,246,0.10),transparent_55%)]";
+
+const { SURFACE, SURFACE_HOVER, TITLE, MUTED, SOFT_INNER } = PREMIUM_STYLES;
+
+// Premium Toggle Pills
+const PILL_BASE = "px-3 py-1 rounded-full text-xs border transition-colors font-medium";
 
 export default function Dashboard({
     isDarkMode,
@@ -62,6 +68,9 @@ export default function Dashboard({
     onOpenZonesList,
     onOpenTasks,
 }: DashboardProps) {
+    // Style Constants
+    // Removed duplicate
+
     const [timeRange, setTimeRange] = useState("this_month");
     const [chartMode, setChartMode] = useState<"revenue" | "trees_out">("revenue");
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -137,80 +146,52 @@ export default function Dashboard({
             // เอาเฉพาะ 5 แถว
             .slice(0, MAX_DASHBOARD_ZONES);
     }, [zones]);
-    void _zonesForTable;
-
-    const bgClass = isDarkMode ? "bg-black" : "bg-slate-50";
-    const cardBg = isDarkMode
-        ? "bg-slate-900/60 border-slate-800 shadow-[0_0_0_1px_rgba(15,23,42,0.8)]"
-        : "bg-white border-slate-100 shadow-sm";
-    const textMain = isDarkMode ? "text-slate-50" : "text-slate-900";
-    const textMuted = isDarkMode ? "text-slate-400" : "text-slate-500";
-
+    // void _zonesForTable; // Used in ZonesSnapshot now
 
     return (
-        <div className={"w-full min-h-screen px-6 py-6 lg:px-8 transition-colors duration-200 " + bgClass}>
-            <div className="mx-auto max-w-[1600px] space-y-6">
-                {/* Top bar (Page Header) */}
-                <header className={"flex items-center justify-between rounded-2xl border px-6 py-4 " + cardBg}>
-                    <div>
-                        <h1 className={"text-lg font-semibold " + textMain}>
-                            Dashboard
-                        </h1>
-                        <p className={"text-xs " + textMuted}>
-                            ระบบบริหารงานขายและต้นไม้ในแปลง – Ava Farm 888
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        {/* Refresh */}
-                        <button
-                            type="button"
-                            onClick={handleRefreshAll}
-                            disabled={isRefreshing}
-                            className={
-                                "inline-flex items-center gap-2 h-9 px-3 rounded-xl border text-sm font-medium transition-colors " +
-                                (isDarkMode
-                                    ? "bg-slate-900/40 border-slate-700 text-slate-100 hover:bg-slate-900/60"
-                                    : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50") +
-                                " disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
-                            }
-                            title="รีเฟรชข้อมูล"
-                        >
-                            <RefreshCcw className={"w-4 h-4 " + (isRefreshing ? "animate-spin" : "")} />
-                            <span>รีเฟรช</span>
-                        </button>
-
-                        {/* Month select */}
-                        <div className="relative">
-                            <select
-                                value={timeRange}
-                                onChange={(e) => setTimeRange(e.target.value)}
-                                className={
-                                    "appearance-none h-9 pl-3 pr-9 rounded-xl border text-sm font-medium shadow-sm outline-none cursor-pointer transition-colors " +
-                                    (isDarkMode
-                                        ? "bg-slate-900/40 border-slate-700 text-slate-100 focus:border-slate-500"
-                                        : "bg-white border-slate-200 text-slate-700 focus:border-slate-400")
-                                }
+        <div className={PAGE_BG}>
+            <div className="mx-auto w-full max-w-[1400px] px-6 lg:px-8 py-6 pb-12 space-y-4 lg:space-y-5 2xl:space-y-6">
+                {/* Header Section */}
+                <div className={`${SURFACE} ${SURFACE_HOVER} px-6 py-5`}>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-1">Dashboard</h1>
+                            <p className="text-sm text-slate-500 dark:text-slate-400">ระบบบริหารงานขายและต้นไม้ในแปลง — Ava Farm 888</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <button
+                                onClick={handleRefreshAll}
+                                disabled={isRefreshing}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${isRefreshing ? "opacity-70 cursor-wait" : "hover:bg-slate-50 dark:hover:bg-white/10"
+                                    } ${isDarkMode ? "border-white/10 text-slate-300" : "border-slate-200 text-slate-600"}`}
                             >
-                                <option value="this_month">เดือนนี้</option>
-                                <option value="last_3m">3 เดือนล่าสุด</option>
-                                <option value="last_6m">6 เดือนล่าสุด</option>
-                                <option value="last_12m">12 เดือนล่าสุด</option>
-                            </select>
-                            <ChevronDown
-                                className={
-                                    "pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 " +
-                                    (isDarkMode ? "text-slate-300" : "text-slate-500")
-                                }
-                            />
+                                <RefreshCcw className={`w-4 h-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                                <span className="hidden sm:inline">รีเฟรช</span>
+                            </button>
+
+                            <div className="relative">
+                                <select
+                                    value={timeRange}
+                                    onChange={(e) => setTimeRange(e.target.value)}
+                                    className={`appearance-none pl-4 pr-10 py-2 rounded-lg border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/50 ${isDarkMode ? "bg-black border-white/10 text-white" : "bg-white border-slate-200 text-slate-700"
+                                        }`}
+                                >
+                                    <option value="this_month">เดือนนี้</option>
+                                    <option value="last_3m">3 เดือนล่าสุด</option>
+                                    <option value="last_6m">6 เดือนล่าสุด</option>
+                                    <option value="last_12m">12 เดือนล่าสุด</option>
+                                </select>
+                                <ChevronDown className={`absolute right-3 top-2.5 w-4 h-4 pointer-events-none ${isDarkMode ? "text-slate-400" : "text-slate-500"}`} />
+                            </div>
                         </div>
                     </div>
-                </header>
+                </div>
 
                 {/* Row A:Financials */}
-                <BillingKpiStrip />
+                <BillingKpiStrip isDarkMode={isDarkMode} />
 
                 {/* Row B:Key Metrics (3 Cards) */}
-                <section className="grid gap-6 md:grid-cols-3">
+                <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5 2xl:gap-6">
                     <KpiCard
                         icon={<HandCoins className="h-6 w-6" />}
                         label="Open deals"
@@ -220,7 +201,6 @@ export default function Dashboard({
                         trendPositive
                         iconColor={isDarkMode ? "bg-sky-500/15 text-sky-400" : "bg-sky-50 text-sky-600"}
                         isDarkMode={isDarkMode}
-                        cardBg={cardBg}
                     />
                     <KpiCard
                         icon={<TreePine className="h-6 w-6" />}
@@ -231,7 +211,6 @@ export default function Dashboard({
                         trendPositive
                         iconColor={isDarkMode ? "bg-emerald-500/15 text-emerald-400" : "bg-emerald-50 text-emerald-600"}
                         isDarkMode={isDarkMode}
-                        cardBg={cardBg}
                     />
                     {/* Using Active Dig Orders Qty as proxy for "Trees in process/out" */}
                     <KpiCard
@@ -243,41 +222,46 @@ export default function Dashboard({
                         trendPositive
                         iconColor={isDarkMode ? "bg-amber-500/15 text-amber-400" : "bg-amber-50 text-amber-600"}
                         isDarkMode={isDarkMode}
-                        cardBg={cardBg}
                     />
                 </section>
 
                 {/* Row C:Trends (Chart + Target) */}
-                <section className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-stretch">
+                <section className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-5 2xl:gap-6 items-stretch">
                     {/* Chart (2/3) */}
-                    <div className={"lg:col-span-2 rounded-2xl border p-6 flex flex-col h-[360px] " + cardBg}>
+                    <div className={`lg:col-span-2 p-6 lg:p-7 2xl:p-8 flex flex-col h-[360px] ${SURFACE}`}>
                         <div className="flex items-start justify-between mb-4 gap-3">
                             <div className="min-w-0">
-                                <h2 className={"text-base font-semibold " + textMain}>
+                                <h2 className={"text-base " + TITLE}>
                                     {chartMode === "revenue" ? "Revenue Trend" : "Trees Out Trend"}
                                 </h2>
-                                <p className={"text-sm " + textMuted}>
+                                <p className={"text-sm " + MUTED}>
                                     {chartMode === "revenue" ? "ยอดขายรวม (บาท)" : "จำนวนต้นไม้ที่ส่งออก (ต้น)"}
                                 </p>
                             </div>
                             <div className="flex gap-2 shrink-0">
                                 <button
                                     onClick={() => setChartMode("revenue")}
-                                    className={"px-3 py-1 rounded-full text-xs border transition-colors " +
-                                        (chartMode === "revenue"
-                                            ? "bg-slate-900 text-white border-slate-900"
-                                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                                        )}
+                                    className={`${PILL_BASE} ${chartMode === "revenue"
+                                        ? (isDarkMode
+                                            ? "bg-white/15 text-white border-white/15"
+                                            : "bg-slate-900 text-white border-slate-900 shadow-sm")
+                                        : (isDarkMode
+                                            ? "bg-white/10 text-slate-200 border-white/10 hover:bg-white/15"
+                                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50")
+                                        }`}
                                 >
                                     Revenue
                                 </button>
                                 <button
                                     onClick={() => setChartMode("trees_out")}
-                                    className={"px-3 py-1 rounded-full text-xs border transition-colors " +
-                                        (chartMode === "trees_out"
-                                            ? "bg-slate-900 text-white border-slate-900"
-                                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                                        )}
+                                    className={`${PILL_BASE} ${chartMode === "trees_out"
+                                        ? (isDarkMode
+                                            ? "bg-white/15 text-white border-white/15"
+                                            : "bg-slate-900 text-white border-slate-900 shadow-sm")
+                                        : (isDarkMode
+                                            ? "bg-white/10 text-slate-200 border-white/10 hover:bg-white/15"
+                                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50")
+                                        }`}
                                 >
                                     Trees out
                                 </button>
@@ -286,15 +270,15 @@ export default function Dashboard({
 
                         <div className="flex-1 min-h-0">
                             {chartLoading ? (
-                                <div className={"flex h-full items-center justify-center text-sm " + textMuted}>
+                                <div className={"flex h-full items-center justify-center text-sm " + MUTED}>
                                     Loading chart...
                                 </div>
                             ) : chartData.length === 0 ? (
-                                <div className={"flex h-full flex-col items-center justify-center text-center p-6 rounded-xl " + (isDarkMode ? "bg-slate-900/40" : "bg-slate-50")}>
-                                    <div className={"text-sm font-semibold " + textMain}>
+                                <div className={`flex h-full flex-col items-center justify-center text-center p-6 ${SOFT_INNER}`}>
+                                    <div className={"text-sm font-semibold " + TITLE}>
                                         ยังไม่มีข้อมูล{chartMode === 'trees_out' ? 'การขนส่ง' : ''}ในช่วงนี้
                                     </div>
-                                    <div className={"text-xs mt-1 " + textMuted}>
+                                    <div className={"text-xs mt-1 " + MUTED}>
                                         {chartMode === 'trees_out'
                                             ? "ลองสร้างรายการขนส่งเพื่อเริ่มนับ Trees out"
                                             : "ไม่มียอดขายในช่วงเวลาที่เลือก"}
@@ -383,19 +367,25 @@ export default function Dashboard({
                     </div>
                 </section>
 
-                {/* Row D:Ops & Tasks */}
-                <section className="grid grid-cols-1 gap-6 items-start xl:grid-cols-[minmax(0,1fr)_480px]">
+                {/* Row D: Ops & Tasks */}
+                <section className="grid grid-cols-1 gap-4 lg:gap-5 items-stretch xl:grid-cols-[minmax(0,1fr)_460px]">
                     {/* Ops Snapshot */}
-                    <div>
+                    <div className="min-w-0 flex flex-col gap-4 lg:gap-5">
                         <OpsSnapshot
                             stats={stats || {}}
                             alerts={opsAlerts}
                             loading={kpiLoading || alertsLoading}
                         />
+                        <ZonesSnapshot
+                            zones={_zonesForTable}
+                            onOpenZone={onOpenZone}
+                            onOpenZonesList={onOpenZonesList}
+                            isDarkMode={isDarkMode}
+                        />
                     </div>
 
                     {/* Priority Tasks */}
-                    <div className="h-full">
+                    <div className="min-w-0 h-full">
                         <DashboardPriorityTasksCard onOpenTasks={onOpenTasks} />
                     </div>
                 </section>
@@ -428,16 +418,16 @@ const KpiCard: React.FC<KpiCardProps> = ({
     trendPositive = true,
     iconColor = "bg-emerald-50 text-emerald-600",
     isDarkMode = false,
-    cardBg = "bg-white border-slate-100 shadow-sm",
+    cardBg,
 }) => (
-    <div className={"flex flex-col justify-between rounded-2xl border p-5 hover:shadow-md transition-shadow min-h-[110px] " + cardBg}>
+    <div className={`flex flex-col justify-between p-5 min-h-[110px] ${SURFACE} ${SURFACE_HOVER}`}>
         <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-4">
                 <div className={"flex h-12 w-12 items-center justify-center rounded-full " + iconColor}>
                     {icon}
                 </div>
                 <div>
-                    <div className={"text-sm font-medium " + (isDarkMode ? "text-slate-400" : "text-slate-500")}>{label}</div>
+                    <div className={"text-sm font-medium " + MUTED}>{label}</div>
                     <div className={"text-2xl font-bold tracking-tight mt-0.5 " + (isDarkMode ? "text-slate-50" : "text-slate-900")}>
                         {value}
                     </div>
@@ -457,277 +447,4 @@ const KpiCard: React.FC<KpiCardProps> = ({
     </div>
 );
 
-type PriorityTaskProps = {
-    label: string;
-    detail: string;
-    badge: string;
-    badgeColor?: string;
-    isDarkMode?: boolean;
-};
-
-const _PriorityTask: React.FC<PriorityTaskProps> = ({
-    label,
-    detail,
-    badge,
-    badgeColor = "bg-emerald-50 text-emerald-700",
-    isDarkMode = false,
-}) => (
-    <div className={`flex items - center justify - between rounded - xl px - 4 py - 3 transition - colors cursor - pointer ${isDarkMode ? "bg-slate-950 hover:bg-slate-800" : "bg-slate-50 hover:bg-slate-100"} `}>
-        <div>
-            <div className={`text - sm font - medium ${isDarkMode ? "text-slate-200" : "text-slate-900"} `}>
-                {label}
-            </div>
-            <div className={`text - xs mt - 0.5 ${isDarkMode ? "text-slate-400" : "text-slate-500"} `}>{detail}</div>
-        </div>
-        <span
-            className={`ml - 3 rounded - full px - 2.5 py - 1 text - [10px] font - medium ${badgeColor} `}
-        >
-            {badge}
-        </span>
-    </div>
-);
-void _PriorityTask;
-
-const MonthlyTargetCard = ({ isDarkMode }: { isDarkMode?: boolean }) => {
-    // Mock data for now
-    const target = 600000; // ฿600k
-    const current = 540000; // ฿540k
-
-    const remaining = Math.max(target - current, 0);
-    const progress = target > 0 ? (current / target) * 100 : 0;
-    const percent = Math.round(progress);
-    const barWidth = `${Math.min(100, Math.max(0, progress))}% `;
-
-    const fmt = (n: number) => `฿${n.toLocaleString("th-TH")} `;
-
-    // --- optional:required per day (until end of this month) ---
-    const now = new Date();
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    const daysLeft = Math.max(
-        1,
-        Math.ceil((endOfMonth.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-    );
-    const requiredPerDay = Math.ceil(remaining / daysLeft);
-
-    const cardBase =
-        "rounded-2xl p-6 shadow-md relative overflow-hidden bg-slate-900 text-white h-full flex flex-col justify-between";
-    const cardBorder = isDarkMode ? " border border-slate-800" : "";
-
-    return (
-        <div className={`${cardBase}${cardBorder} `}>
-            {/* Background decorations */}
-            <div className="absolute -top-6 -right-6 w-24 h-24 bg-white/10 rounded-full" />
-            <div className="absolute bottom-0 right-4 w-16 h-16 bg-emerald-500/20 rounded-full" />
-
-            <h3 className="text-sm font-medium text-slate-200 mb-2">
-                Monthly revenue target
-            </h3>
-
-            <div className="flex items-end justify-between gap-3">
-                <div className="flex items-end gap-2">
-                    <span className="text-3xl font-semibold tabular-nums">
-                        {fmt(current)}
-                    </span>
-                    <span className="text-sm text-slate-400 mb-1 tabular-nums">
-                        / {fmt(target)}
-                    </span>
-                </div>
-
-                {/* Compact percent badge */}
-                <span className="text-xs font-bold px-2 py-1 rounded-full bg-white/10 border border-white/10 tabular-nums">
-                    {Math.min(999, Math.max(0, progress)).toFixed(1)}%
-                </span>
-            </div>
-
-            {/* Progress bar */}
-            <div className="mt-4 h-2 w-full bg-slate-700 rounded-full overflow-hidden">
-                <div
-                    className="h-2 bg-emerald-400 rounded-full transition-all duration-700 ease-out"
-                    style={{ width: barWidth }}
-                />
-            </div>
-
-            <p className="mt-2 text-xs text-emerald-300">
-                🎉 Achieved {Math.min(100, Math.max(0, percent))}% of this month&apos;s target
-            </p>
-
-            {/* Executive stats row */}
-            <div className="mt-4 grid grid-cols-3 gap-2">
-                <div className="rounded-xl bg-white/5 border border-white/10 p-2">
-                    <div className="text-[11px] text-white/60">คืบหน้า</div>
-                    <div className="text-sm font-bold text-white tabular-nums">
-                        {Math.min(100, Math.max(0, progress)).toFixed(1)}%
-                    </div>
-                </div>
-
-                <div className="rounded-xl bg-white/5 border border-white/10 p-2">
-                    <div className="text-[11px] text-white/60">ยอดที่เหลือ</div>
-                    <div className="text-sm font-bold text-white tabular-nums">
-                        {fmt(remaining)}
-                    </div>
-                </div>
-
-                <div className="rounded-xl bg-white/5 border border-white/10 p-2">
-                    <div className="text-[11px] text-white/60">ต้องได้/วัน</div>
-                    <div className="text-sm font-bold text-white tabular-nums">
-                        {fmt(requiredPerDay)}
-                    </div>
-                </div>
-            </div>
-
-            {/* Tiny helper line */}
-            <div className="mt-2 text-[11px] text-white/50">
-                เหลืออีก {daysLeft} วันในเดือนนี้
-            </div>
-        </div>
-    );
-};
-
-type QuickActionProps = {
-    label: string;
-    isDarkMode?: boolean;
-    onClick?: () => void;
-};
-
-const _QuickAction: React.FC<QuickActionProps> = ({ label, isDarkMode = false, onClick }) => (
-    <button
-        type="button"
-        onClick={onClick}
-        className={`flex items - center justify - between rounded - xl border px - 4 py - 3 text - left text - xs font - medium transition - all shadow - sm hover:shadow ${isDarkMode
-            ? "border-slate-700 bg-slate-900 text-slate-300 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-400"
-            : "border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/30 hover:text-emerald-700"
-            } `}>
-        <span>{label}</span>
-        <PlusCircle className={`h - 4 w - 4 ${isDarkMode ? "text-slate-500" : "text-slate-400"} `} />
-    </button>
-);
-void _QuickAction;
-
-type DigAndStockAlertsCardProps = {
-    isDarkMode?: boolean;
-    onOpenZone?: (zoneId: string) => void;
-};
-
-const _DigAndStockAlertsCard: React.FC<DigAndStockAlertsCardProps> = ({
-    isDarkMode = false,
-    onOpenZone,
-}) => {
-    const { summary, alerts, loading, error } = useDashboardDigAndAlerts();
-
-    const monthDigQty = summary?.month_dig_qty ?? 0;
-    const upcomingQty = summary?.upcoming_7d_qty ?? 0;
-
-    const cardTextMain = isDarkMode ? "text-slate-50" : "text-slate-900";
-    const cardTextMuted = isDarkMode ? "text-slate-400" : "text-slate-600";
-    const border = isDarkMode ? "border-slate-800" : "border-slate-100";
-    const bg = isDarkMode ? "bg-slate-900/60" : "bg-white";
-
-    const getBadgeColor = (type: string, isDarkMode: boolean) => {
-        if (type === "low_stock") {
-            // 🟠 ส้ม
-            return isDarkMode
-                ? "bg-amber-500/15 text-amber-300"
-                : "bg-amber-50 text-amber-700";
-        }
-        if (type === "high_untagged") {
-            // 🔵 ฟ้า
-            return isDarkMode
-                ? "bg-sky-500/15 text-sky-300"
-                : "bg-sky-50 text-sky-700";
-        }
-        // inspection_overdue / อื่น ๆ → 🔴 แดง
-        return isDarkMode
-            ? "bg-rose-500/15 text-rose-300"
-            : "bg-rose-50 text-rose-700";
-    };
-
-    const getAlertIcon = (type: string) => {
-        if (type === "low_stock") return "🟠";
-        if (type === "high_untagged") return "🔵";
-        return "🔴"; // inspection_overdue หรืออย่างอื่น
-    };
-
-    return (
-        <div className={`rounded - 2xl border ${border} ${bg} p - 4`}>
-            {/* Header + Stats in one row */}
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-                <h2 className={`text - sm font - semibold ${cardTextMain} `}>
-                    Dig & Stock Alerts
-                </h2>
-                <div className="flex items-center gap-4 text-xs">
-                    <div className="flex items-center gap-1.5">
-                        <span className={cardTextMuted}>ขุดเดือนนี้</span>
-                        <span className={"font-semibold " + cardTextMain}>{monthDigQty.toLocaleString()}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                        <span className={cardTextMuted}>แผน 7 วัน</span>
-                        <span className={"font-semibold " + cardTextMain}>{upcomingQty.toLocaleString()}</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Stock alerts-compact list (max 3) */}
-            {loading ? (
-                <div className={"py-2 text-xs " + cardTextMuted}>กำลังโหลด...</div>
-            ) : error ? (
-                <div className="py-2 text-xs text-rose-500">Error:{error}</div>
-            ) : alerts.length === 0 ? (
-                <div className={"py-2 text-xs " + cardTextMuted}>
-                    ✓ ไม่มี alert ที่ต้องจัดการ
-                </div>
-            ) : (
-                <div className="space-y-2">
-                    {alerts.slice(0, 3).map((a, idx) => {
-                        const clickable = !!a.zone_id && a.alert_type !== "inspection_overdue";
-
-                        return (
-                            <div
-                                key={idx}
-                                onClick={() => {
-                                    if (clickable && a.zone_id && onOpenZone) {
-                                        onOpenZone(a.zone_id);
-                                    }
-                                }}
-                                className={"flex items-center justify-between rounded-lg px-3 py-2 text-xs " + (isDarkMode ? "bg-slate-950" : "bg-slate-50") +
-                                    (clickable
-                                        ? isDarkMode
-                                            ? " hover:bg-slate-800 cursor-pointer"
-                                            : " hover:bg-slate-100 cursor-pointer"
-                                        : "")
-                                }
-                            >
-                                <div className="flex items-center gap-2 truncate">
-                                    <span>{getAlertIcon(a.alert_type)}</span>
-                                    <span className={"truncate " + cardTextMain}>
-                                        {a.alert_type === "inspection_overdue"
-                                            ? `${a.message}`
-                                            : `${a.zone_name ?? ""} · ${a.message}`}
-                                    </span>
-                                </div>
-                                <span
-                                    className={"ml-2 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium " + getBadgeColor(
-                                        a.alert_type,
-                                        isDarkMode
-                                    )}
-                                >
-                                    {a.alert_type === "low_stock"
-                                        ? "Low"
-                                        : a.alert_type === "high_untagged"
-                                            ? "Untagged"
-                                            : "Inspect"}
-                                </span>
-                            </div>
-                        );
-                    })}
-                    {alerts.length > 3 && (
-                        <div className={"text-center text-[11px] " + cardTextMuted}>
-                            +{alerts.length - 3} more alerts
-                        </div>
-                    )}
-                </div>
-            )}
-        </div>
-    );
-};
-void _DigAndStockAlertsCard;
 

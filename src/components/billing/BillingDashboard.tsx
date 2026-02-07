@@ -11,6 +11,7 @@ import {
     BarChart,
     Bar,
 } from 'recharts';
+import { PREMIUM_STYLES } from '../../constants/ui';
 
 const thb = (n: number) => `฿${(n ?? 0).toLocaleString('th-TH', { maximumFractionDigits: 0 })}`;
 
@@ -104,11 +105,11 @@ export const BillingDashboard = () => {
             </div>
 
             {/* KPI */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                <KpiCard title="จำนวนเอกสาร" value={`${kpis.doc_count} ใบ`} color="text-slate-700 dark:text-slate-100" bg="bg-white dark:bg-white/5" />
-                <KpiCard title="ยอดรวม" value={thb(kpis.total_amount)} color="text-indigo-600 dark:text-indigo-400" bg="bg-indigo-50/30 dark:bg-indigo-500/10" />
-                <KpiCard title="รับแล้ว" value={thb(kpis.paid_amount)} color="text-emerald-600 dark:text-emerald-400" bg="bg-emerald-50/30 dark:bg-emerald-500/10" />
-                <KpiCard title="ค้างชำระ" value={thb(kpis.outstanding_amount)} color="text-rose-600 dark:text-rose-400" bg="bg-rose-50/30 dark:bg-rose-500/10" />
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 lg:gap-7 2xl:gap-8">
+                <KpiCard title="จำนวนเอกสาร" value={`${kpis.doc_count} ใบ`} color="text-slate-700 dark:text-slate-100" />
+                <KpiCard title="ยอดรวม" value={thb(kpis.total_amount)} color="text-indigo-600 dark:text-indigo-400" />
+                <KpiCard title="รับแล้ว" value={thb(kpis.paid_amount)} color="text-emerald-600 dark:text-emerald-400" />
+                <KpiCard title="ค้างชำระ" value={thb(kpis.outstanding_amount)} color="text-rose-600 dark:text-rose-400" />
             </div>
 
             {error && (
@@ -196,10 +197,19 @@ export const BillingDashboard = () => {
     );
 };
 
+// ... types if needed ...
+
 function KpiCard({ title, value, color, bg }: { title: string; value: string; color?: string, bg?: string }) {
+    // Override bg if provided, otherwise use SURFACE
+    // Actually, for consistency, we should use SURFACE but maybe with an icon tint like the main dashboard?
+    // The current input uses `bg` prop heavily. Let's keep it simple: Use SURFACE but allow color overrides if needed,
+    // or better, just use SURFACE and ignore the specific bg prop if we want uniformity?
+    // The user wants "Normalize".
+    // Let's use SURFACE + SURFACE_HOVER and specific text colors.
+
     return (
-        <div className={`rounded-2xl border border-zinc-100 dark:border-white/10 p-4 shadow-sm ${bg || 'bg-white dark:bg-white/5'}`}>
-            <div className="text-xs font-bold text-zinc-400 dark:text-slate-500 uppercase tracking-wider">{title}</div>
+        <div className={`p-5 flex flex-col justify-between h-[110px] ${PREMIUM_STYLES.SURFACE} ${PREMIUM_STYLES.SURFACE_HOVER}`}>
+            <div className={`text-xs font-medium uppercase tracking-wider ${PREMIUM_STYLES.MUTED}`}>{title}</div>
             <div className={`text-2xl font-black mt-1 ${color || 'text-zinc-800 dark:text-slate-100'}`}>{value}</div>
         </div>
     );
@@ -207,8 +217,8 @@ function KpiCard({ title, value, color, bg }: { title: string; value: string; co
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
     return (
-        <div className="rounded-2xl border border-zinc-100 dark:border-white/10 bg-white dark:bg-white/5 p-5 shadow-sm">
-            <div className="font-bold text-zinc-700 dark:text-slate-100 mb-4 flex items-center gap-2">
+        <div className={`p-6 ${PREMIUM_STYLES.SURFACE}`}>
+            <div className={`font-bold mb-4 flex items-center gap-2 ${PREMIUM_STYLES.TITLE}`}>
                 {title}
             </div>
             {children}

@@ -1,9 +1,11 @@
 
 import React from "react";
 import { useBillingDashboardSummary } from "../../hooks/useBillingDashboardSummary";
+import { PREMIUM_STYLES } from "../../constants/ui";
 
+const { SURFACE, SURFACE_HOVER, TITLE, MUTED } = PREMIUM_STYLES;
 
-export default function BillingKpiStrip() {
+export default function BillingKpiStrip({ isDarkMode = false }: { isDarkMode?: boolean }) {
     // Use "this_month" preset logic implicitly
     const { data, loading, error } = useBillingDashboardSummary('this_month');
 
@@ -25,10 +27,10 @@ export default function BillingKpiStrip() {
     if (loading) {
         return (
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 animate-pulse">
-                <div className="h-24 rounded-2xl bg-white/50 border border-slate-200" />
-                <div className="h-24 rounded-2xl bg-white/50 border border-slate-200" />
-                <div className="h-24 rounded-2xl bg-white/50 border border-slate-200" />
-                <div className="h-24 rounded-2xl bg-white/50 border border-slate-200" />
+                <div className={`h-24 ${SURFACE}`} />
+                <div className={`h-24 ${SURFACE}`} />
+                <div className={`h-24 ${SURFACE}`} />
+                <div className={`h-24 ${SURFACE}`} />
             </div>
         );
     }
@@ -43,29 +45,29 @@ export default function BillingKpiStrip() {
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="rounded-2xl bg-white border border-slate-100 p-4 h-[110px] flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-xs text-slate-500">เอกสารเดือนนี้</div>
-                <div className="text-3xl font-extrabold tabular-nums text-slate-900">{docCount} ใบ</div>
-                <div className="text-xs text-slate-400">ใบแจ้งหนี้/ใบเสร็จ</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 xl:gap-5">
+            <div className={`${SURFACE} ${SURFACE_HOVER} p-5 h-[110px] flex flex-col justify-between`}>
+                <div className={`text-xs ${MUTED}`}>เอกสารเดือนนี้</div>
+                <div className={`text-3xl font-extrabold tabular-nums ${TITLE}`}>{docCount} ใบ</div>
+                <div className={`text-xs ${MUTED}`}>ใบแจ้งหนี้/ใบเสร็จ</div>
             </div>
 
-            <div className="rounded-2xl bg-white border border-slate-100 p-4 h-[110px] flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-xs text-slate-500">ยอดรวม</div>
-                <div className="text-3xl font-extrabold tabular-nums text-indigo-600">{formatMoney(total)}</div>
-                <div className="text-xs text-slate-400">ยอดขายทั้งหมด</div>
+            <div className={`${SURFACE} ${SURFACE_HOVER} p-5 h-[110px] flex flex-col justify-between`}>
+                <div className={`text-xs ${MUTED}`}>ยอดรวม</div>
+                <div className={`text-3xl font-extrabold tabular-nums ${isDarkMode ? "text-indigo-400" : "text-indigo-600"}`}>{formatMoney(total)}</div>
+                <div className={`text-xs ${MUTED}`}>ยอดขายทั้งหมด</div>
             </div>
 
-            <div className="rounded-2xl bg-white border border-slate-100 p-4 h-[110px] flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-xs text-slate-500">รับแล้ว</div>
-                <div className="text-3xl font-extrabold tabular-nums text-emerald-600">{formatMoney(paid)}</div>
-                <div className="text-xs text-slate-400">ชำระเรียบร้อย</div>
+            <div className={`${SURFACE} ${SURFACE_HOVER} p-5 h-[110px] flex flex-col justify-between`}>
+                <div className={`text-xs ${MUTED}`}>รับแล้ว</div>
+                <div className={`text-3xl font-extrabold tabular-nums ${isDarkMode ? "text-emerald-400" : "text-emerald-600"}`}>{formatMoney(paid)}</div>
+                <div className={`text-xs ${MUTED}`}>ชำระเรียบร้อย</div>
             </div>
 
-            <div className="rounded-2xl bg-white border border-slate-100 p-4 h-[110px] flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow">
-                <div className="text-xs text-slate-500">ค้างชำระ</div>
-                <div className="text-3xl font-extrabold tabular-nums text-rose-600">{formatMoney(outstanding)}</div>
-                <div className="text-xs text-slate-400">ต้องติดตาม</div>
+            <div className={`${SURFACE} ${SURFACE_HOVER} p-5 h-[110px] flex flex-col justify-between`}>
+                <div className={`text-xs ${MUTED}`}>ค้างชำระ</div>
+                <div className={`text-3xl font-extrabold tabular-nums ${isDarkMode ? "text-rose-400" : "text-rose-600"}`}>{formatMoney(outstanding)}</div>
+                <div className={`text-xs ${MUTED}`}>ต้องติดตาม</div>
             </div>
         </div>
     );
