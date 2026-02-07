@@ -3,6 +3,13 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Global height for full-screen layouts */
+html, body, #root { height: 100%; }
+
+/* True black background in dark mode */
+html.dark { color-scheme: dark; }
+html.dark body { background: #000; }
+
 /* Custom Scrollbar Styles */
 .no-scrollbar::-webkit-scrollbar {
   display: none;

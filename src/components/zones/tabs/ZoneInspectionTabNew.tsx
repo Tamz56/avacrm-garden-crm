@@ -17,6 +17,7 @@ type Props = {
     onReload?: () => void;
     mode?: "summary" | "audit";
     inventoryItems?: any[];
+    isDarkMode?: boolean;
 };
 
 export function ZoneInspectionTabNew({
@@ -24,7 +25,8 @@ export function ZoneInspectionTabNew({
     zone,
     onReload,
     mode = "audit",
-    inventoryItems = []
+    inventoryItems = [],
+    isDarkMode = false
 }: Props) {
     // ========== PLOT STATE ==========
     const [plots, setPlots] = React.useState<PlotOption[]>([]);
@@ -105,16 +107,16 @@ export function ZoneInspectionTabNew({
             {/* Header with Plot Selector */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-lg font-semibold text-slate-900">การตรวจแปลง & ความคลาดเคลื่อน</h2>
-                    <p className="text-xs text-slate-500">เปรียบเทียบ Plan vs Tagged vs Inspected ตาม Plot</p>
+                    <h2 className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}>การตรวจแปลง & ความคลาดเคลื่อน</h2>
+                    <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>เปรียบเทียบ Plan vs Tagged vs Inspected ตาม Plot</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <label className="text-xs text-slate-500">เลือกแปลง:</label>
+                    <label className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>เลือกแปลง:</label>
                     <select
                         value={selectedPlotId}
                         onChange={(e) => setSelectedPlotId(e.target.value)}
                         disabled={plotsLoading || plots.length === 0}
-                        className="rounded-lg border border-slate-200 px-2 py-1 text-xs disabled:bg-slate-50"
+                        className={`rounded-lg border px-2 py-1 text-xs disabled:opacity-50 ${isDarkMode ? "bg-black border-white/10 text-white disabled:bg-white/5" : "border-slate-200 disabled:bg-slate-50"}`}
                     >
                         {plotsLoading && <option value="">กำลังโหลด...</option>}
                         {!plotsLoading && plots.length === 0 && <option value="">ไม่มีแปลง</option>}
@@ -127,7 +129,7 @@ export function ZoneInspectionTabNew({
                     <button
                         type="button"
                         onClick={refreshAll}
-                        className="rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:bg-slate-50"
+                        className={`rounded-lg border px-2 py-1 text-xs hover:bg-opacity-50 ${isDarkMode ? "border-white/10 text-slate-300 hover:bg-white/10" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
                     >
                         <RefreshCw className="w-3 h-3" />
                     </button>
@@ -136,7 +138,7 @@ export function ZoneInspectionTabNew({
 
             {/* No plots warning */}
             {plots.length === 0 && !plotsLoading && (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                <div className={`rounded-xl border px-4 py-3 text-sm ${isDarkMode ? "bg-amber-500/10 border-amber-500/20 text-amber-400" : "bg-amber-50 border-amber-200 text-amber-700"}`}>
                     ⚠️ โซนนี้ยังไม่มีแปลงย่อย (Plot) กรุณาสร้างแปลงก่อน
                 </div>
             )}
@@ -145,35 +147,35 @@ export function ZoneInspectionTabNew({
                 <>
                     {/* Summary KPI Cards */}
                     <div className="grid grid-cols-4 gap-3">
-                        <div className="rounded-xl border border-slate-200 bg-white p-3 text-center">
-                            <div className="text-xs text-slate-500">Plan (ระบบ)</div>
-                            <div className="text-lg font-bold text-slate-800">{totals.plan.toLocaleString("th-TH")}</div>
+                        <div className={`rounded-xl border p-3 text-center ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
+                            <div className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Plan (ระบบ)</div>
+                            <div className={`text-lg font-bold ${isDarkMode ? "text-white" : "text-slate-800"}`}>{totals.plan.toLocaleString("th-TH")}</div>
                         </div>
-                        <div className="rounded-xl border border-sky-200 bg-sky-50 p-3 text-center">
-                            <div className="text-xs text-sky-600">Tagged</div>
-                            <div className="text-lg font-bold text-sky-700">{totals.tagged.toLocaleString("th-TH")}</div>
+                        <div className={`rounded-xl border p-3 text-center ${isDarkMode ? "bg-sky-500/10 border-sky-500/20" : "bg-sky-50 border-sky-200"}`}>
+                            <div className={`text-xs ${isDarkMode ? "text-sky-400" : "text-sky-600"}`}>Tagged</div>
+                            <div className={`text-lg font-bold ${isDarkMode ? "text-sky-300" : "text-sky-700"}`}>{totals.tagged.toLocaleString("th-TH")}</div>
                         </div>
-                        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-center">
-                            <div className="text-xs text-emerald-600">Inspected</div>
-                            <div className="text-lg font-bold text-emerald-700">{totals.inspected.toLocaleString("th-TH")}</div>
+                        <div className={`rounded-xl border p-3 text-center ${isDarkMode ? "bg-emerald-500/10 border-emerald-500/20" : "bg-emerald-50 border-emerald-200"}`}>
+                            <div className={`text-xs ${isDarkMode ? "text-emerald-400" : "text-emerald-600"}`}>Inspected</div>
+                            <div className={`text-lg font-bold ${isDarkMode ? "text-emerald-300" : "text-emerald-700"}`}>{totals.inspected.toLocaleString("th-TH")}</div>
                         </div>
-                        <div className="rounded-xl border border-purple-200 bg-purple-50 p-3 text-center">
-                            <div className="text-xs text-purple-600">Diff (Insp - Plan)</div>
-                            <div className={`text-lg font-bold ${totals.inspected - totals.plan === 0 ? "text-emerald-600" : "text-amber-600"}`}>
+                        <div className={`rounded-xl border p-3 text-center ${isDarkMode ? "bg-purple-500/10 border-purple-500/20" : "bg-purple-50 border-purple-200"}`}>
+                            <div className={`text-xs ${isDarkMode ? "text-purple-400" : "text-purple-600"}`}>Diff (Insp - Plan)</div>
+                            <div className={`text-lg font-bold ${totals.inspected - totals.plan === 0 ? (isDarkMode ? "text-emerald-400" : "text-emerald-600") : "text-amber-600"}`}>
                                 {totals.inspected - totals.plan > 0 ? "+" : ""}{(totals.inspected - totals.plan).toLocaleString("th-TH")}
                             </div>
                         </div>
                     </div>
 
                     {/* Summary Table: Plan vs Tagged vs Inspected */}
-                    <section className="rounded-xl border border-slate-200 bg-white p-4">
+                    <section className={`rounded-xl border p-4 ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
                         <div className="flex items-center justify-between mb-3">
                             <div className="flex items-center gap-2">
-                                <AlertTriangle className="w-4 h-4 text-amber-600" />
-                                <h3 className="text-sm font-semibold text-slate-800">สรุป Plan vs Tagged vs Inspected</h3>
+                                <AlertTriangle className={`w-4 h-4 ${isDarkMode ? "text-amber-500" : "text-amber-600"}`} />
+                                <h3 className={`text-sm font-semibold ${isDarkMode ? "text-white" : "text-slate-800"}`}>สรุป Plan vs Tagged vs Inspected</h3>
                             </div>
                             {!canEditPlan && !roleLoading && (
-                                <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-0.5 rounded">
+                                <span className={`text-[10px] px-2 py-0.5 rounded ${isDarkMode ? "bg-white/10 text-slate-400" : "bg-slate-100 text-slate-400"}`}>
                                     🔒 เฉพาะ Admin/Manager เท่านั้นที่แก้ Plan ได้
                                 </span>
                             )}
@@ -191,9 +193,9 @@ export function ZoneInspectionTabNew({
                                 ยังไม่มีข้อมูลสรุป (Plan/Tagged/Inspected ว่างเปล่า)
                             </div>
                         ) : (
-                            <div className="overflow-x-auto rounded-lg border border-slate-100">
+                            <div className={`overflow-x-auto rounded-lg border ${isDarkMode ? "border-white/10" : "border-slate-100"}`}>
                                 <table className="min-w-full text-xs">
-                                    <thead className="bg-slate-50 text-slate-500">
+                                    <thead className={`${isDarkMode ? "bg-white/5 text-slate-400" : "bg-slate-50 text-slate-500"}`}>
                                         <tr>
                                             <th className="px-3 py-2 text-left font-medium">ชนิด/พันธุ์</th>
                                             <th className="px-3 py-2 text-left font-medium">ขนาด</th>
@@ -210,17 +212,17 @@ export function ZoneInspectionTabNew({
                                             const diffIP = row.diff_inspected_vs_plan;
                                             const diffIT = row.diff_inspected_vs_tagged;
                                             return (
-                                                <tr key={idx} className="border-t border-slate-50 hover:bg-slate-50">
-                                                    <td className="px-3 py-2 text-slate-700 font-medium">{getSpeciesName(row.species_id)}</td>
-                                                    <td className="px-3 py-2 text-slate-600">{formatSizeLabel(row.size_label)}</td>
-                                                    <td className="px-3 py-2 text-slate-600">{row.grade || "-"}</td>
-                                                    <td className="px-3 py-2 text-right text-slate-600">{row.plan_qty.toLocaleString("th-TH")}</td>
-                                                    <td className="px-3 py-2 text-right text-sky-600">{row.tagged_qty.toLocaleString("th-TH")}</td>
-                                                    <td className="px-3 py-2 text-right text-emerald-600 font-medium">{row.inspected_qty.toLocaleString("th-TH")}</td>
-                                                    <td className={`px-3 py-2 text-right font-medium ${diffIP === 0 ? "text-slate-400" : diffIP > 0 ? "text-emerald-600" : "text-red-500"}`}>
+                                                <tr key={idx} className={`border-t ${isDarkMode ? "border-white/5 hover:bg-white/5" : "border-slate-50 hover:bg-slate-50"}`}>
+                                                    <td className={`px-3 py-2 font-medium ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{getSpeciesName(row.species_id)}</td>
+                                                    <td className={`px-3 py-2 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>{formatSizeLabel(row.size_label)}</td>
+                                                    <td className={`px-3 py-2 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>{row.grade || "-"}</td>
+                                                    <td className={`px-3 py-2 text-right ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>{row.plan_qty.toLocaleString("th-TH")}</td>
+                                                    <td className={`px-3 py-2 text-right ${isDarkMode ? "text-sky-400" : "text-sky-600"}`}>{row.tagged_qty.toLocaleString("th-TH")}</td>
+                                                    <td className={`px-3 py-2 text-right font-medium ${isDarkMode ? "text-emerald-400" : "text-emerald-600"}`}>{row.inspected_qty.toLocaleString("th-TH")}</td>
+                                                    <td className={`px-3 py-2 text-right font-medium ${diffIP === 0 ? "text-slate-400" : diffIP > 0 ? (isDarkMode ? "text-emerald-400" : "text-emerald-600") : "text-red-500"}`}>
                                                         {diffIP > 0 ? "+" : ""}{diffIP.toLocaleString("th-TH")}
                                                     </td>
-                                                    <td className={`px-3 py-2 text-right font-medium ${diffIT === 0 ? "text-slate-400" : diffIT > 0 ? "text-emerald-600" : "text-red-500"}`}>
+                                                    <td className={`px-3 py-2 text-right font-medium ${diffIT === 0 ? "text-slate-400" : diffIT > 0 ? (isDarkMode ? "text-emerald-400" : "text-emerald-600") : "text-red-500"}`}>
                                                         {diffIT > 0 ? "+" : ""}{diffIT.toLocaleString("th-TH")}
                                                     </td>
                                                 </tr>
@@ -236,11 +238,11 @@ export function ZoneInspectionTabNew({
                     {mode === "audit" && (
                         <>
                             {/* Latest Inspection Section */}
-                            <section className="rounded-xl border border-slate-200 bg-white p-4">
+                            <section className={`rounded-xl border p-4 ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-2">
-                                        <ClipboardCheck className="w-4 h-4 text-emerald-600" />
-                                        <h3 className="text-sm font-semibold text-slate-800">ผลสำรวจล่าสุด</h3>
+                                        <ClipboardCheck className={`w-4 h-4 ${isDarkMode ? "text-emerald-400" : "text-emerald-600"}`} />
+                                        <h3 className={`text-sm font-semibold ${isDarkMode ? "text-white" : "text-slate-800"}`}>ผลสำรวจล่าสุด</h3>
                                     </div>
                                 </div>
 
@@ -259,8 +261,8 @@ export function ZoneInspectionTabNew({
                                     <div className="space-y-3">
                                         <div className="flex gap-4 text-xs">
                                             <div>
-                                                <span className="text-slate-500">วันที่สำรวจ: </span>
-                                                <span className="font-medium text-slate-800">
+                                                <span className={`${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>วันที่สำรวจ: </span>
+                                                <span className={`font-medium ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>
                                                     {new Date(latestInspection.inspection.inspection_date).toLocaleDateString("th-TH", {
                                                         year: "numeric",
                                                         month: "short",
@@ -269,15 +271,15 @@ export function ZoneInspectionTabNew({
                                                 </span>
                                             </div>
                                             <div>
-                                                <span className="text-slate-500">จำนวนรายการ: </span>
-                                                <span className="font-medium text-slate-800">{latestInspection.items.length} รายการ</span>
+                                                <span className={`${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>จำนวนรายการ: </span>
+                                                <span className={`font-medium ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>{latestInspection.items.length} รายการ</span>
                                             </div>
                                         </div>
 
                                         {latestInspection.items.length > 0 && (
-                                            <div className="overflow-x-auto rounded-lg border border-slate-100">
+                                            <div className={`overflow-x-auto rounded-lg border ${isDarkMode ? "border-white/10" : "border-slate-100"}`}>
                                                 <table className="min-w-full text-xs">
-                                                    <thead className="bg-slate-50 text-slate-500">
+                                                    <thead className={`${isDarkMode ? "bg-white/5 text-slate-400" : "bg-slate-50 text-slate-500"}`}>
                                                         <tr>
                                                             <th className="px-3 py-2 text-left font-medium">ชนิด/พันธุ์</th>
                                                             <th className="px-3 py-2 text-left font-medium">ขนาด</th>
@@ -287,11 +289,11 @@ export function ZoneInspectionTabNew({
                                                     </thead>
                                                     <tbody>
                                                         {latestInspection.items.map((item, idx) => (
-                                                            <tr key={idx} className="border-t border-slate-50">
-                                                                <td className="px-3 py-2 text-slate-700">{getSpeciesName(item.species_id)}</td>
-                                                                <td className="px-3 py-2 text-slate-600">{formatSizeLabel(item.size_label)}</td>
-                                                                <td className="px-3 py-2 text-slate-600">{item.grade || "-"}</td>
-                                                                <td className="px-3 py-2 text-right text-emerald-600 font-medium">{item.estimated_qty}</td>
+                                                            <tr key={idx} className={`border-t ${isDarkMode ? "border-white/5" : "border-slate-50"}`}>
+                                                                <td className={`px-3 py-2 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{getSpeciesName(item.species_id)}</td>
+                                                                <td className={`px-3 py-2 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>{formatSizeLabel(item.size_label)}</td>
+                                                                <td className={`px-3 py-2 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>{item.grade || "-"}</td>
+                                                                <td className={`px-3 py-2 text-right font-medium ${isDarkMode ? "text-emerald-400" : "text-emerald-600"}`}>{item.estimated_qty}</td>
                                                             </tr>
                                                         ))}
                                                     </tbody>
@@ -300,7 +302,7 @@ export function ZoneInspectionTabNew({
                                         )}
 
                                         {latestInspection.inspection.notes && (
-                                            <div className="text-xs text-slate-500 bg-slate-50 p-2 rounded">
+                                            <div className={`text-xs p-2 rounded ${isDarkMode ? "bg-white/5 text-slate-400" : "bg-slate-50 text-slate-500"}`}>
                                                 <span className="font-medium">หมายเหตุ: </span>{latestInspection.inspection.notes}
                                             </div>
                                         )}
@@ -309,10 +311,10 @@ export function ZoneInspectionTabNew({
                             </section>
 
                             {/* New Inspection Form */}
-                            <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+                            <section className={`rounded-xl shadow-sm border p-4 ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
                                 <div className="mb-4">
-                                    <h3 className="text-base font-semibold text-slate-800">บันทึกผลการตรวจแปลง</h3>
-                                    <p className="text-xs text-slate-500">สร้างรายการสำรวจใหม่ (การแก้ไขให้ทำที่แท็บ "จัดการต้นไม้")</p>
+                                    <h3 className={`text-base font-semibold ${isDarkMode ? "text-white" : "text-slate-800"}`}>บันทึกผลการตรวจแปลง</h3>
+                                    <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>สร้างรายการสำรวจใหม่ (การแก้ไขให้ทำที่แท็บ "จัดการต้นไม้")</p>
                                 </div>
                                 <ZoneTreeInspectionForm
                                     zoneId={zoneId}
@@ -322,11 +324,12 @@ export function ZoneInspectionTabNew({
                                     onSaved={async () => {
                                         await refreshAll();
                                     }}
+                                    isDarkMode={isDarkMode}
                                 />
                             </section>
 
                             {/* Inspection History */}
-                            <ZoneInspectionHistory zoneId={zoneId} />
+                            <ZoneInspectionHistory zoneId={zoneId} isDarkMode={isDarkMode} />
                         </>
                     )}
                 </>

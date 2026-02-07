@@ -77,40 +77,40 @@ export const ZoneMasterDataTab: React.FC<Props> = ({ isDarkMode = false }) => {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-lg font-semibold text-slate-800 flex items-center gap-2">
+                    <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                         <FileText className="w-5 h-5 text-emerald-600" />
                         ข้อมูลโครงสร้างแปลง (Zone Master Data)
                     </h2>
-                    <p className="text-slate-500 text-sm mt-1">
+                    <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
                         สรุปข้อมูลรายละเอียดโครงสร้างพื้นฐานของแต่ละแปลง
                     </p>
                 </div>
                 <button
                     onClick={load}
-                    className="px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm hover:bg-slate-50 text-slate-600"
+                    className="px-4 py-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-sm hover:bg-slate-50 dark:hover:bg-white/10 text-slate-600 dark:text-slate-200"
                 >
                     รีโหลดข้อมูล
                 </button>
             </div>
 
             {loading && (
-                <div className="flex items-center justify-center py-12 text-slate-500">
+                <div className="flex items-center justify-center py-12 text-slate-500 dark:text-slate-400">
                     <Loader2 className="w-6 h-6 animate-spin mr-2" />
                     กำลังโหลดข้อมูล...
                 </div>
             )}
 
             {error && (
-                <div className="p-4 bg-rose-50 text-rose-600 rounded-xl border border-rose-100">
+                <div className="p-4 bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400 rounded-xl border border-rose-100 dark:border-rose-500/20">
                     เกิดข้อผิดพลาด: {error}
                 </div>
             )}
 
             {!loading && !error && (
-                <div className="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-sm">
+                <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="min-w-full text-sm">
-                            <thead className="bg-slate-50 text-slate-600 border-b border-slate-200">
+                            <thead className="bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
                                 <tr>
                                     <th className="px-4 py-3 text-left font-semibold">ชื่อแปลง</th>
                                     <th className="px-4 py-3 text-left font-semibold">สถานที่ (ฟาร์ม)</th>
@@ -124,39 +124,39 @@ export const ZoneMasterDataTab: React.FC<Props> = ({ isDarkMode = false }) => {
                                     <th className="px-4 py-3 text-left font-semibold">หมายเหตุ</th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
+                            <tbody className="divide-y divide-slate-100 dark:divide-white/10 dark:text-slate-300">
                                 {rows.map((row) => (
-                                    <tr key={row.id} className="hover:bg-slate-50/50">
-                                        <td className="px-4 py-3 font-medium text-slate-800">
+                                    <tr key={row.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5">
+                                        <td className="px-4 py-3 font-medium text-slate-800 dark:text-slate-200">
                                             {row.name}
                                         </td>
-                                        <td className="px-4 py-3 text-slate-600">
+                                        <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
                                             {row.farm_name || "-"}
                                         </td>
-                                        <td className="px-4 py-3 text-slate-600">
-                                            <span className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-600 text-xs">
+                                        <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
+                                            <span className="inline-block px-2 py-0.5 rounded bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-300 text-xs">
                                                 {row.zone_type_name}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-right text-slate-600">
+                                        <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-400">
                                             {row.area_rai?.toLocaleString() ?? "-"}
                                         </td>
-                                        <td className="px-4 py-3 text-center text-slate-600">
+                                        <td className="px-4 py-3 text-center text-slate-600 dark:text-slate-400">
                                             {row.area_width_m || "-"} x {row.area_length_m || "-"} ม.
                                         </td>
-                                        <td className="px-4 py-3 text-center text-slate-600">
+                                        <td className="px-4 py-3 text-center text-slate-600 dark:text-slate-400">
                                             {row.planting_rows ?? "-"}
                                         </td>
-                                        <td className="px-4 py-3 text-slate-600">
+                                        <td className="px-4 py-3 text-slate-600 dark:text-slate-400">
                                             {row.water_source || "-"}
                                         </td>
-                                        <td className="px-4 py-3 text-right text-slate-600">
+                                        <td className="px-4 py-3 text-right text-slate-600 dark:text-slate-400">
                                             {row.pump_size_hp ?? "-"}
                                         </td>
-                                        <td className="px-4 py-3 text-right font-semibold text-emerald-700">
+                                        <td className="px-4 py-3 text-right font-semibold text-emerald-700 dark:text-emerald-400">
                                             {row.total_planted_qty?.toLocaleString() ?? 0}
                                         </td>
-                                        <td className="px-4 py-3 text-slate-500 text-xs max-w-xs truncate">
+                                        <td className="px-4 py-3 text-slate-500 dark:text-slate-400 text-xs max-w-xs truncate">
                                             {row.description || "-"}
                                         </td>
                                     </tr>

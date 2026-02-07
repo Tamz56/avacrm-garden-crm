@@ -11,9 +11,10 @@ type MovementTagRow = {
 
 type Props = {
     zoneId: string;
+    isDarkMode?: boolean;
 };
 
-export const ZoneMovementsTab: React.FC<Props> = ({ zoneId }) => {
+export const ZoneMovementsTab: React.FC<Props> = ({ zoneId, isDarkMode = false }) => {
     const [loading, setLoading] = React.useState(false);
     const [moving, setMoving] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
@@ -113,19 +114,19 @@ export const ZoneMovementsTab: React.FC<Props> = ({ zoneId }) => {
 
     return (
         <div className="space-y-4">
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+            <section className={`rounded-xl shadow-sm border p-4 ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
                 <div className="flex items-start justify-between gap-3">
                     <div>
-                        <h3 className="text-base font-semibold text-slate-800">ย้าย/เคลื่อนย้าย (Movements)</h3>
-                        <p className="text-xs text-slate-500">
-                            v1: เลือก Tag ที่ขุดล้อมแล้ว (<span className="font-medium">dug</span>) เพื่อส่งเข้า Stock เป็นสถานะ{" "}
-                            <span className="font-medium">ready_for_sale</span>
+                        <h3 className={`text-base font-semibold ${isDarkMode ? "text-white" : "text-slate-800"}`}>ย้าย/เคลื่อนย้าย (Movements)</h3>
+                        <p className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                            v1: เลือก Tag ที่ขุดล้อมแล้ว (<span className={`font-medium ${isDarkMode ? "text-slate-300" : ""}`}>dug</span>) เพื่อส่งเข้า Stock เป็นสถานะ{" "}
+                            <span className={`font-medium ${isDarkMode ? "text-slate-300" : ""}`}>ready_for_sale</span>
                         </p>
                     </div>
                     <button
                         onClick={fetchDugTags}
                         disabled={loading || moving}
-                        className="px-3 py-2 text-sm rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50"
+                        className={`px-3 py-2 text-sm rounded-lg border disabled:opacity-50 ${isDarkMode ? "border-white/10 text-slate-300 hover:bg-white/10" : "border-slate-200 hover:bg-slate-50"}`}
                     >
                         รีเฟรช
                     </button>
@@ -140,13 +141,14 @@ export const ZoneMovementsTab: React.FC<Props> = ({ zoneId }) => {
                 <div className="mt-4 overflow-x-auto">
                     <table className="min-w-full text-sm">
                         <thead>
-                            <tr className="text-left text-slate-600 border-b">
+                            <tr className={`text-left border-b ${isDarkMode ? "text-slate-400 border-white/10" : "text-slate-600 border-slate-200"}`}>
                                 <th className="py-2 pr-3 w-10">
                                     <input
                                         type="checkbox"
                                         checked={allChecked}
                                         onChange={(e) => toggleAll(e.target.checked)}
                                         disabled={loading || moving || rows.length === 0}
+                                        className={isDarkMode ? "accent-emerald-500" : ""}
                                     />
                                 </th>
                                 <th className="py-2 pr-3">Tag</th>
@@ -164,26 +166,27 @@ export const ZoneMovementsTab: React.FC<Props> = ({ zoneId }) => {
                                 </tr>
                             ) : rows.length === 0 ? (
                                 <tr>
-                                    <td className="py-4 text-slate-500" colSpan={5}>
-                                        ไม่มี Tag สถานะ <span className="font-medium">dug</span> ในโซนนี้
+                                    <td className={`py-4 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`} colSpan={5}>
+                                        ไม่มี Tag สถานะ <span className={`font-medium ${isDarkMode ? "text-slate-300" : ""}`}>dug</span> ในโซนนี้
                                     </td>
                                 </tr>
                             ) : (
                                 rows.map((r) => (
-                                    <tr key={r.id} className="border-b last:border-b-0">
+                                    <tr key={r.id} className={`border-b last:border-b-0 ${isDarkMode ? "border-white/10" : "border-slate-200"}`}>
                                         <td className="py-2 pr-3">
                                             <input
                                                 type="checkbox"
                                                 checked={!!selected[r.id]}
                                                 onChange={(e) => toggleOne(r.id, e.target.checked)}
                                                 disabled={moving}
+                                                className={isDarkMode ? "accent-emerald-500" : ""}
                                             />
                                         </td>
-                                        <td className="py-2 pr-3 font-medium text-slate-800">{r.tag_code ?? "-"}</td>
-                                        <td className="py-2 pr-3 text-slate-700">{r.size_label ?? "-"}</td>
-                                        <td className="py-2 pr-3 text-slate-700">{r.qty ?? 1}</td>
+                                        <td className={`py-2 pr-3 font-medium ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>{r.tag_code ?? "-"}</td>
+                                        <td className={`py-2 pr-3 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{r.size_label ?? "-"}</td>
+                                        <td className={`py-2 pr-3 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{r.qty ?? 1}</td>
                                         <td className="py-2 pr-3">
-                                            <span className="text-xs px-2 py-1 rounded-full border border-slate-200 text-slate-700">
+                                            <span className={`text-xs px-2 py-1 rounded-full border ${isDarkMode ? "border-white/10 text-slate-300" : "border-slate-200 text-slate-700"}`}>
                                                 {r.status ?? "-"}
                                             </span>
                                         </td>
@@ -196,20 +199,20 @@ export const ZoneMovementsTab: React.FC<Props> = ({ zoneId }) => {
 
                 <div className="mt-4 grid gap-3">
                     <div>
-                        <label className="block text-xs font-medium text-slate-700 mb-1">หมายเหตุ (ไม่บังคับ)</label>
+                        <label className={`block text-xs font-medium mb-1 ${isDarkMode ? "text-slate-400" : "text-slate-700"}`}>หมายเหตุ (ไม่บังคับ)</label>
                         <textarea
                             value={note}
                             onChange={(e) => setNote(e.target.value)}
                             rows={2}
                             disabled={moving}
-                            className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+                            className={`w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 ${isDarkMode ? "bg-black border-white/10 text-white focus:ring-emerald-500/20" : "border-slate-200 focus:ring-slate-200"}`}
                             placeholder="เช่น ส่งเข้าแผงขายไม้, ตรวจรากแล้ว, พร้อมถ่ายรูปลงสต็อก"
                         />
                     </div>
 
                     <div className="flex items-center justify-between gap-3">
-                        <div className="text-xs text-slate-500">
-                            เลือกแล้ว: <span className="font-medium text-slate-800">{selectedIds.length}</span> รายการ
+                        <div className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
+                            เลือกแล้ว: <span className={`font-medium ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>{selectedIds.length}</span> รายการ
                         </div>
 
                         <button

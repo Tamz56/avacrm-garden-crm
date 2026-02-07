@@ -99,35 +99,35 @@ const CommissionPayoutTab = () => {
         <div className="space-y-6">
             {/* Summary cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="bg-white rounded-2xl border border-slate-100 p-4 flex flex-col gap-1">
-                    <span className="text-xs font-medium text-slate-500">
+                <div className="bg-white dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 p-4 flex flex-col gap-1">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         ค่าคอมมิชชั่นที่ต้องจ่ายเดือนนี้
                     </span>
-                    <span className="text-2xl font-semibold text-slate-900">
+                    <span className="text-2xl font-semibold text-slate-900 dark:text-slate-200">
                         ฿{summary.total.toLocaleString()}
                     </span>
                 </div>
-                <div className="bg-white rounded-2xl border border-slate-100 p-4 flex flex-col gap-1">
-                    <span className="text-xs font-medium text-slate-500">
+                <div className="bg-white dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 p-4 flex flex-col gap-1">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         ค่าคอมมิชชั่นที่จ่ายแล้ว
                     </span>
-                    <span className="text-2xl font-semibold text-emerald-600">
+                    <span className="text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
                         ฿{summary.paid.toLocaleString()}
                     </span>
                 </div>
-                <div className="bg-white rounded-2xl border border-slate-100 p-4 flex flex-col gap-1">
-                    <span className="text-xs font-medium text-slate-500">
+                <div className="bg-white dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 p-4 flex flex-col gap-1">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         ค่าคอมมิชชั่นค้างจ่าย
                     </span>
-                    <span className="text-2xl font-semibold text-rose-600">
+                    <span className="text-2xl font-semibold text-rose-600 dark:text-rose-400">
                         ฿{summary.unpaid.toLocaleString()}
                     </span>
                 </div>
-                <div className="bg-white rounded-2xl border border-slate-100 p-4 flex flex-col gap-1">
-                    <span className="text-xs font-medium text-slate-500">
+                <div className="bg-white dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 p-4 flex flex-col gap-1">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         จำนวน Sales ที่ต้องจ่าย
                     </span>
-                    <span className="text-2xl font-semibold text-slate-900">
+                    <span className="text-2xl font-semibold text-slate-900 dark:text-slate-200">
                         {summary.personCount} คน
                     </span>
                 </div>
@@ -135,7 +135,7 @@ const CommissionPayoutTab = () => {
 
             {/* Table header actions */}
             <div className="flex items-center justify-between">
-                <h3 className="text-base font-semibold text-slate-800">
+                <h3 className="text-base font-semibold text-slate-800 dark:text-slate-200">
                     สรุปการจ่ายค่าคอมมิชชั่นตาม Sales (เดือนนี้)
                 </h3>
                 <div className="flex items-center gap-2">
@@ -143,11 +143,11 @@ const CommissionPayoutTab = () => {
                         type="month"
                         value={month}
                         onChange={(e) => setMonth(e.target.value)}
-                        className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-600 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                     />
                     <button
                         onClick={fetchData}
-                        className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50"
+                        className="px-3 py-1.5 text-xs rounded-lg border border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/10"
                     >
                         Refresh
                     </button>
@@ -155,40 +155,40 @@ const CommissionPayoutTab = () => {
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
+            <div className="bg-white dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 overflow-hidden">
                 <table className="min-w-full text-sm">
-                    <thead className="bg-slate-50 border-b border-slate-100">
+                    <thead className="bg-slate-50 dark:bg-white/5 border-b border-slate-100 dark:border-white/10">
                         <tr>
-                            <th className="px-4 py-2 text-left font-medium text-slate-500">
+                            <th className="px-4 py-2 text-left font-medium text-slate-500 dark:text-slate-400">
                                 Sales
                             </th>
-                            <th className="px-4 py-2 text-left font-medium text-slate-500">
+                            <th className="px-4 py-2 text-left font-medium text-slate-500 dark:text-slate-400">
                                 บทบาท
                             </th>
-                            <th className="px-4 py-2 text-right font-medium text-slate-500">
+                            <th className="px-4 py-2 text-right font-medium text-slate-500 dark:text-slate-400">
                                 จำนวนดีล
                             </th>
-                            <th className="px-4 py-2 text-right font-medium text-slate-500">
+                            <th className="px-4 py-2 text-right font-medium text-slate-500 dark:text-slate-400">
                                 ค่าคอมฯ รวม
                             </th>
-                            <th className="px-4 py-2 text-right font-medium text-slate-500">
+                            <th className="px-4 py-2 text-right font-medium text-slate-500 dark:text-slate-400">
                                 จ่ายแล้ว
                             </th>
-                            <th className="px-4 py-2 text-right font-medium text-slate-500">
+                            <th className="px-4 py-2 text-right font-medium text-slate-500 dark:text-slate-400">
                                 ค้างจ่าย
                             </th>
-                            <th className="px-4 py-2 text-left font-medium text-slate-500">
+                            <th className="px-4 py-2 text-left font-medium text-slate-500 dark:text-slate-400">
                                 วันที่จ่ายล่าสุด
                             </th>
-                            <th className="px-4 py-2 text-left font-medium text-slate-500">
+                            <th className="px-4 py-2 text-left font-medium text-slate-500 dark:text-slate-400">
                                 สถานะ
                             </th>
-                            <th className="px-4 py-2 text-right font-medium text-slate-500">
+                            <th className="px-4 py-2 text-right font-medium text-slate-500 dark:text-slate-400">
                                 การจัดการ
                             </th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="dark:text-slate-300">
                         {rows.length === 0 && (
                             <tr>
                                 <td
@@ -210,9 +210,9 @@ const CommissionPayoutTab = () => {
                             const conf = statusConfig[statusKey] ?? statusConfig.unpaid;
 
                             return (
-                                <tr key={row.sales_profile_id} className="border-t border-slate-50">
-                                    <td className="px-4 py-2 font-medium text-slate-700">{row.sales_name}</td>
-                                    <td className="px-4 py-2 text-slate-500 text-xs">{row.roles}</td>
+                                <tr key={row.sales_profile_id} className="border-t border-slate-50 dark:border-white/10">
+                                    <td className="px-4 py-2 font-medium text-slate-700 dark:text-slate-200">{row.sales_name}</td>
+                                    <td className="px-4 py-2 text-slate-500 dark:text-slate-400 text-xs">{row.roles}</td>
                                     <td className="px-4 py-2 text-right">
                                         {Number(row.deals_count || 0).toLocaleString()}
                                     </td>
@@ -264,73 +264,83 @@ const COMMISSION_TABS = [
     { id: "payout", label: "สรุปจ่ายค่าคอมฯ เดือนนี้", icon: CreditCard },
 ];
 
+// Theme tokens
+const shell =
+    "min-h-screen bg-white text-slate-900 dark:bg-black dark:text-slate-100";
+
+const surface =
+    "rounded-2xl border border-slate-200 bg-white shadow-sm " +
+    "dark:border-white/10 dark:bg-white/5";
+
+const muted = "text-slate-500 dark:text-slate-400";
+
+const tabWrap =
+    "inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white p-1 " +
+    "dark:border-white/10 dark:bg-white/5";
+
+const tabBtn = (active: boolean) =>
+    "flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg transition " +
+    (active
+        ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900"
+        : "text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10");
+
 export default function CommissionCenterPage() {
     const [activeTab, setActiveTab] = useState("summary");
 
     return (
-        <div className="p-6 space-y-6">
-            <header className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-                        <DollarSign className="w-8 h-8 text-emerald-600" />
-                        ค่าคอมมิชชั่น
-                    </h1>
-                    <p className="text-sm text-slate-500 mt-1">
-                        ศูนย์รวมรายงานค่าคอมมิชชั่นจากดีล ทีมขาย และสรุปยอดสำหรับจ่าย
-                    </p>
-                </div>
-            </header>
+        <div className={shell}>
+            <div className={`${surface} p-6 m-6`}>
+                <header className="flex items-center justify-between mb-6">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                            <DollarSign className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                            ค่าคอมมิชชั่น
+                        </h1>
+                        <p className={`text-sm mt-1 ${muted}`}>
+                            ศูนย์รวมรายงานค่าคอมมิชชั่นจากดีล ทีมขาย และสรุปยอดสำหรับจ่าย
+                        </p>
+                    </div>
+                </header>
 
-            {/* Tabs */}
-            <div className="border-b border-slate-200">
-                <div className="flex gap-6">
+                {/* Tabs */}
+                <div className={tabWrap}>
                     {COMMISSION_TABS.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`
-                group flex items-center gap-2 py-4 text-sm font-medium border-b-2 transition-colors
-                ${activeTab === tab.id
-                                    ? "border-emerald-500 text-emerald-600"
-                                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-                                }
-              `}
+                            className={tabBtn(activeTab === tab.id)}
                         >
-                            <tab.icon
-                                className={`w-4 h-4 ${activeTab === tab.id
-                                    ? "text-emerald-500"
-                                    : "text-slate-400 group-hover:text-slate-500"
-                                    }`}
-                            />
+                            <tab.icon className="w-4 h-4" />
                             {tab.label}
                         </button>
                     ))}
                 </div>
-            </div>
 
-            {/* Tab Content */}
-            <div className="min-h-[500px]">
-                {activeTab === "summary" && (
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <CommissionDashboard />
-                    </div>
-                )}
-                {activeTab === "ledger" && (
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <CommissionLedger />
-                    </div>
-                )}
-                {activeTab === "team" && (
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <CommissionByRoleDashboard />
-                    </div>
-                )}
-                {activeTab === "payout" && (
-                    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-                        <CommissionPayoutTab />
-                    </div>
-                )}
+                {/* Tab Content */}
+                <div className="min-h-[500px] mt-6">
+                    {activeTab === "summary" && (
+                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <CommissionDashboard />
+                        </div>
+                    )}
+                    {activeTab === "ledger" && (
+                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <CommissionLedger />
+                        </div>
+                    )}
+                    {activeTab === "team" && (
+                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <CommissionByRoleDashboard />
+                        </div>
+                    )}
+                    {activeTab === "payout" && (
+                        <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                            <CommissionPayoutTab />
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
 }
+

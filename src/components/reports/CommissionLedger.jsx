@@ -228,21 +228,21 @@ const CommissionLedger = () => {
             {/* Header + Filters */}
             <div className="flex items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-xl font-semibold text-slate-900">
+                    <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-200">
                         Commission Ledger – ค่าคอมมิชชั่นจากดีล
                     </h1>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-slate-500 dark:text-slate-400">
                         สรุปค่าคอมมิชชั่นตาม Sales และรายการดีลที่มีค่าคอมมิชชั่นในช่วงเวลาที่เลือก
                     </p>
                 </div>
 
                 <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2 bg-white border rounded-lg px-3 py-1.5">
+                    <div className="flex items-center gap-2 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg px-3 py-1.5">
                         <Filter size={16} className="text-slate-400" />
                         <select
                             value={timeRange}
                             onChange={(e) => setTimeRange(e.target.value)}
-                            className="text-sm outline-none bg-transparent"
+                            className="text-sm outline-none bg-transparent dark:text-slate-200"
                         >
                             {TIME_RANGE_OPTIONS.map((opt) => (
                                 <option key={opt.id} value={opt.id}>
@@ -256,50 +256,50 @@ const CommissionLedger = () => {
 
             {/* Summary cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-white rounded-xl border p-4 flex flex-col gap-2">
+                <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-4 flex flex-col gap-2">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-slate-500">
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                             ค่าคอมมิชชั่นรวมทั้งหมด
                         </span>
                         <DollarSign size={16} className="text-emerald-500" />
                     </div>
-                    <div className="text-2xl font-semibold text-slate-900">
+                    <div className="text-2xl font-semibold text-slate-900 dark:text-slate-200">
                         {formatBaht(totalCommission)}
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl border p-4 flex flex-col gap-2">
+                <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-4 flex flex-col gap-2">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-slate-500">
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                             ค่าคอมมิชชั่นที่จ่ายแล้ว
                         </span>
                         <CheckCircle2 size={16} className="text-emerald-500" />
                     </div>
-                    <div className="text-2xl font-semibold text-slate-900">
+                    <div className="text-2xl font-semibold text-slate-900 dark:text-slate-200">
                         {formatBaht(paidCommission)}
                     </div>
                 </div>
 
-                <div className="bg-white rounded-xl border p-4 flex flex-col gap-2">
+                <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-4 flex flex-col gap-2">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-slate-500">
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                             ค่าคอมมิชชั่นค้างจ่าย (pending/approved)
                         </span>
                         <Clock size={16} className="text-amber-500" />
                     </div>
-                    <div className="text-2xl font-semibold text-slate-900">
+                    <div className="text-2xl font-semibold text-slate-900 dark:text-slate-200">
                         {formatBaht(unpaidCommission)}
                     </div>
                 </div>
             </div>
 
             {/* per Sales summary */}
-            <div className="bg-white rounded-xl border p-4">
+            <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-4">
                 <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-sm font-semibold text-slate-900">
+                    <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-200">
                         สรุปค่าคอมมิชชั่นตาม Sales
                     </h2>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
                         ยอดรวมฐานดีลและค่าคอมมิชชั่นในช่วงเวลาที่เลือก
                     </span>
                 </div>
@@ -307,7 +307,7 @@ const CommissionLedger = () => {
                 <div className="overflow-x-auto">
                     <table className="min-w-full text-xs">
                         <thead>
-                            <tr className="text-left text-slate-500 border-b">
+                            <tr className="text-left text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
                                 <th className="py-2 pr-4">Sales</th>
                                 <th className="py-2 pr-4">จำนวนดีล</th>
                                 <th className="py-2 pr-4">ยอดฐานดีลรวม</th>
@@ -316,9 +316,9 @@ const CommissionLedger = () => {
                                 <th className="py-2 pr-4">ค้างจ่าย</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="dark:text-slate-300">
                             {perSales.map((s) => (
-                                <tr key={s.salesId} className="border-b last:border-b-0">
+                                <tr key={s.salesId} className="border-b border-slate-200 dark:border-white/10 last:border-b-0">
                                     <td className="py-2 pr-4">{s.salesName}</td>
                                     <td className="py-2 pr-4">{s.dealsCount}</td>
                                     <td className="py-2 pr-4">{formatBaht(s.totalBase)}</td>
@@ -346,12 +346,12 @@ const CommissionLedger = () => {
             </div>
 
             {/* Ledger table */}
-            <div className="bg-white rounded-xl border p-4">
+            <div className="bg-white dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 p-4">
                 <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-sm font-semibold text-slate-900">
+                    <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-200">
                         รายการค่าคอมมิชชั่น (Commission Ledger)
                     </h2>
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
                         แสดงทีละดีล พร้อมสถานะค่าคอมมิชชั่น
                     </span>
                 </div>
@@ -359,7 +359,7 @@ const CommissionLedger = () => {
                 <div className="overflow-x-auto">
                     <table className="min-w-full text-xs">
                         <thead>
-                            <tr className="text-left text-slate-500 border-b">
+                            <tr className="text-left text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-white/10">
                                 <th className="py-2 pr-4">วันที่ปิดดีล</th>
                                 <th className="py-2 pr-4">รหัสดีล</th>
                                 <th className="py-2 pr-4">Sales</th>
@@ -369,9 +369,9 @@ const CommissionLedger = () => {
                                 <th className="py-2 pr-4">สถานะ</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="dark:text-slate-300">
                             {filteredRows.map((r) => (
-                                <tr key={r.id} className="border-b last:border-b-0">
+                                <tr key={r.id} className="border-b border-slate-200 dark:border-white/10 last:border-b-0">
                                     <td className="py-2 pr-4">
                                         {r.deal?.closing_date
                                             ? new Date(r.deal.closing_date).toLocaleDateString(
@@ -395,12 +395,12 @@ const CommissionLedger = () => {
                                             className={
                                                 "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] " +
                                                 (r.status === "paid"
-                                                    ? "bg-emerald-50 text-emerald-700"
+                                                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400"
                                                     : r.status === "pending"
-                                                        ? "bg-amber-50 text-amber-700"
+                                                        ? "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400"
                                                         : r.status === "approved"
-                                                            ? "bg-sky-50 text-sky-700"
-                                                            : "bg-slate-50 text-slate-500")
+                                                            ? "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-400"
+                                                            : "bg-slate-50 text-slate-500 dark:bg-white/5 dark:text-slate-400")
                                             }
                                         >
                                             {["pending", "approved"].includes(r.status) && (

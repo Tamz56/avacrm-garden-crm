@@ -27,6 +27,7 @@ interface ZoneLegacySurveyAndLogsProps {
     reloadStockDiff: () => Promise<any>;
     // For Form
     inventoryItems: any[];
+    isDarkMode?: boolean;
 }
 
 export const ZoneLegacySurveyAndLogs: React.FC<ZoneLegacySurveyAndLogsProps> = ({
@@ -45,6 +46,7 @@ export const ZoneLegacySurveyAndLogs: React.FC<ZoneLegacySurveyAndLogsProps> = (
     reloadSummary,
     reloadStockDiff,
     inventoryItems,
+    isDarkMode = false,
 }) => {
     // --- State for Growth Log Filters ---
     const [moveFilterReason, setMoveFilterReason] = useState<string>("all");
@@ -95,19 +97,19 @@ export const ZoneLegacySurveyAndLogs: React.FC<ZoneLegacySurveyAndLogsProps> = (
     return (
         <div className="space-y-6">
             {/* Growth Log */}
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 space-y-3">
+            <section className={`rounded-2xl border p-5 space-y-3 ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
                 <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                        <History className="h-4 w-4 text-slate-500" />
-                        <h3 className="text-sm font-semibold text-slate-900">ประวัติการย้ายขนาด (Growth Log)</h3>
-                        <span className="text-xs text-slate-500">{filteredSizeMoves.length.toLocaleString("th-TH")} รายการ</span>
+                        <History className={`h-4 w-4 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`} />
+                        <h3 className={`text-sm font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}>ประวัติการย้ายขนาด (Growth Log)</h3>
+                        <span className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>{filteredSizeMoves.length.toLocaleString("th-TH")} รายการ</span>
                     </div>
 
                     <div className="flex items-center gap-2">
                         <select
                             value={moveFilterSpecies}
                             onChange={(e) => setMoveFilterSpecies(e.target.value)}
-                            className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700"
+                            className={`rounded-lg border px-2 py-1.5 text-xs ${isDarkMode ? "bg-black border-white/10 text-white" : "bg-white border-slate-300 text-slate-700"}`}
                         >
                             <option value="all">ทุกชนิด</option>
                             {speciesOptions.map((s) => (
@@ -120,7 +122,7 @@ export const ZoneLegacySurveyAndLogs: React.FC<ZoneLegacySurveyAndLogsProps> = (
                         <select
                             value={moveFilterReason}
                             onChange={(e) => setMoveFilterReason(e.target.value)}
-                            className="rounded-lg border border-slate-300 bg-white px-2 py-1.5 text-xs text-slate-700"
+                            className={`rounded-lg border px-2 py-1.5 text-xs ${isDarkMode ? "bg-black border-white/10 text-white" : "bg-white border-slate-300 text-slate-700"}`}
                         >
                             <option value="all">ทุกเหตุผล</option>
                             <option value="growth">โตขึ้น</option>
@@ -133,7 +135,7 @@ export const ZoneLegacySurveyAndLogs: React.FC<ZoneLegacySurveyAndLogsProps> = (
                         <button
                             type="button"
                             onClick={() => reloadSizeMoves?.()}
-                            className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50"
+                            className={`rounded-lg border px-3 py-1.5 text-xs hover:bg-slate-50 ${isDarkMode ? "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10" : "bg-white border-slate-200 text-slate-700"}`}
                         >
                             รีเฟรช
                         </button>
@@ -143,9 +145,9 @@ export const ZoneLegacySurveyAndLogs: React.FC<ZoneLegacySurveyAndLogsProps> = (
                 {sizeMoveLoading && <div className="text-xs text-slate-500">กำลังโหลดประวัติ...</div>}
                 {!sizeMoveLoading && sizeMoveError && <div className="text-xs text-rose-600">โหลดไม่สำเร็จ: {sizeMoveError}</div>}
 
-                <div className="overflow-x-auto border rounded-xl border-slate-100">
+                <div className={`overflow-x-auto border rounded-xl ${isDarkMode ? "border-white/10" : "border-slate-100"}`}>
                     <table className="min-w-full text-sm">
-                        <thead className="bg-slate-50 text-xs text-slate-500 border-b border-slate-100">
+                        <thead className={`text-xs border-b ${isDarkMode ? "bg-white/5 text-slate-400 border-white/10" : "bg-slate-50 text-slate-500 border-slate-100"}`}>
                             <tr>
                                 <th className="px-3 py-2 text-left font-medium">วันที่มีผล</th>
                                 <th className="px-3 py-2 text-left font-medium">ชนิดต้นไม้</th>
@@ -159,25 +161,25 @@ export const ZoneLegacySurveyAndLogs: React.FC<ZoneLegacySurveyAndLogsProps> = (
                         <tbody>
                             {!sizeMoveLoading && filteredSizeMoves.length === 0 && (
                                 <tr>
-                                    <td colSpan={7} className="px-3 py-6 text-center text-slate-400">
+                                    <td colSpan={7} className={`px-3 py-6 text-center ${isDarkMode ? "text-slate-500" : "text-slate-400"}`}>
                                         ยังไม่มีประวัติการย้ายขนาด
                                     </td>
                                 </tr>
                             )}
 
                             {filteredSizeMoves.map((r) => (
-                                <tr key={r.id} className="border-b border-slate-50 hover:bg-slate-50">
-                                    <td className="px-3 py-2 text-slate-700">
+                                <tr key={r.id} className={`border-b ${isDarkMode ? "border-white/5 hover:bg-white/5" : "border-slate-50 hover:bg-slate-50"}`}>
+                                    <td className={`px-3 py-2 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>
                                         {r.effective_date ? new Date(r.effective_date).toLocaleDateString("th-TH") : "-"}
                                     </td>
-                                    <td className="px-3 py-2 text-slate-800 font-medium">{r.species_name_th || "-"}</td>
-                                    <td className="px-3 py-2 text-slate-700">
+                                    <td className={`px-3 py-2 font-medium ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>{r.species_name_th || "-"}</td>
+                                    <td className={`px-3 py-2 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>
                                         <span className="font-medium">{r.from_size_label}</span>
                                         <span className="mx-2 text-slate-400">→</span>
                                         <span className="font-medium">{r.to_size_label}</span>
                                         <span className="ml-1 text-slate-500 text-xs">นิ้ว</span>
                                     </td>
-                                    <td className="px-3 py-2 text-right text-slate-800 font-semibold">{Number(r.qty || 0).toLocaleString("th-TH")}</td>
+                                    <td className={`px-3 py-2 text-right font-semibold ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>{Number(r.qty || 0).toLocaleString("th-TH")}</td>
                                     <td className="px-3 py-2">
                                         <span
                                             className={
@@ -188,7 +190,7 @@ export const ZoneLegacySurveyAndLogs: React.FC<ZoneLegacySurveyAndLogsProps> = (
                                             {reasonLabelMap[r.reason] || r.reason}
                                         </span>
                                     </td>
-                                    <td className="px-3 py-2 text-slate-600 text-xs">{r.note || "-"}</td>
+                                    <td className={`px-3 py-2 text-xs ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>{r.note || "-"}</td>
                                     <td className="px-3 py-2 text-slate-500 text-xs">
                                         {r.created_at ? new Date(r.created_at).toLocaleString("th-TH") : "-"}
                                     </td>
@@ -200,14 +202,14 @@ export const ZoneLegacySurveyAndLogs: React.FC<ZoneLegacySurveyAndLogsProps> = (
             </section>
 
             {/* Inspection Results */}
-            <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+            <section className={`rounded-xl shadow-sm border p-4 ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
                 <div className="flex items-center justify-between mb-1">
-                    <h3 className="text-base font-semibold text-slate-800">ผลสำรวจจำนวนต้นไม้ในแปลง (ตามขนาด)</h3>
+                    <h3 className={`text-base font-semibold ${isDarkMode ? "text-white" : "text-slate-800"}`}>ผลสำรวจจำนวนต้นไม้ในแปลง (ตามขนาด)</h3>
                     {inspectionsLoading && <span className="text-xs text-slate-500">กำลังโหลด...</span>}
                 </div>
-                <p className="mb-3 text-xs text-slate-500">
+                <p className={`mb-3 text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
                     ใช้บันทึกผลสำรวจจำนวนต้นไม้จริงในแปลง ณ วันที่ตรวจสอบ เพื่อเปรียบเทียบกับจำนวน Tag และวางแผนการผลิตในระยะยาว{" "}
-                    <span className="font-medium text-slate-600">ข้อมูลส่วนนี้ไม่ได้ใช้เป็นฐานในการสร้างคำสั่งขุดล้อมโดยตรง</span>
+                    <span className={`font-medium ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>ข้อมูลส่วนนี้ไม่ได้ใช้เป็นฐานในการสร้างคำสั่งขุดล้อมโดยตรง</span>
                 </p>
 
                 {inspectionsError && (
@@ -215,10 +217,10 @@ export const ZoneLegacySurveyAndLogs: React.FC<ZoneLegacySurveyAndLogsProps> = (
                 )}
 
                 <div className="mb-6">
-                    <h4 className="text-sm font-medium text-slate-700 mb-2">สรุปภาพรวม</h4>
-                    <div className="overflow-x-auto border rounded-lg border-slate-100">
+                    <h4 className={`text-sm font-medium mb-2 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>สรุปภาพรวม</h4>
+                    <div className={`overflow-x-auto border rounded-lg ${isDarkMode ? "border-white/10" : "border-slate-100"}`}>
                         <table className="min-w-full text-sm">
-                            <thead className="bg-slate-50 text-slate-600">
+                            <thead className={`${isDarkMode ? "bg-white/5 text-slate-400" : "bg-slate-50 text-slate-600"}`}>
                                 <tr>
                                     <th className="px-3 py-2 text-left font-medium">ชนิดต้นไม้</th>
                                     <th className="px-3 py-2 text-center font-medium">ขนาด (นิ้ว)</th>
@@ -239,20 +241,20 @@ export const ZoneLegacySurveyAndLogs: React.FC<ZoneLegacySurveyAndLogsProps> = (
                                 {summaryRows.map((row) => (
                                     <tr
                                         key={`${row.species_id}__${row.size_label}`}
-                                        className="border-t border-slate-50 hover:bg-slate-50"
+                                        className={`border-t ${isDarkMode ? "border-white/5 hover:bg-white/5" : "border-slate-50 hover:bg-slate-50"}`}
                                     >
-                                        <td className="px-3 py-2 text-slate-800 font-medium">{row.species_name_th || "-"}</td>
-                                        <td className="px-3 py-2 text-center text-slate-600">{row.size_label || "-"}</td>
-                                        <td className="px-3 py-2 text-right text-slate-800 font-semibold">
+                                        <td className={`px-3 py-2 font-medium ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>{row.species_name_th || "-"}</td>
+                                        <td className={`px-3 py-2 text-center ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>{row.size_label || "-"}</td>
+                                        <td className={`px-3 py-2 text-right font-semibold ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>
                                             {row.total_estimated_qty?.toLocaleString() ?? "-"}
                                         </td>
-                                        <td className="px-3 py-2 text-slate-600">
+                                        <td className={`px-3 py-2 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
                                             {row.last_inspection_date
                                                 ? new Date(row.last_inspection_date).toLocaleDateString("th-TH")
                                                 : "-"}
                                         </td>
-                                        <td className="px-3 py-2 text-slate-600">{row.grades || "-"}</td>
-                                        <td className="px-3 py-2 text-slate-600">-</td>
+                                        <td className={`px-3 py-2 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>{row.grades || "-"}</td>
+                                        <td className={`px-3 py-2 ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>-</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -261,11 +263,11 @@ export const ZoneLegacySurveyAndLogs: React.FC<ZoneLegacySurveyAndLogsProps> = (
                 </div>
 
                 <div className="mb-4">
-                    <h4 className="text-sm font-medium text-slate-700 mb-2">รายการบันทึกละเอียด</h4>
-                    <div className="overflow-x-auto border rounded-lg border-slate-100">
+                    <h4 className={`text-sm font-medium mb-2 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>รายการบันทึกละเอียด</h4>
+                    <div className={`overflow-x-auto border rounded-lg ${isDarkMode ? "border-white/10" : "border-slate-100"}`}>
                         <table className="min-w-full text-sm">
                             <thead>
-                                <tr className="bg-gray-50">
+                                <tr className={`${isDarkMode ? "bg-white/5" : "bg-gray-50"}`}>
                                     <th className="px-3 py-2 text-left text-xs font-semibold">ชนิดต้นไม้</th>
                                     <th className="px-3 py-2 text-center text-xs font-semibold">ขนาด</th>
                                     <th className="px-3 py-2 text-left text-xs font-semibold">เกรด</th>
@@ -284,7 +286,7 @@ export const ZoneLegacySurveyAndLogs: React.FC<ZoneLegacySurveyAndLogsProps> = (
                                     </tr>
                                 )}
                                 {inspectionRows.map((row) => (
-                                    <tr key={row.id} className="border-t">
+                                    <tr key={row.id} className={`border-t ${isDarkMode ? "border-white/5" : ""}`}>
                                         <td className="px-3 py-1 text-sm">{row.species_name_th ?? "-"}</td>
                                         <td className="px-3 py-1 text-center text-sm">{row.size_label ?? "-"}</td>
                                         <td className="px-3 py-1 text-sm">{row.grade ?? "-"}</td>
@@ -323,10 +325,11 @@ export const ZoneLegacySurveyAndLogs: React.FC<ZoneLegacySurveyAndLogsProps> = (
                         setEditingInspection(null);
                         await Promise.all([reloadInspections(), reloadSummary(), reloadStockDiff()]);
                     }}
+                    isDarkMode={isDarkMode}
                 />
             </section>
 
-            <ZoneInspectionHistory zoneId={zoneId} />
+            <ZoneInspectionHistory zoneId={zoneId} isDarkMode={isDarkMode} />
         </div>
     );
 };

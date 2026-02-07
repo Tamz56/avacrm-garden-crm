@@ -11,6 +11,7 @@ type ZoneTreeInspectionFormProps = {
     // โหมดแก้ไข
     editingRow?: ZoneTreeInspectionRow | null;
     onCancelEdit?: () => void;
+    isDarkMode?: boolean;
 };
 
 export const ZoneTreeInspectionForm: React.FC<ZoneTreeInspectionFormProps> = ({
@@ -19,6 +20,7 @@ export const ZoneTreeInspectionForm: React.FC<ZoneTreeInspectionFormProps> = ({
     inventoryRows = [],
     editingRow = null,
     onCancelEdit,
+    isDarkMode = false,
 }) => {
     const [speciesId, setSpeciesId] = React.useState<string>("");
     const [sizeLabel, setSizeLabel] = React.useState<string>("");
@@ -152,11 +154,11 @@ export const ZoneTreeInspectionForm: React.FC<ZoneTreeInspectionFormProps> = ({
 
             <div className="grid gap-3 md:grid-cols-4">
                 <div className="md:col-span-2">
-                    <label className="block text-xs text-gray-600 mb-1">
+                    <label className={`block text-xs mb-1 ${isDarkMode ? "text-slate-400" : "text-gray-600"}`}>
                         ชนิด/พันธุ์ + ขนาด
                     </label>
                     <select
-                        className="w-full border rounded px-2 py-1 text-sm"
+                        className={`w-full border rounded px-2 py-1 text-sm ${isDarkMode ? "bg-black border-white/10 text-white" : "bg-white"}`}
                         value={speciesId ? `${speciesId}__${sizeLabel}` : ""}
                         onChange={(e) => {
                             const val = e.target.value;
@@ -177,6 +179,7 @@ export const ZoneTreeInspectionForm: React.FC<ZoneTreeInspectionFormProps> = ({
                             <option
                                 key={`${opt.speciesId}__${opt.size}`}
                                 value={`${opt.speciesId}__${opt.size}`}
+                                className={isDarkMode ? "bg-slate-800" : ""}
                             >
                                 {opt.label}
                             </option>
@@ -185,12 +188,12 @@ export const ZoneTreeInspectionForm: React.FC<ZoneTreeInspectionFormProps> = ({
                 </div>
 
                 <div>
-                    <label className="block text-xs text-gray-600 mb-1">
+                    <label className={`block text-xs mb-1 ${isDarkMode ? "text-slate-400" : "text-gray-600"}`}>
                         จำนวนที่ประเมินได้ (ต้น)
                     </label>
                     <input
                         type="number"
-                        className="w-full border rounded px-2 py-1 text-sm text-right"
+                        className={`w-full border rounded px-2 py-1 text-sm text-right ${isDarkMode ? "bg-black border-white/10 text-white" : "bg-white"}`}
                         value={estimatedQty}
                         onChange={(e) => setEstimatedQty(e.target.value)}
                         min={0}
@@ -198,12 +201,12 @@ export const ZoneTreeInspectionForm: React.FC<ZoneTreeInspectionFormProps> = ({
                 </div>
 
                 <div>
-                    <label className="block text-xs text-gray-600 mb-1">
+                    <label className={`block text-xs mb-1 ${isDarkMode ? "text-slate-400" : "text-gray-600"}`}>
                         วันที่สำรวจ
                     </label>
                     <input
                         type="date"
-                        className="w-full border rounded px-2 py-1 text-sm"
+                        className={`w-full border rounded px-2 py-1 text-sm ${isDarkMode ? "bg-black border-white/10 text-white" : "bg-white"}`}
                         value={inspectionDate}
                         onChange={(e) => setInspectionDate(e.target.value)}
                     />
@@ -212,12 +215,12 @@ export const ZoneTreeInspectionForm: React.FC<ZoneTreeInspectionFormProps> = ({
 
             <div className="grid gap-3 md:grid-cols-4">
                 <div>
-                    <label className="block text-xs text-gray-600 mb-1">
+                    <label className={`block text-xs mb-1 ${isDarkMode ? "text-slate-400" : "text-gray-600"}`}>
                         เกรด (ถ้ามี)
                     </label>
                     <input
                         type="text"
-                        className="w-full border rounded px-2 py-1 text-sm"
+                        className={`w-full border rounded px-2 py-1 text-sm ${isDarkMode ? "bg-black border-white/10 text-white" : "bg-white"}`}
                         value={grade}
                         onChange={(e) => setGrade(e.target.value)}
                         placeholder="เช่น A / B / C"
@@ -225,12 +228,12 @@ export const ZoneTreeInspectionForm: React.FC<ZoneTreeInspectionFormProps> = ({
                 </div>
 
                 <div className="md:col-span-3">
-                    <label className="block text-xs text-gray-600 mb-1">
+                    <label className={`block text-xs mb-1 ${isDarkMode ? "text-slate-400" : "text-gray-600"}`}>
                         หมายเหตุ (ถ้ามี)
                     </label>
                     <input
                         type="text"
-                        className="w-full border rounded px-2 py-1 text-sm"
+                        className={`w-full border rounded px-2 py-1 text-sm ${isDarkMode ? "bg-black border-white/10 text-white" : "bg-white"}`}
                         value={notes}
                         onChange={(e) => setNotes(e.target.value)}
                     />
@@ -254,7 +257,7 @@ export const ZoneTreeInspectionForm: React.FC<ZoneTreeInspectionFormProps> = ({
                     <button
                         type="button"
                         onClick={onCancelEdit}
-                        className="px-3 py-1.5 rounded border text-sm"
+                        className={`px-3 py-1.5 rounded border text-sm ${isDarkMode ? "border-white/10 text-slate-300 hover:bg-white/10" : "text-slate-600 hover:bg-slate-50"}`}
                     >
                         ยกเลิกแก้ไข
                     </button>

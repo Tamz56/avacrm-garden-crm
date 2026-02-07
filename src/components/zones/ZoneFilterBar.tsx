@@ -35,7 +35,7 @@ export const ZoneFilterBar: React.FC<Props> = ({
     loading,
 }) => {
     return (
-        <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="flex flex-col gap-4 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-5 shadow-sm">
             {/* Top Row: Search & Plot Type */}
             <div className="flex flex-col gap-4 md:flex-row md:items-center">
                 {/* Search Input */}
@@ -47,7 +47,7 @@ export const ZoneFilterBar: React.FC<Props> = ({
                         type="text"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="block w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-3 text-sm text-slate-900 placeholder-slate-500 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                        className="block w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 py-2.5 pl-10 pr-3 text-sm text-slate-900 dark:text-slate-200 placeholder-slate-500 dark:placeholder-slate-400 focus:border-emerald-500 focus:bg-white dark:focus:bg-white/10 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         placeholder="ค้นหาชื่อแปลง, สถานที่..."
                     />
                     {searchQuery && (
@@ -66,7 +66,7 @@ export const ZoneFilterBar: React.FC<Props> = ({
                     <select
                         value={selectedPlotType}
                         onChange={(e) => setSelectedPlotType(e.target.value)}
-                        className="h-10 w-full rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 md:w-48"
+                        className="h-10 w-full rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 text-sm text-slate-700 dark:text-slate-200 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 md:w-48"
                     >
                         <option value="ALL">ทุกประเภทแปลง</option>
                         {plotTypes.map((pt) => (
@@ -79,15 +79,15 @@ export const ZoneFilterBar: React.FC<Props> = ({
             </div>
 
             {/* Bottom Row: Mismatch Status Chips */}
-            <div className="flex flex-col gap-2 border-t border-slate-100 pt-4">
+            <div className="flex flex-col gap-2 border-t border-slate-100 dark:border-white/10 pt-4">
                 <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-slate-500">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         สถานะความคลาดเคลื่อน
                     </span>
                     {mismatchFilter !== "all" && (
                         <button
                             onClick={() => setMismatchFilter("all")}
-                            className="text-xs text-emerald-600 hover:underline"
+                            className="text-xs text-emerald-600 dark:text-emerald-400 hover:underline"
                         >
                             ล้างตัวกรอง
                         </button>
@@ -110,15 +110,15 @@ export const ZoneFilterBar: React.FC<Props> = ({
                                 key={option.value}
                                 onClick={() => setMismatchFilter(option.value)}
                                 className={`group inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${isActive
-                                        ? "bg-emerald-500 text-white shadow-sm"
-                                        : "bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                                    ? "bg-emerald-500 text-white shadow-sm"
+                                    : "bg-slate-50 dark:bg-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/20 hover:text-slate-900 dark:hover:text-slate-200"
                                     }`}
                             >
                                 <span>{option.label}</span>
                                 <span
                                     className={`rounded-full px-1.5 py-0.5 text-[10px] ${isActive
-                                            ? "bg-emerald-500/30 text-white"
-                                            : "bg-slate-200 text-slate-600 group-hover:bg-slate-300"
+                                        ? "bg-emerald-500/30 text-white"
+                                        : "bg-slate-200 dark:bg-white/20 text-slate-600 dark:text-slate-300 group-hover:bg-slate-300 dark:group-hover:bg-white/30"
                                         }`}
                                 >
                                     {count}

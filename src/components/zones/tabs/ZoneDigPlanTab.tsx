@@ -19,9 +19,10 @@ function toYmdLocal(d: Date): string {
 type Props = {
     zoneId: string;
     onJumpToOrder?: (orderId: string) => void;
+    isDarkMode?: boolean;
 };
 
-export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
+export function ZoneDigPlanTab({ zoneId, onJumpToOrder, isDarkMode = false }: Props) {
     const { plans, itemsByPlan, summary, kpi, loading, error, refetchPlans, refetchSummary, fetchItems } = useZoneDigPlans(zoneId);
     const { promoteToZoneDigupOrder, addDigPlanItem, removeDigPlanItem, createDigPlan, searchZoneTags, working, error: actionError } = useDigPlanActions();
 
@@ -223,8 +224,8 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
         <div className="space-y-4">
             <div className="flex items-center justify-between">
                 <div>
-                    <div className="text-lg font-semibold">Dig Plans</div>
-                    <div className="text-sm text-slate-500">
+                    <div className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}>Dig Plans</div>
+                    <div className={`text-sm ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
                         Planned/In-progress plans for this zone. Promote to create Zone Digup Order.
                     </div>
                 </div>
@@ -238,7 +239,7 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
                     </button>
                     <button
                         onClick={refetchPlans}
-                        className="px-3 py-2 rounded-lg border hover:bg-slate-100 text-sm"
+                        className={`px-3 py-2 rounded-lg border text-sm ${isDarkMode ? "border-white/10 text-slate-300 hover:bg-white/10" : "border-slate-200 text-slate-700 hover:bg-slate-100"}`}
                         disabled={loading}
                     >
                         Refresh
@@ -247,30 +248,30 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-                <div className="p-3 rounded-xl border bg-white">
-                    <div className="text-xs text-slate-500">Planned</div>
-                    <div className="text-lg font-semibold">{kpi.planned}</div>
+                <div className={`p-3 rounded-xl border ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
+                    <div className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Planned</div>
+                    <div className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}>{kpi.planned}</div>
                 </div>
 
-                <div className="p-3 rounded-xl border bg-white">
-                    <div className="text-xs text-slate-500">In-progress</div>
-                    <div className="text-lg font-semibold">{kpi.in_progress}</div>
+                <div className={`p-3 rounded-xl border ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
+                    <div className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>In-progress</div>
+                    <div className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}>{kpi.in_progress}</div>
                 </div>
 
-                <div className="p-3 rounded-xl border bg-white">
-                    <div className="text-xs text-slate-500">Linked Orders</div>
-                    <div className="text-lg font-semibold">{kpi.linked_orders}</div>
+                <div className={`p-3 rounded-xl border ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
+                    <div className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Linked Orders</div>
+                    <div className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}>{kpi.linked_orders}</div>
                 </div>
 
-                <div className="p-3 rounded-xl border bg-white">
-                    <div className="text-xs text-slate-500">Pending Promote</div>
-                    <div className="text-lg font-semibold">{kpi.pending_promote}</div>
+                <div className={`p-3 rounded-xl border ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
+                    <div className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Pending Promote</div>
+                    <div className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}>{kpi.pending_promote}</div>
                 </div>
 
-                <div className="p-3 rounded-xl border bg-white">
-                    <div className="text-xs text-slate-500">Planned Qty (Total)</div>
-                    <div className="text-lg font-semibold">{(summary ?? []).reduce((sum, r) => sum + (r.planned_qty ?? 0), 0)}</div>
-                    <div className="text-xs text-slate-500">Tags: {(summary ?? []).reduce((sum, r) => sum + (r.planned_tags ?? 0), 0)}</div>
+                <div className={`p-3 rounded-xl border ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
+                    <div className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Planned Qty (Total)</div>
+                    <div className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}>{(summary ?? []).reduce((sum, r) => sum + (r.planned_qty ?? 0), 0)}</div>
+                    <div className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Tags: {(summary ?? []).reduce((sum, r) => sum + (r.planned_tags ?? 0), 0)}</div>
                 </div>
             </div>
 
@@ -286,7 +287,7 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
                     Loading plans...
                 </div>
             ) : plans.length === 0 ? (
-                <div className="p-4 rounded-xl border text-sm text-slate-500">
+                <div className={`p-4 rounded-xl border text-sm ${isDarkMode ? "border-white/10 text-slate-400" : "border-slate-200 text-slate-500"}`}>
                     No dig plans yet.
                 </div>
             ) : (
@@ -297,27 +298,27 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
                         const qty = items.filter((x) => x.is_active).reduce((s, x) => s + (x.qty ?? 1), 0);
 
                         return (
-                            <div key={p.id} className="rounded-xl border bg-white">
+                            <div key={p.id} className={`rounded-xl border ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
                                 <div className="p-4 flex items-center justify-between">
                                     <div className="space-y-1">
                                         <div className="flex items-center gap-2">
-                                            <span className="font-medium">{p.status.toUpperCase()}</span>
-                                            <span className="text-xs text-slate-500">#{p.id.slice(0, 8)}</span>
+                                            <span className={`font-medium ${isDarkMode ? "text-slate-200" : "text-slate-800"}`}>{p.status.toUpperCase()}</span>
+                                            <span className={`text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>#{p.id.slice(0, 8)}</span>
                                             {p.promoted_order_id && (
                                                 <span className="text-xs px-2 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
                                                     Linked Order
                                                 </span>
                                             )}
                                         </div>
-                                        <div className="text-sm text-slate-500">
+                                        <div className={`text-sm ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
                                             {p.target_date_from ?? "—"} → {p.target_date_to ?? "—"} | Confidence: {p.confidence_level}
                                         </div>
-                                        {p.plan_reason && <div className="text-sm text-slate-600">{p.plan_reason}</div>}
+                                        {p.plan_reason && <div className={`text-sm ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>{p.plan_reason}</div>}
                                     </div>
 
                                     <div className="flex items-center gap-2">
                                         <button
-                                            className="px-3 py-2 rounded-lg border hover:bg-slate-100 text-sm"
+                                            className={`px-3 py-2 rounded-lg border text-sm ${isDarkMode ? "border-white/10 text-slate-300 hover:bg-white/10" : "border-slate-200 hover:bg-slate-100"}`}
                                             onClick={() => onToggle(p.id)}
                                         >
                                             {isOpen ? (
@@ -361,7 +362,7 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
                                                 </span>
 
                                                 <button
-                                                    className="px-3 py-2 rounded-lg border hover:bg-slate-100 text-sm"
+                                                    className={`px-3 py-2 rounded-lg border text-sm ${isDarkMode ? "border-white/10 text-slate-300 hover:bg-white/10" : "border-slate-200 hover:bg-slate-100"}`}
                                                     onClick={() => onJumpToOrder?.(p.promoted_order_id!)}
                                                     title="ไปที่ใบขุด"
                                                 >
@@ -369,7 +370,7 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
                                                 </button>
 
                                                 <button
-                                                    className="px-3 py-2 rounded-lg border hover:bg-slate-100 text-sm"
+                                                    className={`px-3 py-2 rounded-lg border text-sm ${isDarkMode ? "border-white/10 text-slate-300 hover:bg-white/10" : "border-slate-200 hover:bg-slate-100"}`}
                                                     onClick={() => navigator.clipboard.writeText(p.promoted_order_id!)}
                                                     title="Copy order id"
                                                 >
@@ -382,29 +383,29 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
 
                                 {isOpen && (
                                     <div className="px-4 pb-4">
-                                        <div className="text-sm text-slate-500 mb-2">
+                                        <div className={`text-sm mb-2 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
                                             Items: {items.length} | Qty: {qty}
                                         </div>
-                                        <div className="rounded-lg border overflow-hidden">
+                                        <div className={`rounded-lg border overflow-hidden ${isDarkMode ? "border-white/10" : "border-slate-200"}`}>
                                             <table className="w-full text-sm">
-                                                <thead className="bg-slate-50">
+                                                <thead className={isDarkMode ? "bg-white/5" : "bg-slate-50"}>
                                                     <tr>
-                                                        <th className="text-left p-2 font-medium text-slate-600">Tag</th>
-                                                        <th className="text-left p-2 font-medium text-slate-600">Size</th>
-                                                        <th className="text-left p-2 font-medium text-slate-600">Grade</th>
-                                                        <th className="text-right p-2 font-medium text-slate-600">Qty</th>
+                                                        <th className={`text-left p-2 font-medium ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Tag</th>
+                                                        <th className={`text-left p-2 font-medium ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Size</th>
+                                                        <th className={`text-left p-2 font-medium ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Grade</th>
+                                                        <th className={`text-right p-2 font-medium ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Qty</th>
                                                         {!p.promoted_order_id && (
-                                                            <th className="text-right p-2 font-medium text-slate-600">Action</th>
+                                                            <th className={`text-right p-2 font-medium ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Action</th>
                                                         )}
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {items.map((it) => (
-                                                        <tr key={it.id} className="border-t border-slate-100">
-                                                            <td className="p-2 font-medium text-slate-700">{it.tag_code ?? it.tag_id.slice(0, 8)}</td>
-                                                            <td className="p-2 text-slate-700">{it.size_label ?? "—"}</td>
-                                                            <td className="p-2 text-slate-700">{it.grade ?? "—"}</td>
-                                                            <td className="p-2 text-right text-slate-700">{it.qty}</td>
+                                                        <tr key={it.id} className={`border-t ${isDarkMode ? "border-white/10" : "border-slate-100"}`}>
+                                                            <td className={`p-2 font-medium ${isDarkMode ? "text-slate-200" : "text-slate-700"}`}>{it.tag_code ?? it.tag_id.slice(0, 8)}</td>
+                                                            <td className={`p-2 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{it.size_label ?? "—"}</td>
+                                                            <td className={`p-2 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{it.grade ?? "—"}</td>
+                                                            <td className={`p-2 text-right ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>{it.qty}</td>
                                                             {!p.promoted_order_id && (
                                                                 <td className="p-2 text-right">
                                                                     <button
@@ -422,7 +423,7 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
                                                     ))}
                                                     {items.length === 0 && (
                                                         <tr>
-                                                            <td className="p-3 text-sm text-slate-400" colSpan={!p.promoted_order_id ? 5 : 4}>
+                                                            <td className={`p-3 text-sm ${isDarkMode ? "text-slate-500" : "text-slate-400"}`} colSpan={!p.promoted_order_id ? 5 : 4}>
                                                                 No items loaded yet.
                                                             </td>
                                                         </tr>
@@ -440,14 +441,14 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
 
             {/* Add Item Modal */}
             {addForPlanId && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
-                        <div className="flex items-center justify-between p-4 border-b">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className={`rounded-2xl shadow-2xl w-full max-w-md mx-4 ${isDarkMode ? "bg-slate-900 border border-white/10" : "bg-white"}`}>
+                        <div className={`flex items-center justify-between p-4 border-b ${isDarkMode ? "border-white/10" : "border-slate-100"}`}>
                             <div>
-                                <div className="font-semibold">Add Item to Plan</div>
-                                <div className="text-sm text-slate-500">Plan #{shortId(addForPlanId)}</div>
+                                <div className={`font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}>Add Item to Plan</div>
+                                <div className={`text-sm ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Plan #{shortId(addForPlanId)}</div>
                             </div>
-                            <button onClick={closeAddModal} className="p-2 rounded-lg hover:bg-slate-100">
+                            <button onClick={closeAddModal} className={`p-2 rounded-lg ${isDarkMode ? "hover:bg-white/10 text-slate-400" : "hover:bg-slate-100 text-slate-600"}`}>
                                 <X className="h-5 w-5" />
                             </button>
                         </div>
@@ -455,11 +456,11 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
                         <div className="p-4 space-y-4">
                             {/* Tag Search */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Tag Code</label>
+                                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>Tag Code</label>
                                 <input
                                     type="text"
                                     placeholder="Search tag code..."
-                                    className="w-full p-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className={`w-full p-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none ${isDarkMode ? "bg-black border-white/10 text-white placeholder:text-slate-500" : "bg-white border-slate-200"}`}
                                     value={tagQuery}
                                     onChange={(e) => setTagQuery(e.target.value)}
                                 />
@@ -469,11 +470,11 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
                                     </div>
                                 )}
                                 {tagOptions.length > 0 && !tagId && (
-                                    <div className="mt-1 border rounded-lg max-h-40 overflow-y-auto bg-white shadow">
+                                    <div className={`mt-1 border rounded-lg max-h-40 overflow-y-auto shadow ${isDarkMode ? "bg-slate-800 border-white/10" : "bg-white border-slate-200"}`}>
                                         {tagOptions.map((t) => (
                                             <button
                                                 key={t.id}
-                                                className="w-full text-left p-2 hover:bg-slate-50 text-sm"
+                                                className={`w-full text-left p-2 text-sm ${isDarkMode ? "text-slate-200 hover:bg-white/10" : "text-slate-900 hover:bg-slate-50"}`}
                                                 onClick={() => {
                                                     setTagId(t.id);
                                                     setSelectedTagCode(t.tag_code);
@@ -501,9 +502,9 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
 
                             {/* Size Label */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Size</label>
+                                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>Size</label>
                                 <select
-                                    className="w-full p-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className={`w-full p-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none ${isDarkMode ? "bg-black border-white/10 text-white" : "bg-white border-slate-200"}`}
                                     value={sizeLabel}
                                     onChange={(e) => setSizeLabel(e.target.value)}
                                 >
@@ -517,9 +518,9 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
 
                             {/* Grade */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Grade</label>
+                                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>Grade</label>
                                 <select
-                                    className="w-full p-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className={`w-full p-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none ${isDarkMode ? "bg-black border-white/10 text-white" : "bg-white border-slate-200"}`}
                                     value={grade}
                                     onChange={(e) => setGrade(e.target.value)}
                                 >
@@ -531,11 +532,11 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
 
                             {/* Qty */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Quantity</label>
+                                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>Quantity</label>
                                 <input
                                     type="number"
                                     min={1}
-                                    className="w-full p-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none"
+                                    className={`w-full p-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none ${isDarkMode ? "bg-black border-white/10 text-white" : "bg-white border-slate-200"}`}
                                     value={qty}
                                     onChange={(e) => setQty(parseInt(e.target.value, 10) || 1)}
                                 />
@@ -543,9 +544,9 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
 
                             {/* Notes */}
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-1">Notes (optional)</label>
+                                <label className={`block text-sm font-medium mb-1 ${isDarkMode ? "text-slate-300" : "text-slate-700"}`}>Notes (optional)</label>
                                 <textarea
-                                    className="w-full p-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none resize-none"
+                                    className={`w-full p-2 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none resize-none ${isDarkMode ? "bg-black border-white/10 text-white placeholder:text-slate-500" : "bg-white border-slate-200"}`}
                                     rows={2}
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
@@ -561,9 +562,9 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
                             </div>
                         )}
 
-                        <div className="p-4 border-t flex items-center justify-end gap-2">
+                        <div className={`p-4 border-t flex items-center justify-end gap-2 ${isDarkMode ? "border-white/10" : "border-slate-100"}`}>
                             <button
-                                className="px-4 py-2 rounded-lg border hover:bg-slate-100 text-sm"
+                                className={`px-4 py-2 rounded-lg border text-sm ${isDarkMode ? "border-white/10 text-slate-300 hover:bg-white/10" : "border-slate-200 hover:bg-slate-100"}`}
                                 onClick={closeAddModal}
                             >
                                 Cancel
@@ -608,6 +609,7 @@ export function ZoneDigPlanTab({ zoneId, onJumpToOrder }: Props) {
                     setCreatePlanOpen(false);
                     await refetchPlans();
                 }}
+                isDarkMode={isDarkMode}
             />
         </div>
     );

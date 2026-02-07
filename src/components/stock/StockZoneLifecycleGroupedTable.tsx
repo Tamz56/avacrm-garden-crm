@@ -64,7 +64,7 @@ function gradeStyle(gradeCode: string | null | undefined, isDarkMode: boolean) {
         return styles[gradeCode as keyof typeof styles];
     }
     return isDarkMode
-        ? { label: gradeCode || "-", className: "bg-slate-700 text-slate-400 border-slate-600" }
+        ? { label: gradeCode || "-", className: "bg-slate-500/20 text-slate-300 border-white/10" }
         : { label: gradeCode || "-", className: "bg-slate-50 text-slate-500 border-slate-200" };
 }
 
@@ -139,34 +139,34 @@ export const StockZoneLifecycleGroupedTable: React.FC<Props> = ({
 
     // Theme-aware styles
     const containerClass = isDarkMode
-        ? "rounded-xl border border-slate-700 bg-slate-800 shadow-lg overflow-hidden"
+        ? "rounded-xl border border-white/10 bg-white/5 shadow-lg overflow-hidden"
         : "rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden";
     const theadClass = isDarkMode
-        ? "bg-slate-700/50 border-b border-slate-600"
+        ? "bg-white/5 border-b border-white/10"
         : "bg-slate-50 border-b border-slate-200";
     const thClass = isDarkMode ? "text-slate-400" : "text-slate-600";
-    const tbodyDivide = isDarkMode ? "divide-y divide-slate-700" : "divide-y divide-slate-100";
-    const speciesHeaderBg = isDarkMode ? "bg-slate-700/30" : "bg-slate-50";
+    const tbodyDivide = isDarkMode ? "divide-y divide-white/10" : "divide-y divide-slate-100";
+    const speciesHeaderBg = isDarkMode ? "bg-white/5" : "bg-slate-50";
     const speciesHeaderText = isDarkMode ? "text-emerald-400" : "text-emerald-700";
-    const sizeRowBg = isDarkMode ? "bg-slate-800 hover:bg-slate-700/50" : "bg-white hover:bg-slate-50";
+    const sizeRowBg = isDarkMode ? "bg-transparent hover:bg-white/5" : "bg-white hover:bg-slate-50";
     const textWhite = isDarkMode ? "text-white" : "text-slate-900";
     const textMuted = isDarkMode ? "text-slate-400" : "text-slate-500";
     const textMutedLight = isDarkMode ? "text-slate-500" : "text-slate-400";
     const emeraldText = isDarkMode ? "text-emerald-400" : "text-emerald-600";
     const cyanText = isDarkMode ? "text-cyan-400" : "text-cyan-600";
     const amberText = isDarkMode ? "text-amber-400" : "text-amber-600";
-    const zoneRowHover = isDarkMode ? "hover:bg-slate-700/50" : "hover:bg-slate-50";
+    const zoneRowHover = isDarkMode ? "hover:bg-white/5" : "hover:bg-slate-50";
 
     const getBadgeClass = (type: "red" | "orange" | "amber") => {
         const classes = {
             red: isDarkMode
-                ? "bg-red-900/50 border border-red-700 text-red-300"
+                ? "bg-red-500/20 border border-red-500/30 text-red-300"
                 : "bg-red-50 border border-red-200 text-red-700",
             orange: isDarkMode
-                ? "bg-orange-900/50 border border-orange-700 text-orange-300"
+                ? "bg-orange-500/20 border border-orange-500/30 text-orange-300"
                 : "bg-orange-50 border border-orange-200 text-orange-700",
             amber: isDarkMode
-                ? "bg-amber-900/50 border border-amber-700 text-amber-300"
+                ? "bg-amber-500/20 border border-amber-500/30 text-amber-300"
                 : "bg-amber-50 border border-amber-200 text-amber-700",
         };
         return classes[type];

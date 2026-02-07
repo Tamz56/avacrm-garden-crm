@@ -14,9 +14,10 @@ type Props = {
         target_date_from: string | null;
         target_date_to: string | null;
     }) => Promise<void>;
+    isDarkMode?: boolean;
 };
 
-export default function CreateDigPlanModal({ open, onClose, onSubmit }: Props) {
+export default function CreateDigPlanModal({ open, onClose, onSubmit, isDarkMode = false }: Props) {
     const [status, setStatus] = useState<"planned" | "in_progress">("planned");
     const [confidence, setConfidence] = useState<"low" | "medium" | "high">("medium");
     const [planReason, setPlanReason] = useState("");
@@ -55,45 +56,45 @@ export default function CreateDigPlanModal({ open, onClose, onSubmit }: Props) {
     }
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-            <div className="w-full max-w-xl rounded-2xl bg-white shadow-xl border p-5">
-                <div className="text-lg font-semibold">สร้าง Dig Plan ใหม่</div>
-                <div className="text-sm text-slate-500 mt-1">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+            <div className={`w-full max-w-xl rounded-2xl shadow-xl border p-5 ${isDarkMode ? "bg-slate-900 border-white/10" : "bg-white border-slate-200"}`}>
+                <div className={`text-lg font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}>สร้าง Dig Plan ใหม่</div>
+                <div className={`text-sm mt-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
                     สร้างแผนขุดก่อน แล้วค่อย Add items และ Promote ไปเป็นคำสั่งขุด
                 </div>
 
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
-                        <div className="text-xs text-slate-500 mb-1">Status</div>
+                        <div className={`text-xs mb-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Status</div>
                         <select
-                            className="w-full rounded-xl border px-3 py-2"
+                            className={`w-full rounded-xl border px-3 py-2 ${isDarkMode ? "bg-black border-white/10 text-white" : "bg-white border-slate-200"}`}
                             value={status}
                             onChange={(e) => setStatus(e.target.value as any)}
                             disabled={saving}
                         >
-                            <option value="planned">planned</option>
-                            <option value="in_progress">in_progress</option>
+                            <option value="planned" className={isDarkMode ? "bg-slate-800" : ""}>planned</option>
+                            <option value="in_progress" className={isDarkMode ? "bg-slate-800" : ""}>in_progress</option>
                         </select>
                     </div>
 
                     <div>
-                        <div className="text-xs text-slate-500 mb-1">Confidence</div>
+                        <div className={`text-xs mb-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Confidence</div>
                         <select
-                            className="w-full rounded-xl border px-3 py-2"
+                            className={`w-full rounded-xl border px-3 py-2 ${isDarkMode ? "bg-black border-white/10 text-white" : "bg-white border-slate-200"}`}
                             value={confidence}
                             onChange={(e) => setConfidence(e.target.value as any)}
                             disabled={saving}
                         >
-                            <option value="low">low</option>
-                            <option value="medium">medium</option>
-                            <option value="high">high</option>
+                            <option value="low" className={isDarkMode ? "bg-slate-800" : ""}>low</option>
+                            <option value="medium" className={isDarkMode ? "bg-slate-800" : ""}>medium</option>
+                            <option value="high" className={isDarkMode ? "bg-slate-800" : ""}>high</option>
                         </select>
                     </div>
 
                     <div className="md:col-span-2">
-                        <div className="text-xs text-slate-500 mb-1">Reason</div>
+                        <div className={`text-xs mb-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Reason</div>
                         <input
-                            className="w-full rounded-xl border px-3 py-2"
+                            className={`w-full rounded-xl border px-3 py-2 ${isDarkMode ? "bg-black border-white/10 text-white placeholder:text-slate-500" : "bg-white border-slate-200"}`}
                             placeholder="เช่น เตรียมขุดส่งลูกค้า, แผนขุดเข้าพาเนล..."
                             value={planReason}
                             onChange={(e) => setPlanReason(e.target.value)}
@@ -102,9 +103,9 @@ export default function CreateDigPlanModal({ open, onClose, onSubmit }: Props) {
                     </div>
 
                     <div>
-                        <div className="text-xs text-slate-500 mb-1">Target from (optional)</div>
+                        <div className={`text-xs mb-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Target from (optional)</div>
                         <input
-                            className="w-full rounded-xl border px-3 py-2"
+                            className={`w-full rounded-xl border px-3 py-2 ${isDarkMode ? "bg-black border-white/10 text-white" : "bg-white border-slate-200"}`}
                             type="date"
                             value={from}
                             onChange={(e) => setFrom(e.target.value)}
@@ -113,9 +114,9 @@ export default function CreateDigPlanModal({ open, onClose, onSubmit }: Props) {
                     </div>
 
                     <div>
-                        <div className="text-xs text-slate-500 mb-1">Target to (optional)</div>
+                        <div className={`text-xs mb-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Target to (optional)</div>
                         <input
-                            className="w-full rounded-xl border px-3 py-2"
+                            className={`w-full rounded-xl border px-3 py-2 ${isDarkMode ? "bg-black border-white/10 text-white" : "bg-white border-slate-200"}`}
                             type="date"
                             value={to}
                             onChange={(e) => setTo(e.target.value)}
@@ -124,9 +125,9 @@ export default function CreateDigPlanModal({ open, onClose, onSubmit }: Props) {
                     </div>
 
                     <div className="md:col-span-2">
-                        <div className="text-xs text-slate-500 mb-1">Notes</div>
+                        <div className={`text-xs mb-1 ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>Notes</div>
                         <textarea
-                            className="w-full rounded-xl border px-3 py-2 min-h-[90px]"
+                            className={`w-full rounded-xl border px-3 py-2 min-h-[90px] ${isDarkMode ? "bg-black border-white/10 text-white placeholder:text-slate-500" : "bg-white border-slate-200"}`}
                             placeholder="หมายเหตุเพิ่มเติม"
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
@@ -143,7 +144,7 @@ export default function CreateDigPlanModal({ open, onClose, onSubmit }: Props) {
 
                 <div className="mt-4 flex justify-end gap-2">
                     <button
-                        className="rounded-xl border px-4 py-2 hover:bg-slate-50"
+                        className={`rounded-xl border px-4 py-2 ${isDarkMode ? "border-white/10 text-slate-300 hover:bg-white/10" : "border-slate-200 hover:bg-slate-50"}`}
                         onClick={onClose}
                         disabled={saving}
                     >

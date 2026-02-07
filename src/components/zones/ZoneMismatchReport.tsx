@@ -45,10 +45,10 @@ export const ZoneMismatchReport: React.FC = () => {
             {/* Header */}
             <div className="flex items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-xl font-semibold text-slate-900">
+                    <h1 className="text-xl font-semibold text-slate-900 dark:text-slate-200">
                         รายงานความคลาดเคลื่อนของแปลงปลูก
                     </h1>
-                    <p className="text-sm text-slate-500 mt-1">
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                         ใช้ตรวจดูว่าแปลงไหนข้อมูลในระบบไม่ตรงกับการสำรวจภาคสนาม
                     </p>
                 </div>
@@ -56,32 +56,32 @@ export const ZoneMismatchReport: React.FC = () => {
 
             {/* Summary cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="rounded-2xl border bg-white p-4 shadow-sm">
-                    <p className="text-xs font-medium text-slate-500">
+                <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 shadow-sm">
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         จำนวนแปลงทั้งหมด
                     </p>
-                    <p className="mt-2 text-2xl font-semibold text-slate-900">
+                    <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-200">
                         {totalZones.toLocaleString()} <span className="text-base">แปลง</span>
                     </p>
                 </div>
 
-                <div className="rounded-2xl border bg-white p-4 shadow-sm">
-                    <p className="text-xs font-medium text-slate-500">
+                <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 shadow-sm">
+                    <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                         แปลงที่มีความคลาดเคลื่อน
                     </p>
-                    <p className="mt-2 text-2xl font-semibold text-amber-700 flex items-baseline gap-2">
+                    <p className="mt-2 text-2xl font-semibold text-amber-700 dark:text-amber-400 flex items-baseline gap-2">
                         {totalMismatch.toLocaleString()}{" "}
-                        <span className="text-base text-slate-500">แปลง</span>
+                        <span className="text-base text-slate-500 dark:text-slate-400">แปลง</span>
                     </p>
                 </div>
 
-                <div className="rounded-2xl border bg-white p-4 shadow-sm flex items-center gap-3">
+                <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 shadow-sm flex items-center gap-3">
                     <AlertTriangle className="w-8 h-8 text-amber-500" />
                     <div>
-                        <p className="text-xs font-medium text-slate-500">
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                             หมายเหตุ
                         </p>
-                        <p className="text-sm text-slate-700">
+                        <p className="text-sm text-slate-700 dark:text-slate-300">
                             แนะนำให้เริ่มจากแปลงที่ “คลาดเคลื่อนมาก” ก่อน
                         </p>
                     </div>
@@ -95,14 +95,14 @@ export const ZoneMismatchReport: React.FC = () => {
                     <input
                         type="text"
                         placeholder="ค้นหาชื่อแปลง..."
-                        className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500 outline-none"
+                        className="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-sm dark:text-slate-200 focus:ring-2 focus:ring-emerald-500/60 focus:border-emerald-500 outline-none"
                         value={searchText}
                         onChange={(e) => setSearchText(e.target.value)}
                     />
                 </div>
 
                 <select
-                    className="text-sm rounded-xl border border-slate-200 px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
+                    className="text-sm rounded-xl border border-slate-200 dark:border-white/10 px-3 py-2 bg-white dark:bg-white/5 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/60"
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                 >
@@ -115,30 +115,30 @@ export const ZoneMismatchReport: React.FC = () => {
             </div>
 
             {/* Table */}
-            <div className="rounded-2xl border bg-white shadow-sm overflow-hidden">
+            <div className="rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 shadow-sm overflow-hidden">
                 {loading && (
-                    <div className="flex items-center justify-center py-10 text-sm text-slate-500 gap-2">
+                    <div className="flex items-center justify-center py-10 text-sm text-slate-500 dark:text-slate-400 gap-2">
                         <Loader2 className="w-4 h-4 animate-spin" />
                         กำลังโหลดข้อมูล...
                     </div>
                 )}
 
                 {error && !loading && (
-                    <div className="p-6 text-sm text-red-600">
+                    <div className="p-6 text-sm text-red-600 dark:text-red-400">
                         ไม่สามารถโหลดข้อมูลได้: {error}
                     </div>
                 )}
 
                 {!loading && !error && filteredRows.length === 0 && (
-                    <div className="p-6 text-sm text-slate-500">
+                    <div className="p-6 text-sm text-slate-500 dark:text-slate-400">
                         ไม่พบข้อมูลตามเงื่อนไขที่เลือก
                     </div>
                 )}
 
                 {!loading && !error && filteredRows.length > 0 && (
                     <table className="min-w-full text-sm">
-                        <thead className="bg-slate-50 border-b border-slate-200">
-                            <tr className="text-xs font-semibold text-slate-500">
+                        <thead className="bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-white/10">
+                            <tr className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                                 <th className="px-4 py-3 text-left">ชื่อแปลง</th>
                                 <th className="px-4 py-3 text-left">สถานะความคลาดเคลื่อน</th>
                                 <th className="px-4 py-3 text-right">จำนวนในระบบ (ต้น)</th>
@@ -148,22 +148,22 @@ export const ZoneMismatchReport: React.FC = () => {
                                 <th className="px-4 py-3 text-left">วันที่สำรวจล่าสุด</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="dark:text-slate-300">
                             {filteredRows.map((row) => (
                                 <tr
                                     key={row.zone_id}
-                                    className="border-b border-slate-100 last:border-0 hover:bg-slate-50/60"
+                                    className="border-b border-slate-100 dark:border-white/10 last:border-0 hover:bg-slate-50/60 dark:hover:bg-white/5"
                                 >
-                                    <td className="px-4 py-2.5 text-slate-900">
+                                    <td className="px-4 py-2.5 text-slate-900 dark:text-slate-200">
                                         {row.zone_name}
                                     </td>
                                     <td className="px-4 py-2.5">
                                         <ZoneMismatchStatusBadge status={row.mismatch_status} />
                                     </td>
-                                    <td className="px-4 py-2.5 text-right text-slate-900">
+                                    <td className="px-4 py-2.5 text-right text-slate-900 dark:text-slate-200">
                                         {row.system_qty?.toLocaleString() ?? "-"}
                                     </td>
-                                    <td className="px-4 py-2.5 text-right text-slate-900">
+                                    <td className="px-4 py-2.5 text-right text-slate-900 dark:text-slate-200">
                                         {row.inspected_qty != null
                                             ? row.inspected_qty.toLocaleString()
                                             : "-"}
@@ -173,10 +173,10 @@ export const ZoneMismatchReport: React.FC = () => {
                                             <span
                                                 className={
                                                     row.diff_qty > 0
-                                                        ? "text-emerald-700"
+                                                        ? "text-emerald-700 dark:text-emerald-400"
                                                         : row.diff_qty < 0
-                                                            ? "text-red-600"
-                                                            : "text-slate-700"
+                                                            ? "text-red-600 dark:text-red-400"
+                                                            : "text-slate-700 dark:text-slate-300"
                                                 }
                                             >
                                                 {row.diff_qty.toLocaleString()}
@@ -185,10 +185,10 @@ export const ZoneMismatchReport: React.FC = () => {
                                             "-"
                                         )}
                                     </td>
-                                    <td className="px-4 py-2.5 text-slate-700">
+                                    <td className="px-4 py-2.5 text-slate-700 dark:text-slate-300">
                                         {row.diff_direction ?? "-"}
                                     </td>
-                                    <td className="px-4 py-2.5 text-slate-600">
+                                    <td className="px-4 py-2.5 text-slate-600 dark:text-slate-400">
                                         {row.last_inspection_date
                                             ? new Date(row.last_inspection_date).toLocaleDateString(
                                                 "th-TH"

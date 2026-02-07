@@ -13,7 +13,7 @@ const formatNum = (val: number | null | undefined) => {
 export const ZoneMismatchBadge: React.FC<Props> = ({ mismatch }) => {
     if (!mismatch) {
         return (
-            <span className="inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-500">
+            <span className="inline-flex rounded-full bg-slate-100 dark:bg-slate-500/20 px-3 py-1 text-xs text-slate-500 dark:text-slate-400">
                 ยังไม่สำรวจ
             </span>
         );
@@ -23,14 +23,14 @@ export const ZoneMismatchBadge: React.FC<Props> = ({ mismatch }) => {
 
     const badgeColor =
         status.includes("คลาดเคลื่อนมาก")
-            ? "bg-red-50 text-red-700"
+            ? "bg-red-50 text-red-700 dark:bg-red-500/20 dark:text-red-400"
             : status.includes("ปานกลาง")
-                ? "bg-orange-50 text-orange-700"
+                ? "bg-orange-50 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400"
                 : status.includes("เล็กน้อย")
-                    ? "bg-amber-50 text-amber-700"
+                    ? "bg-amber-50 text-amber-700 dark:bg-amber-500/20 dark:text-amber-400"
                     : status.includes("ตรงตามระบบ")
-                        ? "bg-emerald-50 text-emerald-700"
-                        : "bg-slate-50 text-slate-700";
+                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400"
+                        : "bg-slate-50 text-slate-700 dark:bg-slate-500/20 dark:text-slate-400";
 
     return (
         <div className="group relative inline-flex">
@@ -51,14 +51,14 @@ export const ZoneMismatchBadge: React.FC<Props> = ({ mismatch }) => {
           absolute left-0 top-[110%] z-50
           hidden
           min-w-[240px] max-w-xs
-          rounded-lg border border-slate-200 bg-white
+          rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800
           px-3 py-2
-          text-[11px] text-slate-700
+          text-[11px] text-slate-700 dark:text-slate-300
           shadow-lg
           group-hover:block
         "
             >
-                <div className="mb-1 font-semibold text-slate-900">
+                <div className="mb-1 font-semibold text-slate-900 dark:text-slate-200">
                     รายละเอียดความคลาดเคลื่อน
                 </div>
 

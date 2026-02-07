@@ -11,6 +11,7 @@ import { PinGate } from "./components/auth/PinGate";
 import { PinSetup } from "./components/auth/PinSetup";
 import * as pinLock from "./pinLock";
 import { getQueryParam, setQueryParam } from "./utils/urlState";
+import { buildZoneUrl } from "./constants/deeplink.ts";
 
 
 // Components
@@ -280,7 +281,11 @@ function App() {
     if (customerId) setCustomerPresetId(customerId);
 
     const zoneId = getQueryParam("zone_id");
-    if (zoneId) setZonesPreset({ initialZoneId: zoneId });
+    if (zoneId) {
+      const hl = getQueryParam("hl");
+      const focus = getQueryParam("focus") || "inventory"; // Default focus if not specified
+      setZonesPreset({ initialZoneId: zoneId, hl: hl ? 1 : undefined, focus });
+    }
 
     const tagId = getQueryParam("tag_id");
     if (tagId) setTagPreset({ initialTagId: tagId });
@@ -323,6 +328,18 @@ function App() {
     localStorage.setItem('ava-theme', newMode ? 'dark' : 'light');
   };
 
+  // Sync body background color for overscroll/margin areas AND toggle html.dark for Tailwind
+  useEffect(() => {
+    // Toggle dark class on html element for Tailwind dark: classes
+    document.documentElement.classList.toggle("dark", isDarkMode);
+    // Set body background for overscroll areas
+    document.body.style.backgroundColor = isDarkMode ? "#000000" : "";
+    return () => {
+      document.documentElement.classList.remove("dark");
+      document.body.style.backgroundColor = "";
+    };
+  }, [isDarkMode]);
+
   // Navigation Presets
   const [zonesPreset, setZonesPreset] = useState(null);
   const [tagPreset, setTagPreset] = useState(null);
@@ -336,11 +353,19 @@ function App() {
 
 
 
+
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const handleOpenZone = useCallback((zoneId) => {
-    setZonesPreset({ initialZoneId: zoneId });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const handleOpenZone = useCallback((zoneId, opts = {}) => {
+    // opts: { focus: 'inventory', highlight: true, ... }
+    setZonesPreset({ initialZoneId: zoneId, ...opts });
     navigatePage("zones");
-    setQueryParam("zone_id", zoneId, { replace: false });
+
+    // Explicitly update URL params for deep linking persistence (so refresh works)
+    // Use canonical helper to build clean URL
+    const newUrl = buildZoneUrl(zoneId, opts);
+    window.history.pushState({}, "", newUrl); // Use pushState for new history logic
   }, [navigatePage]);
 
   const handleOpenContext = useCallback((type, id) => {
@@ -401,7 +426,7 @@ function App() {
 
   return (
 
-    <div className={`flex min-h-screen font-sans transition-colors duration-200 ${isDarkMode ? "dark bg-slate-950 text-slate-50" : "bg-slate-50 text-slate-900"}`}>
+    <div className={`flex min-h-screen font-sans transition-colors duration-200 ${isDarkMode ? "dark bg-black text-slate-50" : "bg-slate-50 text-slate-900"}`}>
       {/* Sidebar */}
       <Sidebar
         activePage={activePage}
@@ -510,7 +535,7 @@ function App() {
         </header>
 
         {/* Page Content */}
-        <main className={`flex-1 overflow-auto transition-colors duration-200 ${isDarkMode ? "bg-slate-950" : "bg-slate-50"}`}>
+        <main className={`flex-1 overflow-auto transition-colors duration-200 ${isDarkMode ? "bg-black" : "bg-slate-50"}`}>
           {activePage === "dashboard" && (
             <Dashboard
               isDarkMode={isDarkMode}

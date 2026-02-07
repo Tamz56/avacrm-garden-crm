@@ -136,7 +136,7 @@ const StockOverviewPage: React.FC<Props> = ({ onOpenTagSearch, isDarkMode = fals
     const textMain = isDarkMode ? "text-white" : "text-slate-800";
     const textMuted = isDarkMode ? "text-slate-400" : "text-slate-500";
     const selectClass = isDarkMode
-        ? "h-8 rounded-lg border border-slate-600 bg-slate-700 px-2 text-xs text-white focus:ring-2 focus:ring-emerald-500"
+        ? "h-8 rounded-lg border border-white/10 bg-white/5 px-2 text-xs text-white focus:ring-2 focus:ring-emerald-500"
         : "h-8 rounded-lg border border-gray-200 bg-white px-2 text-xs text-gray-700";
 
     return (
@@ -271,6 +271,7 @@ const StockOverviewPage: React.FC<Props> = ({ onOpenTagSearch, isDarkMode = fals
                 open={!!selectedGroup}
                 group={selectedGroup}
                 onClose={() => setSelectedGroup(null)}
+                isDarkMode={isDarkMode}
             />
 
             <SetStockPriceDialog
@@ -301,8 +302,8 @@ const StatCard: React.FC<StatCardProps> = ({ label, value, suffix, tone = "defau
         ? (tone === "positive"
             ? "border-emerald-800 bg-emerald-900/30"
             : tone === "warning"
-                ? "border-amber-800 bg-amber-900/30"
-                : "border-slate-700 bg-slate-800")
+                ? "border-amber-500/20 bg-amber-500/10"
+                : "border-white/10 bg-white/5")
         : (tone === "positive"
             ? "border-emerald-200 bg-emerald-50"
             : tone === "warning"

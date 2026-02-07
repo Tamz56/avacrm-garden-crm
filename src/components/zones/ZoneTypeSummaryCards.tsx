@@ -21,24 +21,24 @@ export const ZoneTypeSummaryCards: React.FC<Props> = ({
     };
 
     const badgeColorByKey: Record<string, string> = {
-        production: "bg-emerald-50 text-emerald-700 ring-emerald-100",
-        trial: "bg-amber-50 text-amber-700 ring-amber-100",
-        nursery: "bg-sky-50 text-sky-700 ring-sky-100",
-        untyped: "bg-slate-50 text-slate-700 ring-slate-100",
+        production: "bg-emerald-50 text-emerald-700 ring-emerald-100 dark:bg-emerald-900/40 dark:text-emerald-400 dark:ring-emerald-800",
+        trial: "bg-amber-50 text-amber-700 ring-amber-100 dark:bg-amber-900/40 dark:text-amber-400 dark:ring-amber-800",
+        nursery: "bg-sky-50 text-sky-700 ring-sky-100 dark:bg-sky-900/40 dark:text-sky-400 dark:ring-sky-800",
+        untyped: "bg-slate-50 text-slate-700 ring-slate-100 dark:bg-slate-800/40 dark:text-slate-400 dark:ring-slate-700",
     };
 
     return (
         <div className="space-y-3">
             {/* แถวสรุปภาพรวมทั้งหมด */}
             {(totalZones ?? 0) > 0 && (
-                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600">
-                    <span className="font-medium text-slate-800">
+                <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600 dark:text-slate-400">
+                    <span className="font-medium text-slate-800 dark:text-slate-200">
                         รวมทั้งหมด {totalZones} แปลง
                     </span>
                     {typeof totalPlannedTrees === "number" && (
-                        <span className="text-slate-500">
+                        <span className="text-slate-500 dark:text-slate-400">
                             แผนปลูกรวม{" "}
-                            <span className="font-semibold text-slate-800">
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">
                                 {totalPlannedTrees.toLocaleString("th-TH")}
                             </span>{" "}
                             ต้น
@@ -59,7 +59,7 @@ export const ZoneTypeSummaryCards: React.FC<Props> = ({
                     return (
                         <div
                             key={item.key}
-                            className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+                            className="flex flex-col gap-2 rounded-xl border border-slate-200 bg-white dark:border-white/10 dark:bg-white/5 px-4 py-3 shadow-sm"
                         >
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
@@ -69,32 +69,32 @@ export const ZoneTypeSummaryCards: React.FC<Props> = ({
                                         {icon}
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                             ประเภทแปลง
                                         </span>
-                                        <span className="text-sm font-semibold text-slate-900">
+                                        <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                                             {item.label}
                                         </span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="mt-1 grid grid-cols-1 gap-2 text-xs text-slate-600 sm:grid-cols-2">
+                            <div className="mt-1 grid grid-cols-1 gap-2 text-xs text-slate-600 dark:text-slate-400 sm:grid-cols-2">
                                 <div className="flex items-baseline justify-between gap-2">
-                                    <span className="text-slate-500">จำนวนแปลง</span>
-                                    <span className="font-semibold text-slate-900">
+                                    <span className="text-slate-500 dark:text-slate-400">จำนวนแปลง</span>
+                                    <span className="font-semibold text-slate-900 dark:text-slate-200">
                                         {item.zoneCount.toLocaleString("th-TH")} แปลง
                                     </span>
                                 </div>
                                 <div className="flex items-baseline justify-between gap-2">
-                                    <span className="text-slate-500">พื้นที่รวม</span>
-                                    <span className="font-semibold text-slate-900">
+                                    <span className="text-slate-500 dark:text-slate-400">พื้นที่รวม</span>
+                                    <span className="font-semibold text-slate-900 dark:text-slate-200">
                                         {item.areaRai.toLocaleString("th-TH")} ไร่
                                     </span>
                                 </div>
                                 <div className="flex items-baseline justify-between gap-2 sm:col-span-2">
-                                    <span className="text-slate-500">จำนวนต้นตามแผน</span>
-                                    <span className="font-semibold text-emerald-700">
+                                    <span className="text-slate-500 dark:text-slate-400">จำนวนต้นตามแผน</span>
+                                    <span className="font-semibold text-emerald-700 dark:text-emerald-400">
                                         {item.plannedTrees.toLocaleString("th-TH")} ต้น
                                     </span>
                                 </div>

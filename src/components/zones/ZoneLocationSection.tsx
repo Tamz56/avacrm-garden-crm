@@ -8,12 +8,14 @@ interface ZoneLocationSectionProps {
     zone: any;
     onSaved?: () => void;
     onReload?: () => void;
+    isDarkMode?: boolean;
 }
 
 export const ZoneLocationSection: React.FC<ZoneLocationSectionProps> = ({
     zone,
     onSaved,
     onReload,
+    isDarkMode = false,
 }) => {
     const { updateZoneLocation } = useZoneMutations();
     const [isBoundaryOpen, setIsBoundaryOpen] = React.useState(false);
@@ -117,20 +119,20 @@ export const ZoneLocationSection: React.FC<ZoneLocationSectionProps> = ({
     }, [lat, lng]);
 
     return (
-        <div className="rounded-xl border border-slate-200 bg-white p-4 space-y-3">
+        <div className={`rounded-xl border p-4 space-y-3 ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                    <div className="h-7 w-7 rounded-lg bg-sky-50 flex items-center justify-center">
-                        <MapPin className="h-4 w-4 text-sky-600" />
+                    <div className={`h-7 w-7 rounded-lg flex items-center justify-center ${isDarkMode ? "bg-sky-500/10" : "bg-sky-50"}`}>
+                        <MapPin className={`h-4 w-4 ${isDarkMode ? "text-sky-400" : "text-sky-600"}`} />
                     </div>
-                    <div className="text-sm font-semibold text-slate-800">พิกัดแปลง (Zone Location)</div>
+                    <div className={`text-sm font-semibold ${isDarkMode ? "text-white" : "text-slate-800"}`}>พิกัดแปลง (Zone Location)</div>
 
                     {hasBoundary ? (
-                        <span className="ml-2 text-xs rounded-full bg-emerald-50 text-emerald-700 px-2 py-1 border border-emerald-200">
+                        <span className={`ml-2 text-xs rounded-full px-2 py-1 border ${isDarkMode ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-emerald-50 text-emerald-700 border-emerald-200"}`}>
                             มีขอบเขตแล้ว
                         </span>
                     ) : (
-                        <span className="ml-2 text-xs rounded-full bg-slate-50 text-slate-600 px-2 py-1 border">
+                        <span className={`ml-2 text-xs rounded-full px-2 py-1 border ${isDarkMode ? "bg-white/5 text-slate-400 border-white/10" : "bg-slate-50 text-slate-600 border-slate-200"}`}>
                             ยังไม่มีขอบเขต
                         </span>
                     )}
@@ -138,7 +140,7 @@ export const ZoneLocationSection: React.FC<ZoneLocationSectionProps> = ({
 
                 <button
                     onClick={() => setIsBoundaryOpen(true)}
-                    className="rounded-xl bg-sky-600 px-3 py-2 text-sm text-white hover:bg-sky-700 disabled:opacity-60"
+                    className={`rounded-xl px-3 py-2 text-sm text-white disabled:opacity-60 ${isDarkMode ? "bg-sky-500 hover:bg-sky-600" : "bg-sky-600 hover:bg-sky-700"}`}
                     disabled={!zone?.id}
                 >
                     {hasBoundary ? "แก้ไขขอบเขต" : "วาดขอบเขต"}
@@ -146,13 +148,13 @@ export const ZoneLocationSection: React.FC<ZoneLocationSectionProps> = ({
             </div>
 
             {/* พื้นที่ (ไร่) */}
-            <div className="flex items-center justify-between text-xs text-slate-600">
+            <div className={`flex items-center justify-between text-xs ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
                 <div>
                     พื้นที่:{" "}
                     {areaRai == null ? (
                         <span className="text-slate-400">-</span>
                     ) : (
-                        <span className="font-semibold text-slate-800">{areaRai.toFixed(2)} ไร่</span>
+                        <span className={`font-semibold ${isDarkMode ? "text-white" : "text-slate-800"}`}>{areaRai.toFixed(2)} ไร่</span>
                     )}
                 </div>
                 {zone?.boundary_updated_at ? (
@@ -162,7 +164,7 @@ export const ZoneLocationSection: React.FC<ZoneLocationSectionProps> = ({
 
             {mapSrc && (
                 <div className="mb-2">
-                    <div className="w-full overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                    <div className={`w-full overflow-hidden rounded-xl border ${isDarkMode ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200"}`}>
                         <div className="h-72">
                             <iframe
                                 title="Zone Map"
@@ -176,20 +178,22 @@ export const ZoneLocationSection: React.FC<ZoneLocationSectionProps> = ({
                 </div>
             )}
 
-            <details className="group rounded-xl border border-slate-200 bg-slate-50">
-                <summary className="flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-100/50 select-none">
+            <details className={`group rounded-xl border ${isDarkMode ? "bg-white/5 border-white/10" : "bg-slate-50 border-slate-200"}`}>
+                <summary className={`flex cursor-pointer items-center justify-between px-4 py-3 text-sm font-medium select-none ${isDarkMode ? "text-slate-300 hover:bg-white/5" : "text-slate-700 hover:bg-slate-100/50"}`}>
                     <span>แก้ไขพิกัด / ลิงก์แผนที่</span>
                     <span className="text-xs font-normal text-slate-400 group-open:hidden">(คลิกเพื่อเปิด)</span>
                     <span className="text-xs font-normal text-slate-400 hidden group-open:inline">(คลิกเพื่อปิด)</span>
                 </summary>
 
-                <div className="px-4 pb-4 pt-2 border-t border-slate-100 bg-white rounded-b-xl space-y-3">
+                <div className={`px-4 pb-4 pt-2 border-t rounded-b-xl space-y-3 ${isDarkMode ? "bg-black border-white/10" : "bg-white border-slate-100"}`}>
                     <div className="space-y-2">
-                        <label className="text-xs font-medium text-slate-600">Google Maps URL</label>
+                        <label className={`text-xs font-medium ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Google Maps URL</label>
                         <div className="flex gap-2">
                             <input
                                 type="url"
-                                className="flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500"
+                                className={`flex-1 rounded-lg border px-3 py-2 text-sm outline-none focus:ring-1 ${isDarkMode
+                                    ? "bg-white/5 border-white/10 text-white placeholder-slate-600 focus:border-sky-500 focus:ring-sky-900"
+                                    : "bg-white border-slate-200 text-slate-900 placeholder-slate-400 focus:border-sky-500 focus:ring-sky-500"}`}
                                 value={mapUrl}
                                 onChange={(e) => onMapUrlChange(e.target.value)}
                                 placeholder="วาง URL จาก Google Maps เพื่อดึงพิกัดอัตโนมัติ"
@@ -198,7 +202,7 @@ export const ZoneLocationSection: React.FC<ZoneLocationSectionProps> = ({
                                 <button
                                     type="button"
                                     onClick={() => openInGoogleMaps(mapUrl)}
-                                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-3 py-2 text-xs text-slate-600 hover:bg-slate-50"
+                                    className={`inline-flex items-center gap-1 rounded-lg border px-3 py-2 text-xs hover:bg-white/5 ${isDarkMode ? "border-white/10 text-slate-300" : "border-slate-200 text-slate-600 hover:bg-slate-50"}`}
                                 >
                                     <ExternalLink className="w-3 h-3" />
                                     เปิด
@@ -219,11 +223,15 @@ export const ZoneLocationSection: React.FC<ZoneLocationSectionProps> = ({
 
                     <div className="grid grid-cols-2 gap-3">
                         <div className="space-y-1">
-                            <label className="text-xs font-medium text-slate-600">Latitude</label>
+                            <label className={`text-xs font-medium ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Latitude</label>
                             <input
                                 type="number"
                                 step="any"
-                                className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-sky-500 ${latError ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
+                                className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-sky-500 ${latError
+                                    ? 'border-red-400 bg-red-50'
+                                    : isDarkMode
+                                        ? 'bg-white/5 border-white/10 text-white'
+                                        : 'bg-white border-slate-200 text-slate-900'}`}
                                 value={lat}
                                 onChange={(e) => { setLat(e.target.value); setLatError(null); }}
                                 placeholder="เช่น 14.1234567"
@@ -231,11 +239,15 @@ export const ZoneLocationSection: React.FC<ZoneLocationSectionProps> = ({
                             {latError && <p className="text-[10px] text-red-500">{latError}</p>}
                         </div>
                         <div className="space-y-1">
-                            <label className="text-xs font-medium text-slate-600">Longitude</label>
+                            <label className={`text-xs font-medium ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>Longitude</label>
                             <input
                                 type="number"
                                 step="any"
-                                className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-sky-500 ${lngError ? 'border-red-400 bg-red-50' : 'border-slate-200'}`}
+                                className={`w-full rounded-lg border px-3 py-2 text-sm outline-none focus:border-sky-500 ${lngError
+                                    ? 'border-red-400 bg-red-50'
+                                    : isDarkMode
+                                        ? 'bg-white/5 border-white/10 text-white'
+                                        : 'bg-white border-slate-200 text-slate-900'}`}
                                 value={lng}
                                 onChange={(e) => { setLng(e.target.value); setLngError(null); }}
                                 placeholder="เช่น 101.1234567"
@@ -255,12 +267,12 @@ export const ZoneLocationSection: React.FC<ZoneLocationSectionProps> = ({
                         </button>
                     )}
 
-                    <div className="flex items-center gap-2 pt-1 border-t border-slate-50 mt-2">
+                    <div className={`flex items-center gap-2 pt-1 border-t mt-2 ${isDarkMode ? "border-white/10" : "border-slate-50"}`}>
                         <button
                             type="button"
                             onClick={save}
                             disabled={saving}
-                            className="w-full rounded-lg bg-sky-600 px-4 py-2 text-xs font-medium text-white hover:bg-sky-700 disabled:opacity-60"
+                            className={`w-full rounded-lg px-4 py-2 text-xs font-medium text-white disabled:opacity-60 ${isDarkMode ? "bg-sky-500 hover:bg-sky-600" : "bg-sky-600 hover:bg-sky-700"}`}
                         >
                             {saving ? "กำลังบันทึก..." : "บันทึกพิกัด"}
                         </button>

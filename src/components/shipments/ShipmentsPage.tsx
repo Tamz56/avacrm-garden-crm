@@ -176,7 +176,7 @@ const ShipmentsPage: React.FC<ShipmentsPageProps> = ({ onDataChanged }) => {
                 </div>
 
                 {/* Status Filter Buttons */}
-                <div className="hidden md:flex items-center gap-1 bg-white p-1 rounded-lg border border-slate-200">
+                <div className="hidden md:flex items-center gap-1 bg-white dark:bg-slate-900/60 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
                     {SHIPMENT_STATUS_OPTIONS.map((opt) => (
                         <button
                             key={opt.id}
@@ -213,7 +213,7 @@ const ShipmentsPage: React.FC<ShipmentsPageProps> = ({ onDataChanged }) => {
             {/* Filters */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
                 {/* Search */}
-                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2">
+                <div className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/60 px-3 py-2">
                     <Search className="h-4 w-4 text-slate-400" />
                     <input
                         value={search}
@@ -224,7 +224,7 @@ const ShipmentsPage: React.FC<ShipmentsPageProps> = ({ onDataChanged }) => {
                 </div>
 
                 {/* Date range */}
-                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs md:text-sm">
+                <div className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/60 px-3 py-2 text-xs md:text-sm">
                     <Calendar className="h-4 w-4 text-slate-400" />
                     <select
                         value={dateRange}
@@ -241,7 +241,7 @@ const ShipmentsPage: React.FC<ShipmentsPageProps> = ({ onDataChanged }) => {
                 </div>
 
                 {/* Vehicle filter */}
-                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs md:text-sm">
+                <div className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/60 px-3 py-2 text-xs md:text-sm">
                     <Filter className="h-4 w-4 text-slate-400" />
                     <select
                         value={vehicleFilter}
@@ -260,23 +260,23 @@ const ShipmentsPage: React.FC<ShipmentsPageProps> = ({ onDataChanged }) => {
             <div className="space-y-4 mb-6">
                 {/* แถวบน: ตัวเลขหลัก */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="p-4 rounded-xl border border-gray-200 bg-white">
-                        <div className="text-xs text-gray-500">จำนวน Shipment (Completed)</div>
-                        <div className="mt-1 text-2xl font-semibold">
+                    <div className="p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900/60">
+                        <div className="text-xs text-gray-500 dark:text-slate-400">จำนวน Shipment (Completed)</div>
+                        <div className="mt-1 text-2xl font-semibold dark:text-white">
                             {kpiLoading ? '...' : formatNumber(kpis?.total_shipments)}
                         </div>
                     </div>
 
-                    <div className="p-4 rounded-xl border border-gray-200 bg-white">
-                        <div className="text-xs text-gray-500">ระยะทางรวมโดยประมาณ</div>
-                        <div className="mt-1 text-2xl font-semibold">
+                    <div className="p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900/60">
+                        <div className="text-xs text-gray-500 dark:text-slate-400">ระยะทางรวมโดยประมาณ</div>
+                        <div className="mt-1 text-2xl font-semibold dark:text-white">
                             {kpiLoading ? '...' : `${formatNumber(kpis?.total_distance_km)} กม.`}
                         </div>
                     </div>
 
-                    <div className="p-4 rounded-xl border border-gray-200 bg-white">
-                        <div className="text-xs text-gray-500">ค่าขนส่งรวม</div>
-                        <div className="mt-1 text-2xl font-semibold">
+                    <div className="p-4 rounded-xl border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900/60">
+                        <div className="text-xs text-gray-500 dark:text-slate-400">ค่าขนส่งรวม</div>
+                        <div className="mt-1 text-2xl font-semibold dark:text-white">
                             {kpiLoading ? '...' : formatBaht(kpis?.total_cost)}
                         </div>
                     </div>
@@ -284,23 +284,23 @@ const ShipmentsPage: React.FC<ShipmentsPageProps> = ({ onDataChanged }) => {
 
                 {/* แถวล่าง: KPI เชิงประสิทธิภาพ */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="p-4 rounded-xl border border-indigo-100 bg-indigo-50">
-                        <div className="text-xs text-indigo-700">ค่าเฉลี่ยต่อเที่ยว</div>
-                        <div className="mt-1 text-xl font-semibold text-indigo-900">
+                    <div className="p-4 rounded-xl border border-indigo-100 bg-indigo-50 dark:border-indigo-800 dark:bg-indigo-900/30">
+                        <div className="text-xs text-indigo-700 dark:text-indigo-400">ค่าเฉลี่ยต่อเที่ยว</div>
+                        <div className="mt-1 text-xl font-semibold text-indigo-900 dark:text-indigo-200">
                             {kpiLoading ? '...' : formatBaht(kpis?.avg_cost_per_shipment)}
                         </div>
                     </div>
 
-                    <div className="p-4 rounded-xl border border-emerald-100 bg-emerald-50">
-                        <div className="text-xs text-emerald-700">ค่าเฉลี่ยต่อ กม.</div>
-                        <div className="mt-1 text-xl font-semibold text-emerald-900">
+                    <div className="p-4 rounded-xl border border-emerald-100 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/30">
+                        <div className="text-xs text-emerald-700 dark:text-emerald-400">ค่าเฉลี่ยต่อ กม.</div>
+                        <div className="mt-1 text-xl font-semibold text-emerald-900 dark:text-emerald-200">
                             {kpiLoading ? '...' : `${formatBaht(kpis?.avg_cost_per_km)} / กม.`}
                         </div>
                     </div>
 
-                    <div className="p-4 rounded-xl border border-amber-100 bg-amber-50">
-                        <div className="text-xs text-amber-700">ค่าเฉลี่ยต่อต้น</div>
-                        <div className="mt-1 text-xl font-semibold text-amber-900">
+                    <div className="p-4 rounded-xl border border-amber-100 bg-amber-50 dark:border-amber-800 dark:bg-amber-900/30">
+                        <div className="text-xs text-amber-700 dark:text-amber-400">ค่าเฉลี่ยต่อต้น</div>
+                        <div className="mt-1 text-xl font-semibold text-amber-900 dark:text-amber-200">
                             {kpiLoading ? '...' : `${formatBaht(kpis?.avg_cost_per_tree)} / ต้น`}
                         </div>
                     </div>
@@ -308,7 +308,7 @@ const ShipmentsPage: React.FC<ShipmentsPageProps> = ({ onDataChanged }) => {
             </div>
 
             {/* Table */}
-            <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/60 overflow-hidden">
                 {loading ? (
                     <div className="p-6 text-sm text-slate-500">กำลังโหลดข้อมูล...</div>
                 ) : error ? (

@@ -8,10 +8,12 @@ import { supabase } from "../../supabaseClient";
 
 type ZoneInspectionHistoryProps = {
     zoneId: string;
+    isDarkMode?: boolean;
 };
 
 export const ZoneInspectionHistory: React.FC<ZoneInspectionHistoryProps> = ({
     zoneId,
+    isDarkMode = false,
 }) => {
     const [rows, setRows] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(false);
@@ -87,13 +89,13 @@ export const ZoneInspectionHistory: React.FC<ZoneInspectionHistoryProps> = ({
         });
 
     return (
-        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+        <div className={`mt-6 rounded-2xl border p-4 shadow-sm ${isDarkMode ? "bg-white/5 border-white/10" : "bg-white border-slate-200"}`}>
             <div className="mb-3 flex items-center justify-between gap-2">
                 <div>
-                    <h2 className="text-sm font-semibold text-slate-900">
+                    <h2 className={`text-sm font-semibold ${isDarkMode ? "text-white" : "text-slate-900"}`}>
                         ประวัติการตรวจแปลง
                     </h2>
-                    <p className="mt-1 text-xs text-slate-500">
+                    <p className={`mt-1 text-xs ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
                         ใช้ดูประวัติการลงพื้นที่ตรวจแปลงย้อนหลัง
                     </p>
                 </div>
@@ -112,16 +114,16 @@ export const ZoneInspectionHistory: React.FC<ZoneInspectionHistoryProps> = ({
             )}
 
             {!loading && !error && rows.length === 0 && (
-                <div className="py-6 text-center text-sm text-slate-500">
+                <div className={`py-6 text-center text-sm ${isDarkMode ? "text-slate-400" : "text-slate-500"}`}>
                     ยังไม่เคยบันทึกการตรวจแปลงสำหรับแปลงนี้
                 </div>
             )}
 
             {!loading && !error && rows.length > 0 && (
                 <div className="overflow-x-auto">
-                    <table className="min-w-full text-left text-xs text-slate-600">
+                    <table className={`min-w-full text-left text-xs ${isDarkMode ? "text-slate-300" : "text-slate-600"}`}>
                         <thead>
-                            <tr className="border-b border-slate-100 bg-slate-50 text-[11px] uppercase tracking-wide text-slate-500">
+                            <tr className={`border-b text-[11px] uppercase tracking-wide ${isDarkMode ? "border-white/10 bg-white/5 text-slate-400" : "border-slate-100 bg-slate-50 text-slate-500"}`}>
                                 <th className="px-3 py-2">วันที่ตรวจ</th>
                                 <th className="px-3 py-2">ผู้ตรวจ</th>
                                 <th className="px-3 py-2 text-right">จำนวนที่ตรวจได้ (ต้น)</th>
@@ -144,11 +146,11 @@ export const ZoneInspectionHistory: React.FC<ZoneInspectionHistoryProps> = ({
                                 return (
                                     <tr
                                         key={idx}
-                                        className="border-b border-slate-50 text-[13px] last:border-0"
+                                        className={`border-b text-[13px] last:border-0 ${isDarkMode ? "border-white/5 hover:bg-white/5" : "border-slate-50"}`}
                                     >
-                                        <td className="px-3 py-2 text-slate-800">
+                                        <td className={`px-3 py-2 ${isDarkMode ? "text-white" : "text-slate-800"}`}>
                                             <div className="inline-flex items-center gap-1">
-                                                <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                                                <Calendar className={`h-3.5 w-3.5 ${isDarkMode ? "text-slate-400" : "text-slate-400"}`} />
                                                 {formatDate(date)}
                                             </div>
                                         </td>
@@ -168,7 +170,7 @@ export const ZoneInspectionHistory: React.FC<ZoneInspectionHistoryProps> = ({
                                             <span className="text-slate-400">-</span>
                                         </td> */}
                                         <td className="px-3 py-2">
-                                            <span className="line-clamp-2 text-[12px] text-slate-600">
+                                            <span className={`line-clamp-2 text-[12px] ${isDarkMode ? "text-slate-400" : "text-slate-600"}`}>
                                                 {note || "-"}
                                             </span>
                                         </td>
