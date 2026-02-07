@@ -1,0 +1,37 @@
+# CODEOWNERS
+# ใช้สำหรับกำหนดว่าไฟล์/โฟลเดอร์ไหน ต้องให้ใครเป็น reviewer (code owner)
+
+# Default: ทุกไฟล์ให้ owner คนเดียว
+* @Tamz56
+
+# Repo / Workflow
+/.github/ @Tamz56
+
+# Core UI
+/src/App.js @Tamz56
+/src/index.css @Tamz56
+
+# Dashboard
+/src/components/dashboard/ @Tamz56
+/src/components/Dashboard.tsx @Tamz56
+
+# Zones
+/src/components/zones/ @Tamz56
+/src/components/ZoneDetailPage.tsx @Tamz56
+
+# Auth
+/src/components/auth/ @Tamz56
+
+# Billing / Docs
+/src/components/billing/ @Tamz56
+/src/components/docs/ @Tamz56
+
+# Supabase / DB
+/supabase/ @Tamz56
+
+# Scripts & configs
+/scripts/ @Tamz56
+/tailwind.config.js @Tamz56
+/postcss.config.js @Tamz56
+/package.json @Tamz56
+/package-lock.json @Tamz56
