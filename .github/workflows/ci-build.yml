@@ -2,8 +2,10 @@ name: CI Build
 
 on:
   pull_request:
+    branches: [main]
   push:
-    branches: [ "wip/ui-before-mac" ]
+    branches: [main]
+  workflow_dispatch:
 
 jobs:
   build:
